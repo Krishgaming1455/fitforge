@@ -938,7 +938,6 @@ setInterval(autoSave, 30000);
 
 function syncProfileToDiet() {
   const profileWeight = document.getElementById('p-weight')?.value;
-  const profileHeight = document.getElementById('p-height')?.value;
   const dietWeight = document.getElementById('diet-weight');
   
   // Always sync weight from profile to diet if profile has a value
@@ -946,19 +945,17 @@ function syncProfileToDiet() {
     dietWeight.value = profileWeight;
   }
   
-  // Also sync goal if profile has a selected goal
-  const profileGoal = document.querySelector('#screen-profile .tag-group .tag.selected[onclick*="goal"]')?.textContent;
+  // Also sync goal if profile has a selected goal. The profile buttons include
+  // an emoji prefix (e.g. "💪 Gain Muscle & Weight"), so match on keywords
+  // rather than the exact label.
+  const goalText = document.querySelector('#goal-tags .tag.selected')?.textContent.toLowerCase();
   const dietGoal = document.getElementById('diet-goal');
-  if (profileGoal && dietGoal) {
-    const goalMap = {
-      'Gain Muscle & Weight': 'gain',
-      'Lose Fat (Preserve Muscle)': 'loss',
-      'Get Stronger': 'strength',
-      'Improve Athletic Performance': 'strength'
-    };
-    if (goalMap[profileGoal]) {
-      dietGoal.value = goalMap[profileGoal];
-    }
+  if (goalText && dietGoal) {
+    let mapped = '';
+    if (goalText.includes('gain')) mapped = 'gain';
+    else if (goalText.includes('lose') || goalText.includes('fat')) mapped = 'loss';
+    else if (goalText.includes('stronger') || goalText.includes('strength') || goalText.includes('athletic')) mapped = 'strength';
+    if (mapped) dietGoal.value = mapped;
   }
 }
 
