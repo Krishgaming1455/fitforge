@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitForge — Smart Gym & Diet Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --card: #16161f;
+  --border: #2a2a3a;
+  --accent: #f0ff44;
+  --accent2: #44ffcc;
+  --accent3: #ff6b44;
+  --text: #f0f0f5;
+  --muted: #7a7a90;
+  --red: #ff4466;
+  --green: #44ff88;
+  --blue: #4488ff;
+  --purple: #aa44ff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+.screen{display:none;min-height:100vh;animation:fadeIn .4s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.site-header{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,10,15,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:58px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--accent);cursor:pointer;text-decoration:none}
+.logo span{color:var(--accent2)}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:6px 13px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.3px}
+.nav-tab:hover{color:var(--text);background:var(--bg3)}
+.nav-tab.active{background:var(--accent);color:#000;font-weight:700}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,15,.96);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:200}
+.mobile-nav-inner{display:flex}
+.mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:none;background:transparent;color:var(--muted);font-size:9px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.4px}
+.mobile-nav-btn .icon{font-size:19px;transition:transform .18s}
+.mobile-nav-btn.active{color:var(--accent)}
+.mobile-nav-btn.active .icon{transform:translateY(-2px)}
+@media(max-width:680px){.nav-tabs{display:none}.mobile-nav{display:block}body{padding-bottom:68px}}
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+.section{padding:56px 0}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,6vw,60px);letter-spacing:2px;margin-bottom:8px;line-height:1}
+.section-title span{color:var(--accent)}
+.section-sub{color:var(--muted);margin-bottom:36px;font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:all .25s}
+.card:hover{border-color:rgba(240,255,68,.3);transform:translateY(-2px);box-shadow:0 10px 36px rgba(240,255,68,.07)}
+.card-icon{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:7px}
+.card p{color:var(--muted);font-size:13px;line-height:1.55}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.9px}
+.form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;transition:all .18s;outline:none}
+.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,255,68,.09)}
+.form-select option{background:var(--bg3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.form-row{grid-template-columns:1fr}}
+.tag-group{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.tag{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;user-select:none}
+.tag:hover{border-color:var(--accent);color:var(--text)}
+.tag.selected{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.progress-bar{background:var(--bg3);border-radius:8px;height:9px;overflow:hidden;margin:7px 0}
+.progress-fill{height:100%;border-radius:8px;transition:width .6s ease}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;font-weight:700;font-size:14px;padding:12px 26px;border-radius:9px;border:none;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(240,255,68,.3)}
+.btn-secondary{display:inline-flex;align-items:center;gap:7px;background:transparent;color:var(--text);font-weight:600;font-size:14px;padding:11px 22px;border-radius:9px;border:1px solid var(--border);cursor:pointer;transition:all .18s;margin-left:10px;font-family:'DM Sans',sans-serif}
+.btn-secondary:hover{background:var(--bg3);border-color:var(--accent)}
+.btn-full{width:100%;justify-content:center;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.chip-beginner{background:rgba(68,255,136,.1);color:var(--green);border:1px solid rgba(68,255,136,.2)}
+.chip-intermediate{background:rgba(240,255,68,.1);color:var(--accent);border:1px solid rgba(240,255,68,.2)}
+.chip-advanced{background:rgba(255,68,102,.1);color:var(--red);border:1px solid rgba(255,68,102,.2)}
+.chip-avoid{background:rgba(255,68,102,.15);color:var(--red);border:1px solid rgba(255,68,102,.3)}
+.chip-muscle{background:rgba(68,136,255,.1);color:var(--blue);border:1px solid rgba(68,136,255,.2)}
+.sub-tabs{display:flex;gap:3px;margin-bottom:24px;background:var(--bg3);padding:4px;border-radius:9px;width:fit-content;flex-wrap:wrap}
+.sub-tab{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+.sub-tab.active{background:var(--accent);color:#000}
+.stat-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 18px;flex:1;min-width:110px}
+.stat-box-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:5px}
+.stat-box-value{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;line-height:1}
+.stat-box-unit{font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif}
+.bmi-display{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;margin-bottom:20px}
+.bmi-number{font-family:'Bebas Neue',sans-serif;font-size:68px;line-height:1;letter-spacing:2px}
+.bmi-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.bmi-scale{display:flex;border-radius:6px;overflow:hidden;height:8px;margin:14px 0}
+.bmi-pointer-wrap{position:relative;height:18px;margin-top:3px}
+.bmi-pointer{position:absolute;top:0;font-size:10px;color:var(--accent);transform:translateX(-50%);font-family:'JetBrains Mono',monospace;transition:left .6s}
+.timeline{position:relative;padding-left:38px}
+.timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent2),var(--purple))}
+.timeline-item{position:relative;margin-bottom:22px}
+.timeline-dot{position:absolute;left:-32px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.timeline-item.gym .timeline-dot{border-color:var(--accent3);background:rgba(255,107,68,.18)}
+.timeline-item.meal .timeline-dot{border-color:var(--green);background:rgba(68,255,136,.18)}
+.timeline-item.rest .timeline-dot{border-color:var(--blue);background:rgba(68,136,255,.18)}
+.timeline-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:3px}
+.timeline-title{font-weight:700;font-size:14px;margin-bottom:3px}
+.timeline-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.exercise-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;cursor:pointer;transition:all .2s}
+.exercise-card:hover{border-color:var(--accent2);background:var(--bg3)}
+.exercise-card.expanded{border-color:var(--accent)}
+.exercise-name{font-size:15px;font-weight:700;margin-bottom:5px}
+.exercise-meta{display:flex;gap:7px;flex-wrap:wrap}
+.exercise-detail{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;animation:fadeIn .3s ease}
+.exercise-card.expanded .exercise-detail{display:block}
+.exercise-steps{list-style:none;counter-reset:steps}
+.exercise-steps li{counter-increment:steps;padding:7px 0 7px 30px;position:relative;color:var(--muted);font-size:13px;line-height:1.5;border-bottom:1px solid rgba(255,255,255,.04)}
+.exercise-steps li::before{content:counter(steps);position:absolute;left:0;top:7px;width:19px;height:19px;border-radius:50%;background:var(--accent);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.avoid-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);color:var(--red);padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600}
+.food-search-wrap{position:relative;margin-bottom:18px}
+.food-search{width:100%;background:var(--bg3);border:2px solid var(--border);color:var(--text);padding:13px 18px;border-radius:11px;font-size:15px;outline:none;font-family:'DM Sans',sans-serif;transition:all .18s}
+.food-search:focus{border-color:var(--accent)}
+.food-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:11px;max-height:260px;overflow-y:auto;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.food-suggestion-item{padding:11px 15px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;display:flex;justify-content:space-between;align-items:center}
+.food-suggestion-item:hover{background:var(--bg3)}
+.food-suggestion-item:last-child{border-bottom:none}
+.food-item-name{font-weight:600;font-size:13px}
+.food-item-sub{font-size:11px;color:var(--muted)}
+.food-item-cal{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.nutrition-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:11px;margin-top:18px}
+.nutrition-item{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:14px;text-align:center}
+.nutrition-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;font-weight:700}
+.nutrition-value{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px}
+.nutrition-unit{font-size:11px;color:var(--muted)}
+.cal-ring-wrap{display:flex;justify-content:center;margin:18px 0}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bg3);stroke-width:12}
+.ring-fill{fill:none;stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+.vitamin-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)}
+.vitamin-row:last-child{border:none}
+.vitamin-name{font-size:13px;font-weight:600;min-width:130px}
+.vitamin-bar-wrap{flex:1}
+.vitamin-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.vitamin-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.vitamin-amount{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);min-width:78px;text-align:right}
+.vitamin-status{font-size:10px;font-weight:700;min-width:48px;text-align:right}
+.food-log-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.food-log-item:last-child{border-bottom:none}
+.food-log-name{font-weight:600;font-size:13px}
+.food-log-amount{font-size:12px;color:var(--muted)}
+.food-log-macros{display:flex;gap:6px;flex-wrap:wrap}
+.macro-pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700}
+.macro-p{background:rgba(68,255,136,.1);color:var(--green)}
+.macro-c{background:rgba(240,255,68,.1);color:var(--accent)}
+.macro-f{background:rgba(255,107,68,.1);color:var(--accent3)}
+.remove-food{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:4px;border-radius:4px;transition:all .18s}
+.remove-food:hover{color:var(--red);background:rgba(255,68,102,.1)}
+.plan-day-card{background:var(--card);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:14px}
+.plan-day-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .18s;background:var(--bg3)}
+.plan-day-header:hover{background:var(--bg2)}
+.plan-day-name{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px}
+.plan-day-focus{font-size:12px;color:var(--muted)}
+.plan-day-body{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s}
+.plan-day-card.open .plan-day-body{max-height:700px;padding:14px 18px}
+.plan-exercise-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.plan-exercise-row:last-child{border:none}
+.plan-ex-name{font-size:13px;font-weight:600}
+.plan-ex-sets{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);background:rgba(240,255,68,.09);padding:2px 9px;border-radius:4px}
+.myth-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;position:relative;overflow:hidden}
+.myth-card::before{content:'MYTH';position:absolute;top:11px;right:14px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:2px;color:var(--red);background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);padding:2px 7px;border-radius:4px}
+.fact-card{background:var(--card);border:1px solid rgba(68,255,136,.2);border-radius:13px;padding:18px;position:relative}
+.fact-card::before{content:'FACT';position:absolute;top:11px;right:14px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:2px;color:var(--green);background:rgba(68,255,136,.1);border:1px solid rgba(68,255,136,.2);padding:2px 7px;border-radius:4px}
+.hero{padding:96px 20px 56px;text-align:center;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(240,255,68,.07),transparent)}
+.hero-badge{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 15px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--accent2);margin-bottom:18px;letter-spacing:1px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(54px,10vw,114px);line-height:.93;letter-spacing:2px;margin-bottom:18px}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);font-size:16px;max-width:520px;margin:0 auto 32px;line-height:1.6}
+.page-header{padding:96px 20px 18px;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(240,255,68,.055),transparent)}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(38px,7vw,70px);letter-spacing:2px;line-height:1}
+.page-title span{color:var(--accent)}
+.page-desc{color:var(--muted);font-size:15px;margin-top:10px;max-width:470px;line-height:1.6}
+.ai-response{background:var(--bg3);border:1px solid rgba(68,255,204,.18);border-radius:12px;padding:18px;margin-top:14px;font-size:13px;line-height:1.7}
+.ai-response h4{color:var(--accent2);font-size:14px;font-weight:700;margin-bottom:7px;margin-top:14px}
+.ai-response h4:first-child{margin-top:0}
+.ai-response ul{padding-left:15px;color:var(--muted);margin:6px 0}
+.ai-response li{margin-bottom:3px}
+.ai-response strong{color:var(--text)}
+.loading{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px}
+.loading-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite}
+.loading-dot:nth-child(2){animation-delay:.14s}
+.loading-dot:nth-child(3){animation-delay:.28s}
+@keyframes ldBounce{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-5px);opacity:1}}
+/* PPL Workout Tracker */
+.ppl-day-tabs{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:22px}
+.ppl-tab{flex:1;padding:12px 8px;border:none;background:var(--bg3);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.ppl-tab:not(:last-child){border-right:1px solid var(--border)}
+.ppl-tab.active{background:var(--accent);color:#000}
+.ppl-panel{display:none}
+.ppl-panel.active{display:block;animation:fadeIn .3s ease}
+.workout-exercise-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;margin-bottom:10px;transition:all .2s}
+.workout-exercise-item:hover{border-color:var(--accent2)}
+.workout-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.workout-checkbox.done{background:var(--accent);border-color:var(--accent)}
+.workout-checkbox.done::after{content:'✓';font-size:13px;font-weight:800;color:#000}
+.workout-ex-info{flex:1}
+.workout-ex-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.workout-ex-meta{font-size:12px;color:var(--muted)}
+.workout-ex-badge{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);background:rgba(240,255,68,.09);padding:3px 10px;border-radius:5px;white-space:nowrap}
+.workout-note{background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.15);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--accent2);margin-bottom:14px;line-height:1.5}
+.workout-progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:18px}
+.workout-progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease}
+/* Recovery Desk */
+.recovery-select-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.recovery-area-btn{padding:9px 18px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+.recovery-area-btn.active{background:var(--red);border-color:var(--red);color:#fff}
+.recovery-type-row{display:flex;gap:8px;margin-bottom:20px}
+.recovery-type-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center}
+.recovery-type-btn.active.doms{background:rgba(240,255,68,.15);border-color:var(--accent);color:var(--accent)}
+.recovery-type-btn.active.acute{background:rgba(255,68,102,.15);border-color:var(--red);color:var(--red)}
+.recovery-protocol{animation:fadeIn .3s ease}
+.substitution-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.substitution-row:last-child{border:none}
+.sub-avoid{font-size:13px;color:var(--red);font-weight:600;flex:1;text-decoration:line-through;opacity:.7}
+.sub-arrow{color:var(--muted);font-size:16px}
+.sub-do{font-size:13px;color:var(--green);font-weight:600;flex:1}
+/* Diet Plan Panel */
+.diet-meal-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:12px}
+.diet-meal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.diet-meal-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px}
+.diet-meal-cals{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);background:rgba(240,255,68,.08);padding:3px 9px;border-radius:5px}
+.diet-food-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.diet-food-row:last-child{border:none}
+.diet-food-name{font-size:13px;color:var(--text)}
+.diet-food-macros{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+/* Tooltip */
+.tooltip{position:relative;display:inline-block}
+.tooltip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 11px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .18s;z-index:100;font-family:'DM Sans',sans-serif}
+.tooltip:hover::after{opacity:1}
+/* Warning box */
+.warn-box{background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.25);border-radius:9px;padding:11px 14px;font-size:12px;color:var(--red);line-height:1.5;margin-top:8px}
+.info-box{background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);border-radius:9px;padding:11px 14px;font-size:12px;color:var(--accent2);line-height:1.5;margin-bottom:14px}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <a class="logo" onclick="showScreen('home')">FIT<span>FORGE</span></a>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showScreen('home')">Home</button>
+    <button class="nav-tab" onclick="showScreen('profile')">Profile</button>
+    <button class="nav-tab" onclick="showScreen('gym')">Gym Tracker</button>
+    <button class="nav-tab" onclick="showScreen('diet')">Diet Plan</button>
+    <button class="nav-tab" onclick="showScreen('recovery')">Recovery Desk</button>
+    <button class="nav-tab" onclick="showScreen('myths')">Myths</button>
+  </nav>
+</header>
+<div class="mobile-nav"><div class="mobile-nav-inner">
+  <button class="mobile-nav-btn active" onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
+  <button class="mobile-nav-btn" onclick="showScreen('profile')"><span class="icon">📊</span>Profile</button>
+  <button class="mobile-nav-btn" onclick="showScreen('gym')"><span class="icon">💪</span>Gym</button>
+  <button class="mobile-nav-btn" onclick="showScreen('diet')"><span class="icon">🥗</span>Diet</button>
+  <button class="mobile-nav-btn" onclick="showScreen('recovery')"><span class="icon">🩹</span>Recovery</button>
+</div></div>
+
+<!-- ===== HOME ===== -->
+<div id="screen-home" class="screen active">
+  <div class="hero">
+    <div class="hero-badge">🏋️ SMART FITNESS PLANNER v3.0 — FULLY DYNAMIC</div>
+    <h1>BUILD YOUR<br><span>BEST BODY</span></h1>
+    <p>Dynamic diet plans calculated from your actual weight and goal. Interactive PPL workout tracker. Smart recovery protocols. All in one place.</p>
+    <button class="btn-primary" onclick="showScreen('profile')">🚀 Start My Plan</button>
+    <button class="btn-secondary" onclick="showScreen('gym')">💪 Open Gym Tracker</button>
+  </div>
+  <div class="container"><div class="section">
+    <p class="section-title">EVERYTHING<br><span>YOU NEED</span></p>
+    <p class="section-sub">Smart, dynamic, fully personalized — not a static template</p>
+    <div class="grid3">
+      <div class="card" onclick="showScreen('profile')" style="cursor:pointer"><div class="card-icon" style="background:rgba(240,255,68,.1)">📊</div><h3>Dynamic Profile</h3><p>Enter weight, height, goal. Get BMI, precise calorie targets, and protein calculated to your exact body — never a static number.</p></div>
+      <div class="card" onclick="showScreen('gym')" style="cursor:pointer"><div class="card-icon" style="background:rgba(68,255,204,.1)">🏋️</div><h3>PPL Workout Tracker</h3><p>Interactive Push / Pull / Legs split with checkboxes, sets, reps, muscle groups, and injury-safe substitutions built in.</p></div>
+      <div class="card" onclick="showScreen('diet')" style="cursor:pointer"><div class="card-icon" style="background:rgba(68,255,136,.1)">🥗</div><h3>Smart Diet Plan</h3><p>Food portions dynamically calculated from your weight and goal. Gain = more carbs. Loss = more lean protein. Always accurate.</p></div>
+      <div class="card" onclick="showScreen('recovery')" style="cursor:pointer"><div class="card-icon" style="background:rgba(255,68,102,.1)">🩹</div><h3>Recovery Desk</h3><p>Select your problem area — Knees, Lower Back, or Shoulders. Get distinct protocols for DOMS vs Acute pain with safe exercise swaps.</p></div>
+      <div class="card" onclick="showScreen('myths')" style="cursor:pointer"><div class="card-icon" style="background:rgba(170,68,255,.1)">⚡</div><h3>Myths & Facts</h3><p>Eggs in summer, height growth, protein powder — every common gym myth debunked with science.</p></div>
+      <div class="card" onclick="showScreen('profile')" style="cursor:pointer"><div class="card-icon" style="background:rgba(68,136,255,.1)">🤖</div><h3>AI Coach</h3><p>Powered by Claude AI — get personalized analysis and recommendations based on your exact profile and goals.</p></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ===== PROFILE ===== -->
+<div id="screen-profile" class="screen">
+  <div class="page-header container">
+    <div class="page-title">MY<br><span>PROFILE</span></div>
+    <p class="page-desc">Your stats drive everything — calorie targets, protein grams, food portions, and workout intensity are all calculated from this page.</p>
+  </div>
+  <div class="container section">
+    <div id="profile-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+      <div class="card" style="padding:26px">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="p-name" placeholder="Your name" oninput="calcBMI()"></div>
+          <div class="form-group"><label class="form-label">Age</label><input class="form-input" id="p-age" type="number" placeholder="19" min="13" max="80" oninput="calcBMI()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Weight (kg)</label><input class="form-input" id="p-weight" type="number" placeholder="56" min="30" max="200" oninput="calcBMI()"></div>
+          <div class="form-group"><label class="form-label">Height (cm)</label><input class="form-input" id="p-height" type="number" placeholder="175" min="120" max="220" oninput="calcBMI()"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Gender</label><div class="tag-group"><div class="tag selected" onclick="selectTag(this,'gender')">Male</div><div class="tag" onclick="selectTag(this,'gender')">Female</div><div class="tag" onclick="selectTag(this,'gender')">Other</div></div></div>
+        <div class="form-group"><label class="form-label">Fitness Level</label><div class="tag-group"><div class="tag selected" onclick="selectTag(this,'level')">Complete Beginner</div><div class="tag" onclick="selectTag(this,'level')">Some Experience</div><div class="tag" onclick="selectTag(this,'level')">Intermediate</div><div class="tag" onclick="selectTag(this,'level')">Advanced</div></div></div>
+        <div class="form-group"><label class="form-label">Main Goal</label><div class="tag-group"><div class="tag selected" onclick="selectTag(this,'goal');syncGoalToDiet()">Gain Muscle &amp; Weight</div><div class="tag" onclick="selectTag(this,'goal');syncGoalToDiet()">Lose Fat</div><div class="tag" onclick="selectTag(this,'goal');syncGoalToDiet()">Get Stronger</div><div class="tag" onclick="selectTag(this,'goal');syncGoalToDiet()">Build Stamina</div></div></div>
+        <div class="form-group"><label class="form-label">Injuries (select all that apply)</label><div class="tag-group"><div class="tag selected" onclick="toggleTag(this)">Back Pain</div><div class="tag" onclick="toggleTag(this)">Knee Pain</div><div class="tag" onclick="toggleTag(this)">Shoulder Issue</div><div class="tag" onclick="toggleTag(this)">None</div></div></div>
+        <div class="form-group"><label class="form-label">Diet Type</label><div class="tag-group"><div class="tag" onclick="selectTag(this,'diet')">Pure Veg</div><div class="tag" onclick="selectTag(this,'diet')">Veg + Eggs</div><div class="tag selected" onclick="selectTag(this,'diet')">Veg + Chicken Sometimes</div><div class="tag" onclick="selectTag(this,'diet')">Full Non-Veg</div></div></div>
+        <button class="btn-primary btn-full" onclick="generateAIAdvice()">🤖 Get AI Analysis</button>
+        <button class="btn-secondary btn-full" style="margin-left:0;margin-top:8px" onclick="syncGoalToDiet();showScreen('diet')">🥗 Generate My Diet Plan →</button>
+      </div>
+      <div id="profile-results">
+        <div style="text-align:center;padding:56px 20px;color:var(--muted)"><div style="font-size:56px;margin-bottom:14px">📊</div><p style="font-size:15px">Fill in your stats on the left<br>to see your personalized analysis</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GYM TRACKER ===== -->
+<div id="screen-gym" class="screen">
+  <div class="page-header container">
+    <div class="page-title">PPL<br><span>TRACKER</span></div>
+    <p class="page-desc">Interactive Push / Pull / Legs split. Check off each exercise as you complete it. Muscle groups shown for every movement.</p>
+  </div>
+  <div class="container section">
+    <div class="ppl-day-tabs">
+      <button class="ppl-tab active" onclick="switchPPL('push',this)">💥 Push Day<br><small style="font-weight:400;font-size:10px">Chest · Shoulders · Triceps</small></button>
+      <button class="ppl-tab" onclick="switchPPL('pull',this)">🔗 Pull Day<br><small style="font-weight:400;font-size:10px">Back · Biceps · Rear Delts</small></button>
+      <button class="ppl-tab" onclick="switchPPL('legs',this)">🦵 Legs Day<br><small style="font-weight:400;font-size:10px">Quads · Hamstrings · Core</small></button>
+    </div>
+
+    <!-- PUSH -->
+    <div class="ppl-panel active" id="ppl-push">
+      <div class="info-box">💡 <strong>Push Day Focus:</strong> Shoulder-safe pressing angles. Neutral-grip options protect the rotator cuff. Control the eccentric (lowering) phase for maximum chest activation.</div>
+      <div class="workout-progress"><div class="workout-progress-fill" id="push-progress" style="width:0%"></div></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="push-progress-label">0 / 5 exercises completed</p>
+      <div id="push-exercises"></div>
+    </div>
+
+    <!-- PULL -->
+    <div class="ppl-panel" id="ppl-pull">
+      <div class="info-box">💡 <strong>Pull Day Focus:</strong> Chest-supported rows keep lower back completely safe. Face Pulls are mandatory — they fix laptop posture and protect shoulder health long-term.</div>
+      <div class="workout-progress"><div class="workout-progress-fill" id="pull-progress" style="width:0%"></div></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="pull-progress-label">0 / 5 exercises completed</p>
+      <div id="pull-exercises"></div>
+    </div>
+
+    <!-- LEGS -->
+    <div class="ppl-panel" id="ppl-legs">
+      <div class="info-box">💡 <strong>Legs Day Focus:</strong> Box Squats teach you to sit back safely, protecting knees. Romanian Deadlifts are a hip hinge — not a lower-back exercise if done correctly. High-foot leg press takes quads out and hammers glutes.</div>
+      <div class="workout-progress"><div class="workout-progress-fill" id="legs-progress" style="width:0%"></div></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="legs-progress-label">0 / 5 exercises completed</p>
+      <div id="legs-exercises"></div>
+    </div>
+
+    <!-- WEEKLY SPLIT ACCORDION -->
+    <div style="margin-top:44px">
+      <p class="section-title" style="margin-bottom:6px">WEEKLY <span>SPLIT</span></p>
+      <p class="section-sub" style="margin-bottom:20px">6-day schedule — tap any day to expand</p>
+      <div id="weekly-split"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIET PLAN ===== -->
+<div id="screen-diet" class="screen">
+  <div class="page-header container">
+    <div class="page-title">SMART<br><span>DIET PLAN</span></div>
+    <p class="page-desc">Portions are calculated dynamically from your weight and goal. Every gram of food is justified — not guessed.</p>
+  </div>
+  <div class="container section">
+    <!-- Controls -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="font-size:15px;margin-bottom:16px">⚙️ Generate Your Personalised Diet</h3>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group" style="margin:0"><label class="form-label">Your Weight (kg)</label><input class="form-input" id="diet-weight" type="number" placeholder="56" min="30" max="200" value="56"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Your Goal</label>
+          <select class="form-select" id="diet-goal">
+            <option value="gain">Gain Muscle &amp; Weight</option>
+            <option value="loss">Lose Fat (Preserve Muscle)</option>
+            <option value="strength">Get Stronger</option>
+            <option value="maintenance">Stay Fit / Maintain</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0"><label class="form-label">Activity Level</label>
+          <select class="form-select" id="diet-activity">
+            <option value="light">Light (1–2 gym days)</option>
+            <option value="moderate" selected>Moderate (3–4 gym days)</option>
+            <option value="active">Active (5–6 gym days)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0"><label class="form-label">Diet Type</label>
+          <select class="form-select" id="diet-type">
+            <option value="veg">Pure Vegetarian</option>
+            <option value="egg">Veg + Eggs</option>
+            <option value="nonveg" selected>Veg + Chicken / Fish</option>
+            <option value="fullnonveg">Full Non-Veg</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary btn-full" style="margin-top:14px" onclick="generateDietPlan()">🥗 Calculate My Diet Plan</button>
+    </div>
+    <!-- Macro summary -->
+    <div id="diet-macro-summary" style="display:none;margin-bottom:24px">
+      <div class="stat-strip" id="diet-stats"></div>
+      <div class="info-box" id="diet-logic-note"></div>
+    </div>
+    <!-- Meals -->
+    <div id="diet-meals-output">
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:52px;margin-bottom:14px">🥗</div><p>Enter your details above and click Calculate to see your personalised meal plan</p></div>
+    </div>
+    <!-- Food tracker section -->
+    <div style="margin-top:44px">
+      <p class="section-title" style="margin-bottom:6px">FOOD <span>TRACKER</span></p>
+      <p class="section-sub" style="margin-bottom:20px">Search and add any food to track today's intake</p>
+      <div class="food-search-wrap">
+        <input class="food-search" id="food-search-input" placeholder="🔍 Search food… rice, eggs, chicken, banana, dal" oninput="searchFood()" autocomplete="off">
+        <div class="food-suggestions" id="food-suggestions" style="display:none"></div>
+      </div>
+      <div class="cal-ring-wrap" style="position:relative;width:170px;height:170px;margin:0 auto 20px">
+        <svg class="ring-svg" width="170" height="170" viewBox="0 0 170 170">
+          <circle class="ring-bg" cx="85" cy="85" r="68"/>
+          <circle id="cal-ring" class="ring-fill" cx="85" cy="85" r="68" stroke="var(--accent)" stroke-dasharray="427" stroke-dashoffset="427"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div id="cal-consumed" style="font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--accent);line-height:1">0</div>
+          <div style="font-size:11px;color:var(--muted)">/ <span id="cal-target-display">2800</span> kcal</div>
+          <div id="cal-remaining-display" style="font-size:10px;color:var(--accent2);margin-top:3px">2800 left</div>
+        </div>
+      </div>
+      <div class="nutrition-grid">
+        <div class="nutrition-item"><div class="nutrition-label">Protein</div><div class="nutrition-value" id="nt-prot" style="color:var(--green)">0</div><div class="nutrition-unit">g / <span id="nt-prot-t">100</span>g</div><div class="progress-bar"><div class="progress-fill" id="pb-prot" style="width:0%;background:var(--green)"></div></div></div>
+        <div class="nutrition-item"><div class="nutrition-label">Carbs</div><div class="nutrition-value" id="nt-carb" style="color:var(--accent)">0</div><div class="nutrition-unit">g</div><div class="progress-bar"><div class="progress-fill" id="pb-carb" style="width:0%;background:var(--accent)"></div></div></div>
+        <div class="nutrition-item"><div class="nutrition-label">Fat</div><div class="nutrition-value" id="nt-fat" style="color:var(--accent3)">0</div><div class="nutrition-unit">g</div><div class="progress-bar"><div class="progress-fill" id="pb-fat" style="width:0%;background:var(--accent3)"></div></div></div>
+        <div class="nutrition-item"><div class="nutrition-label">Fiber</div><div class="nutrition-value" id="nt-fiber" style="color:var(--blue)">0</div><div class="nutrition-unit">/ 30g</div><div class="progress-bar"><div class="progress-fill" id="pb-fiber" style="width:0%;background:var(--blue)"></div></div></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h3 style="font-size:14px;margin-bottom:6px">💊 Vitamins &amp; Minerals</h3>
+        <div id="vit-display"></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:14px">📋 Today's Log</h3>
+          <button onclick="clearFoodLog()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.2);color:var(--red);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700">Clear All</button>
+        </div>
+        <div id="food-log-list"><div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Search and add foods above to track today</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RECOVERY DESK ===== -->
+<div id="screen-recovery" class="screen">
+  <div class="page-header container">
+    <div class="page-title">RECOVERY<br><span>DESK</span></div>
+    <p class="page-desc">Select your problem area and pain type. Get a distinct protocol with safe exercise substitutions — not generic advice.</p>
+  </div>
+  <div class="container section">
+    <div class="card" style="margin-bottom:22px">
+      <p class="form-label" style="margin-bottom:10px">Step 1 — Select Problem Area</p>
+      <div class="recovery-select-row">
+        <button class="recovery-area-btn active" onclick="setRecoveryArea('back',this)">🔴 Lower Back</button>
+        <button class="recovery-area-btn" onclick="setRecoveryArea('knees',this)">🦵 Knees</button>
+        <button class="recovery-area-btn" onclick="setRecoveryArea('shoulders',this)">💪 Shoulders</button>
+      </div>
+      <p class="form-label" style="margin-bottom:10px;margin-top:16px">Step 2 — Select Pain Type</p>
+      <div class="recovery-type-row">
+        <button class="recovery-type-btn active doms" onclick="setRecoveryType('doms',this)">😣 Muscle Soreness (DOMS)<br><small style="font-weight:400;font-size:10px">Generalised ache 24–48h after training</small></button>
+        <button class="recovery-type-btn acute" onclick="setRecoveryType('acute',this)">⚡ Acute Joint Pain<br><small style="font-weight:400;font-size:10px">Sharp / stabbing during or after exercise</small></button>
+      </div>
+    </div>
+    <div id="recovery-protocol-output"></div>
+  </div>
+</div>
+
+<!-- ===== MYTHS ===== -->
+<div id="screen-myths" class="screen">
+  <div class="page-header container">
+    <div class="page-title">MYTHS<br><span>&amp; FACTS</span></div>
+    <p class="page-desc">The most common gym and diet myths — each one debunked with real science.</p>
+  </div>
+  <div class="container section"><div id="myths-grid"></div></div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const FOOD_DB = [
+  {n:"Boiled Egg",cal:78,p:6,c:0.6,f:5,fi:0,vitC:0,vitD:44,ca:28,fe:0.9,k:69,s:"1 egg (50g)"},
+  {n:"Scrambled Eggs",cal:91,p:6.1,c:0.7,f:6.7,fi:0,vitC:0,vitD:44,ca:28,fe:0.9,k:69,s:"1 egg cooked (55g)"},
+  {n:"Banana",cal:89,p:1.1,c:23,f:0.3,fi:2.6,vitC:8.7,vitD:0,ca:5,fe:0.3,k:358,s:"1 medium (100g)"},
+  {n:"Whole Milk",cal:61,p:3.2,c:4.8,f:3.3,fi:0,vitC:0,vitD:40,ca:113,fe:0,k:150,s:"100ml"},
+  {n:"Cooked Rice",cal:130,p:2.7,c:28,f:0.3,fi:0.4,vitC:0,vitD:0,ca:10,fe:0.2,k:35,s:"100g cooked"},
+  {n:"Roti / Chapati",cal:104,p:3.5,c:20,f:1.5,fi:2.4,vitC:0,vitD:0,ca:27,fe:1.6,k:86,s:"1 medium (40g)"},
+  {n:"Dal (Cooked)",cal:116,p:9,c:20,f:0.4,fi:8,vitC:0,vitD:0,ca:19,fe:3.3,k:369,s:"100g"},
+  {n:"Chicken Breast",cal:165,p:31,c:0,f:3.6,fi:0,vitC:0,vitD:4,ca:15,fe:1,k:256,s:"100g grilled"},
+  {n:"Paneer",cal:265,p:18,c:1.2,f:21,fi:0,vitC:0,vitD:7,ca:480,fe:0.5,k:98,s:"100g"},
+  {n:"Peanut Butter",cal:188,p:8,c:6.4,f:16,fi:1.9,vitC:0,vitD:0,ca:16,fe:0.6,k:179,s:"2 tbsp (32g)"},
+  {n:"Oats",cal:389,p:17,c:66,f:7,fi:11,vitC:0,vitD:0,ca:54,fe:4.7,k:429,s:"100g dry"},
+  {n:"Soya Chunks",cal:345,p:52,c:33,f:0.5,fi:13,vitC:0,vitD:0,ca:350,fe:13,k:1950,s:"100g dry"},
+  {n:"Fish (Rohu)",cal:97,p:17,c:0,f:3,fi:0,vitC:0,vitD:320,ca:530,fe:1,k:250,s:"100g"},
+  {n:"Almonds",cal:58,p:2.1,c:2.2,f:5,fi:1.3,vitC:0,vitD:0,ca:26,fe:0.4,k:73,s:"10 nuts"},
+  {n:"Sweet Potato",cal:86,p:1.6,c:20,f:0.1,fi:3,vitC:19.6,vitD:0,ca:30,fe:0.6,k:337,s:"100g"},
+  {n:"Spinach",cal:23,p:2.9,c:3.6,f:0.4,fi:2.2,vitC:28.1,vitD:0,ca:99,fe:2.7,k:558,s:"100g"},
+  {n:"Dahi / Yogurt",cal:61,p:3.5,c:4.7,f:3.3,fi:0,vitC:0,vitD:3,ca:121,fe:0.1,k:155,s:"100g"},
+  {n:"Mixed Nuts",cal:607,p:20,c:21,f:54,fi:7,vitC:0.6,vitD:0,ca:264,fe:3.1,k:660,s:"100g"},
+  {n:"Whey Protein",cal:120,p:25,c:3,f:1.5,fi:0,vitC:0,vitD:0,ca:150,fe:0,k:160,s:"1 scoop (30g)"},
+  {n:"Broccoli",cal:55,p:3.7,c:11,f:0.6,fi:5.1,vitC:89.2,vitD:0,ca:47,fe:0.7,k:316,s:"100g"},
+  {n:"Apple",cal:52,p:0.3,c:14,f:0.2,fi:2.4,vitC:4.6,vitD:0,ca:6,fe:0.1,k:107,s:"1 medium"},
+  {n:"Lassi",cal:70,p:3.5,c:8,f:2.5,fi:0,vitC:0,vitD:5,ca:120,fe:0.1,k:160,s:"200ml"}
+];
+
+const PPL_DATA = {
+  push: [
+    {name:"Incline Dumbbell Press",sets:"4",reps:"10–12",muscles:"Upper Chest · Front Shoulders · Triceps",note:"Set bench 30–45°. Controls shoulder impingement risk vs flat barbell. Lower slowly — 2s eccentric.",avoid:false},
+    {name:"Neutral-Grip Dumbbell Press (Flat)",sets:"3",reps:"10–12",muscles:"Chest (Primary) · Triceps",note:"Palms face each other throughout. Neutral grip dramatically reduces shoulder joint stress vs pronated grip. Ideal if you have any shoulder history.",avoid:false},
+    {name:"Seated Overhead Press (Dumbbell)",sets:"3",reps:"10–12",muscles:"Medial & Front Deltoid · Triceps",note:"Seated with back support — protects lower back. Start with arms at 90°, press overhead. Do NOT behind-the-neck.",avoid:false},
+    {name:"Lateral Raises",sets:"3",reps:"14–16",muscles:"Medial Deltoid (Width)",note:"Very light weight. Lead with elbows, not hands. Tilt pinky slightly up at top. Slow lowering phase = most growth.",avoid:false},
+    {name:"Overhead Tricep Extension",sets:"3",reps:"12–14",muscles:"Long Head Triceps (Fullness)",note:"One dumbbell, both hands. Lower behind head slowly. Keep elbows pointing forward — don't flare them.",avoid:false}
+  ],
+  pull: [
+    {name:"Lat Pulldown",sets:"4",reps:"10–12",muscles:"Latissimus Dorsi · Biceps · Rear Delts",note:"Grip slightly wider than shoulders. Lean back 10–15°. Drive elbows to pockets — think 'elbows down', not 'bar down'. Builds the V-taper.",avoid:false},
+    {name:"Chest-Supported Dumbbell Row",sets:"4",reps:"10–12",muscles:"Mid Back · Lower Traps · Rear Delts",note:"Lie prone on incline bench — chest fully supported. Lower back is COMPLETELY removed from the movement. Pull elbows back and up. Squeeze at top.",avoid:false},
+    {name:"Face Pulls (Cable — Rope)",sets:"3",reps:"15–20",muscles:"Rear Deltoid · External Rotators · Upper Traps",note:"MANDATORY every session. Cable at forehead height. Pull to face, hands split apart, elbows flare out. Reverses laptop rounded-shoulder posture. Use light weight — it's corrective.",avoid:false},
+    {name:"Bicep Curl (Dumbbell)",sets:"3",reps:"12",muscles:"Biceps Brachii · Brachialis",note:"Elbows FIXED at sides — this is the entire exercise. Supinate (rotate palm up) as you curl. Lower in 3 seconds. Squeeze at top.",avoid:false},
+    {name:"Hammer Curl",sets:"3",reps:"12",muscles:"Brachialis · Brachioradialis · Biceps",note:"Neutral grip throughout. Builds arm thickness (brachialis) more than regular curls. Also develops forearm strength. Alternate arms or together.",avoid:false}
+  ],
+  legs: [
+    {name:"Box Squat (Goblet or Bodyweight)",sets:"4",reps:"12",muscles:"Quads · Glutes · Hamstrings · Core",note:"Box/bench behind you — sit BACK onto it, not down. Teaches proper hip-hinge mechanics. Protects knees by preventing forward knee travel. Goblet (dumbbell at chest) is safer for back pain than barbell.",avoid:false},
+    {name:"Romanian Deadlift (Dumbbell)",sets:"3",reps:"10–12",muscles:"Hamstrings (Lengthened) · Glutes · Spinal Erectors",note:"Hip-hinge drill — NOT a lower-back exercise when done correctly. Soft bend in knees throughout. Push hips BACK, feel hamstring stretch. Barbell travels close to legs. Neutral spine is mandatory.",avoid:false},
+    {name:"Leg Press — High Foot Placement",sets:"4",reps:"12–15",muscles:"Glutes · Hamstrings (shifts load from quads)",note:"Feet high and wide on platform. This shifts the movement pattern toward glutes and hamstrings. Do NOT let lower back peel off seat. Stop at 90° knee angle.",avoid:false},
+    {name:"Hanging Knee Raises",sets:"3",reps:"12–15",muscles:"Hip Flexors · Rectus Abdominis · Obliques",note:"Hang from pull-up bar. Bring knees to chest under control. Lower slowly — don't swing. Builds core without loading spine (unlike crunches). Progresses to straight-leg raises over time.",avoid:false},
+    {name:"Calf Raise (Single-Leg on Step)",sets:"4",reps:"15–20",muscles:"Gastrocnemius · Soleus",note:"Stand on step edge for full range of motion. Single-leg gives deeper stretch and more overload. Hold at top 1 second. Calves need high reps and full ROM — they're resistant to growth otherwise.",avoid:false}
+  ]
+};
+
+const WEEKLY_SPLIT = [
+  {day:"Monday",focus:"Push — Chest · Shoulders · Triceps",color:"var(--accent3)",exs:[{n:"Incline Dumbbell Press",s:"4×10–12"},{n:"Neutral-Grip DB Press",s:"3×10–12"},{n:"Seated OHP",s:"3×10–12"},{n:"Lateral Raises",s:"3×14–16"},{n:"Overhead Tricep Extension",s:"3×12–14"}]},
+  {day:"Tuesday",focus:"Pull — Back · Biceps · Rear Delts",color:"var(--blue)",exs:[{n:"Lat Pulldown",s:"4×10–12"},{n:"Chest-Supported DB Row",s:"4×10–12"},{n:"Face Pulls",s:"3×15–20"},{n:"Bicep Curl",s:"3×12"},{n:"Hammer Curl",s:"3×12"}]},
+  {day:"Wednesday",focus:"Legs + Core",color:"var(--green)",exs:[{n:"Box Squat",s:"4×12"},{n:"Romanian Deadlift",s:"3×10–12"},{n:"Leg Press (High Feet)",s:"4×12–15"},{n:"Hanging Knee Raises",s:"3×12–15"},{n:"Calf Raise",s:"4×15–20"}]},
+  {day:"Thursday",focus:"Push (Repeat — try heavier)",color:"var(--accent3)",exs:[{n:"Incline DB Press",s:"4×10–12"},{n:"Neutral-Grip DB Press",s:"3×10–12"},{n:"Seated OHP",s:"3×10–12"},{n:"Lateral Raises",s:"3×14–16"},{n:"Overhead Tricep Extension",s:"3×12–14"}]},
+  {day:"Friday",focus:"Pull (Repeat)",color:"var(--blue)",exs:[{n:"Lat Pulldown",s:"4×10–12"},{n:"Chest-Supported DB Row",s:"4×10–12"},{n:"Face Pulls",s:"3×15–20"},{n:"Bicep Curl",s:"3×12"},{n:"Hammer Curl",s:"3×12"}]},
+  {day:"Saturday",focus:"Legs + Stamina",color:"var(--green)",exs:[{n:"Box Squat",s:"4×12"},{n:"Romanian Deadlift",s:"3×10–12"},{n:"Leg Press (High Feet)",s:"3×12"},{n:"Hanging Knee Raises",s:"3×15"},{n:"20 min Brisk Walk",s:"1×20min"}]},
+  {day:"Sunday",focus:"REST — Mandatory Recovery",color:"var(--purple)",exs:[{n:"Light stretching",s:"10 min"},{n:"Cat-Cow stretch",s:"5 min"},{n:"Walk (optional)",s:"20–30 min"},{n:"8+ hours sleep",s:"Required"}]}
+];
+
+const RECOVERY_DATA = {
+  back:{
+    doms:{
+      title:"Lower Back — Muscle Soreness (DOMS)",
+      color:"var(--accent)",
+      desc:"This is normal post-training soreness in the spinal erectors and glutes. Continue training lightly. The muscles are adapting — this is a good sign.",
+      protocol:["Continue gym — use LIGHTER weights today (60% of normal)","Start every session with Cat-Cow stretch × 10 reps and Child's Pose × 45 sec","Heat therapy: warm compress or hot shower on lower back for 15 minutes","Stay mobile — don't rest completely. Walk 15–20 min. Movement speeds recovery.","Avoid: very heavy deadlifts or barbell squats today specifically"],
+      subs:[{avoid:"Heavy Barbell Deadlift",do:"Light Romanian Deadlift with dumbbells (60% weight)"},{avoid:"Barbell Back Squat",do:"Goblet Squat or Box Squat (unloaded or light)"},{avoid:"Good Mornings",do:"Cat-Cow Stretch + Bird Dog (3×10 each side)"},{avoid:"Heavy Cable Row",do:"Chest-Supported DB Row (removes lower back entirely)"}]
+    },
+    acute:{
+      title:"Lower Back — Acute Pain ⚠️",
+      color:"var(--red)",
+      desc:"STOP all heavy loading immediately. Acute lower back pain may indicate disc irritation, muscle spasm, or joint issue. Do not train through sharp, stabbing, or radiating pain.",
+      protocol:["STOP all lower-back loading exercises today","Ice first 24 hours: 15 min on / 45 min off (reduces inflammation)","After 24h switch to heat for muscle spasm relief","Gentle movement ONLY: walking, and the rehab exercises below","See a doctor if pain radiates down the leg (could be nerve involvement)","Return to full training only when pain-free for 3 consecutive days"],
+      subs:[{avoid:"ALL squatting, deadlifting, rowing",do:"Upper body pressing only: Chest-Supported Row, DB Press"},{avoid:"Seated cable exercises (spinal compression)",do:"Standing or lying exercises only"},{avoid:"Any exercise that reproduces the pain",do:"Dead Bug × 10 each side — spine-neutral core work"},{avoid:"Heavy loading in general",do:"Bird Dog × 10 each side — activates stabilisers safely"}]
+    }
+  },
+  knees:{
+    doms:{
+      title:"Knees — Muscle Soreness (DOMS)",
+      color:"var(--accent)",
+      desc:"Quad and VMO soreness after leg day is expected. This is the muscles rebuilding. Continue training — just modify impact and range of motion.",
+      protocol:["Foam roll quads and IT band for 2–3 minutes each side","Ice after training if swelling present: 15 min on","Keep knees WARM during exercise — consider knee sleeves","Avoid locking out knees at top of any press","Gentle cycling (stationary bike) is excellent active recovery for knee soreness"],
+      subs:[{avoid:"Deep Barbell Squat (below parallel)",do:"Box Squat (controlled depth) or Goblet Squat"},{avoid:"Leg Extension (heavy)",do:"Terminal Knee Extension with resistance band"},{avoid:"Running or jumping",do:"Stationary bike at low resistance — knees love circular motion"},{avoid:"Lunges (high shear force)",do:"Leg Press with high-and-wide foot placement"}]
+    },
+    acute:{
+      title:"Knees — Acute Joint Pain ⚠️",
+      color:"var(--red)",
+      desc:"Sharp knee pain during exercise is a red flag. Could be patellar tendinopathy, IT band syndrome, or meniscus irritation. Immediately reduce load.",
+      protocol:["STOP: any exercise that reproduces the sharp pain","RICE protocol: Rest, Ice (15 min on/off), Compression wrap, Elevate leg","Avoid: squatting below 90°, running, stairs with heavy load","Strengthen the glutes — weak glutes = knees caving = knee pain","See a physiotherapist if pain persists more than 5 days"],
+      subs:[{avoid:"All squat variations",do:"Straight-leg raises (lying) — loads quad with zero knee bend"},{avoid:"Leg Press",do:"Glute Bridge (lying) — activates glutes without knee stress"},{avoid:"Running / jump training",do:"Swimming or pool walking — zero impact"},{avoid:"Leg Extension",do:"Short-arc quad extension (only last 30° of movement)"}]
+    }
+  },
+  shoulders:{
+    doms:{
+      title:"Shoulders — Muscle Soreness (DOMS)",
+      color:"var(--accent)",
+      desc:"Shoulder soreness after push/pull day is normal. The deltoids and rotator cuff are adapting. Keep them mobile and warmed up before any pressing.",
+      protocol:["Arm circles: 20 reps forward and backward before any pressing","Band pull-aparts: 3×20 with light resistance band — activates rotator cuff","Face Pulls are mandatory this session — they heal, not hurt","Reduce overhead pressing weight by 20% today","Heat on shoulder before training — increases blood flow to tendons"],
+      subs:[{avoid:"Behind-the-neck press (always dangerous)",do:"Seated DB Overhead Press (neutral or pronated grip)"},{avoid:"Upright Row (impingement risk)",do:"Lateral Raises with thumbs slightly up"},{avoid:"Wide-grip bench press (extreme shoulder stretch)",do:"Neutral-grip DB press (palms facing each other)"},{avoid:"Heavy overhead work",do:"Face Pulls 3×20 + band pull-aparts 3×20"}]
+    },
+    acute:{
+      title:"Shoulders — Acute Pain ⚠️",
+      color:"var(--red)",
+      desc:"Shoulder joint pain can indicate impingement, rotator cuff strain, or AC joint irritation. All involve the same initial response: stop compressive loading.",
+      protocol:["STOP all overhead pressing immediately","Avoid: any movement that lifts arm above 90° (impingement zone)","Ice shoulder 15 min on / 45 min off for first 24 hours","Sleep on the NON-affected side to reduce compression","Gentle external rotation with band only — no pain should occur","If pain present at rest: see a doctor immediately"],
+      subs:[{avoid:"Overhead Press (all variations)",do:"Chest-Supported DB Row — pulls, does not press"},{avoid:"Lat Pulldown (behind neck)",do:"Lat Pulldown to collarbone ONLY"},{avoid:"Chest Fly / Cable Fly",do:"Face Pulls at face height (below impingement zone)"},{avoid:"Any arm-above-head movement",do:"Bicep curls, Hammer curls (elbow-level only)"}]
+    }
+  }
+};
+
+const MYTHS = [
+  {m:"Lifting heavy stops your height growth",f:"100% false. No scientific evidence exists. Growth plates close based on genetics and hormones, not weightlifting. Thousands of professional athletes lifted heavy as teenagers and grew to full height normally."},
+  {m:"Eating eggs in summer causes dangerous body heat",f:"Mostly a myth. 3–4 eggs daily is safe year-round. The idea of 'heating foods' is traditional belief, not proven physiology. Real risk in summer is dehydration — drink more water, eat eggs in morning or evening."},
+  {m:"You need protein powder to build muscle",f:"Real food is superior. Eggs, milk, dal, chicken, paneer, soya — all provide high-quality protein. Supplements are convenient, not necessary. Beginners see full results from food alone. Powder is useful only when food protein is genuinely hard to hit."},
+  {m:"More sweat = better workout",f:"Sweat is your body's cooling system, not a fat burner. You can sweat heavily in a hot room doing nothing. Workout quality is measured by progressive overload, form quality, and recovery — not sweat volume."},
+  {m:"Cardio is the best way to lose fat and get fit",f:"Resistance training burns more total calories over 24 hours via the afterburn effect (EPOC). For weight gain specifically, excessive cardio directly works against you by burning the caloric surplus you need. Brisk walking is ideal for beginners."},
+  {m:"Sit-ups give you a six-pack",f:"You cannot spot-reduce fat. Sit-ups strengthen core muscles but don't burn belly fat. Abs are revealed by reducing overall body fat through diet. 'Six-pack is made in the kitchen' is 100% accurate physiology."},
+  {m:"Eating fat makes you fat",f:"Excess total calories cause fat gain — not dietary fat. Healthy fats from nuts, eggs, and ghee (in moderation) are essential for hormone production, brain function, vitamin absorption, and testosterone levels. Do not fear fat."},
+  {m:"You must feel sore to know the workout worked",f:"Soreness (DOMS) means muscles experienced something new. As you become consistent, soreness decreases — that's adaptation and progress, not lack of results. Strength and physique changes are the correct measures of progress."},
+  {m:"Women who lift will look bulky like men",f:"Women have 15–20x less testosterone than men — it's biologically impossible to accidentally build large masculine muscles. Lifting makes women lean, strong, and toned. Looking 'bulky' requires years of dedicated effort and often chemical assistance."},
+  {m:"No pain, no gain — push through everything",f:"Muscle soreness is tolerable and training through it is fine. Sharp joint pain, nerve pain, or pain that worsens during exercise means STOP immediately. Training through joint pain causes injuries that set you back months. Learn the difference."},
+  {m:"Creatine is a steroid and is dangerous",f:"Creatine is the most extensively researched supplement in exercise science. It occurs naturally in your body and in meat. It is not a steroid, not hormonal, not banned by any sports body. It safely helps muscles produce more energy for intense efforts."},
+  {m:"You need to train 7 days a week for maximum results",f:"Muscles grow during REST, not during training. Training creates the stimulus; sleep and recovery days create the adaptation. Most evidence supports 4–6 sessions per week with structured rest for maximum long-term progress."}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let foodLog = [];
+let targetCal = 2800, targetProtein = 100;
+let currentRecoveryArea = 'back', currentRecoveryType = 'doms';
+let pplChecked = {push:{}, pull:{}, legs:{}};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const ntNames = ['home','profile','gym','diet','recovery','myths'];
+  const mnNames = ['home','profile','gym','diet','recovery'];
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ntNames[i] === name));
+  document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (name === 'gym') { renderPPL(); renderWeeklySplit(); }
+  if (name === 'myths') renderMyths();
+  if (name === 'recovery') renderRecovery();
+  if (name === 'diet') updateNutritionDisplay();
+}
+
+// ============================================================
+// PROFILE & BMI
+// ============================================================
+function selectTag(el, group) {
+  el.closest('.tag-group').querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  calcBMI();
+}
+function toggleTag(el) { el.classList.toggle('selected'); }
+
+function calcBMI() {
+  const w = parseFloat(document.getElementById('p-weight').value);
+  const h = parseFloat(document.getElementById('p-height').value);
+  if (!w || !h) return;
+  const bmi = (w / ((h/100)**2)).toFixed(1);
+  const status = bmi < 18.5 ? {l:'Underweight',c:'var(--blue)'} :
+    bmi < 25 ? {l:'Normal Weight',c:'var(--green)'} :
+    bmi < 30 ? {l:'Overweight',c:'var(--accent)'} : {l:'Obese',c:'var(--red)'};
+  const pct = Math.min(100, Math.max(0, ((bmi - 10) / 30) * 100));
+  const bmr = Math.round(10*w + 6.25*h - 5*25 + 5);
+  const tdee = Math.round(bmr * 1.55);
+  const calTarget = Math.round(tdee + 400); // default gain
+  targetCal = calTarget;
+  targetProtein = Math.round(w * 1.8);
+
+  // Generate smart recommendations based on BMI
+  let recommendation = '';
+  if (bmi < 18.5) {
+    recommendation = `
+      <div class="info-box" style="background:rgba(68,136,255,.07);border-color:rgba(68,136,255,.2);color:var(--blue)">
+        <strong>⚠️ UNDERWEIGHT STATUS</strong><br>
+        Your BMI (${bmi}) is below the normal range. Recommendations:
+        <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
+          <li>✅ Focus on <strong>MUSCLE GAIN</strong> — eat in caloric surplus (+400 kcal/day)</li>
+          <li>✅ Increase protein intake: <strong>${Math.round(w*1.9)}g/day</strong> (1.9g/kg)</li>
+          <li>✅ Eat 4-5 meals daily with calorie-dense foods: oats, rice, bananas, nuts, whole milk</li>
+          <li>✅ Strength training 4-5x/week to build muscle mass</li>
+          <li>✅ Protein post-workout within 1 hour: eggs, chicken, dal</li>
+          <li>📊 Target: Gain 0.5-1kg per month (mostly muscle)</li>
+          <li>💡 Tip: Track weight weekly and adjust calorie intake if no progress in 2 weeks</li>
+        </ul>
+      </div>
+    `;
+  } else if (bmi >= 18.5 && bmi < 25) {
+    recommendation = `
+      <div class="info-box" style="background:rgba(68,255,136,.07);border-color:rgba(68,255,136,.2);color:var(--green)">
+        <strong>✅ NORMAL WEIGHT — MAINTENANCE & OPTIMIZATION</strong><br>
+        Your BMI (${bmi}) is in the healthy normal range. Recommendations:
+        <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
+          <li>✅ Goal: <strong>BODY COMPOSITION</strong> — build lean muscle while staying lean</li>
+          <li>✅ Eat at TDEE (${tdee} kcal) for maintenance, or slight surplus (+200 kcal) for lean gains</li>
+          <li>✅ Moderate protein: <strong>${Math.round(w*1.6)}g/day</strong> (1.6g/kg) for lean muscle building</li>
+          <li>✅ Balanced macros: 30-35% protein, 40% carbs, 25-30% fats</li>
+          <li>✅ Strength training 4x/week + 1-2 cardio sessions (perfect for muscle-building phase)</li>
+          <li>✅ Focus on compound lifts: squats, deadlifts, bench press, rows</li>
+          <li>📊 Track progress: recomposition (lose fat, gain muscle) = stable weight, increasing strength</li>
+          <li>💡 Tip: Get 7-9 hours sleep daily — critical for muscle recovery and hormonal balance</li>
+        </ul>
+      </div>
+    `;
+  } else if (bmi >= 25 && bmi < 30) {
+    recommendation = `
+      <div class="info-box" style="background:rgba(240,255,68,.07);border-color:rgba(240,255,68,.2);color:var(--accent)">
+        <strong>⚠️ OVERWEIGHT STATUS</strong><br>
+        Your BMI (${bmi}) is in the overweight range. Recommendations:
+        <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
+          <li>✅ Primary goal: <strong>FAT LOSS</strong> — eat in caloric deficit (-400 kcal/day)</li>
+          <li>✅ Increase protein to preserve muscle: <strong>${Math.round(w*1.4)}g/day</strong> (1.4g/kg)</li>
+          <li>✅ Reduce refined carbs; focus on: chicken, fish, eggs, dal, soya chunks, roti</li>
+          <li>✅ Cardio 2-3x/week: 20-30 min brisk walk or cycling (low impact)</li>
+          <li>✅ Resistance training 3-4x/week to prevent muscle loss during deficit</li>
+          <li>📊 Target: Lose 0.5kg per week (fat loss, preserve muscle)</li>
+          <li>💡 Tip: Increase vegetable intake to stay full without extra calories</li>
+          <li>⏰ Expected timeline: 10-15 weeks to reach normal BMI (if following plan consistently)</li>
+        </ul>
+      </div>
+    `;
+  } else if (bmi >= 30) {
+    recommendation = `
+      <div class="info-box" style="background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.2);color:var(--red)">
+        <strong>🚨 OBESE STATUS — PRIORITY ACTION NEEDED</strong><br>
+        Your BMI (${bmi}) indicates obesity. Immediate recommendations:
+        <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
+          <li>✅ <strong>URGENT: Caloric deficit of 500 kcal/day</strong> (target: ${Math.round(tdee - 500)} kcal)</li>
+          <li>✅ High protein is critical: <strong>${Math.round(w*1.3)}g/day</strong> (1.3g/kg) to preserve muscle</li>
+          <li>✅ Medical check-up recommended before starting intense exercise</li>
+          <li>✅ Start with LOW-IMPACT cardio: brisk walking 30-45 min daily, swimming, cycling</li>
+          <li>✅ Resistance training 2-3x/week (lighter weights, focus on form)</li>
+          <li>✅ Strict diet: eliminate sugary drinks, fried food, processed snacks</li>
+          <li>✅ Focus on whole foods: chicken, fish, eggs, dal, vegetables, whole grains</li>
+          <li>📊 Target: Lose 1kg per week (aggressive but sustainable with discipline)</li>
+          <li>⚠️ Important: Consult doctor if you have joint pain, diabetes, or heart concerns</li>
+          <li>⏰ Timeline: 6-9 months to reach overweight, 12-18 months for normal BMI</li>
+        </ul>
+      </div>
+    `;
+  }
+
+  document.getElementById('profile-results').innerHTML = `
+    <div class="bmi-display">
+      <div class="bmi-number" style="color:${status.c}">${bmi}</div>
+      <div class="bmi-label" style="color:${status.c}">${status.l}</div>
+      <div class="bmi-scale">
+        <div style="flex:1;background:#4488ff;opacity:.8"></div>
+        <div style="flex:1.8;background:#44ff88;opacity:.8"></div>
+        <div style="flex:1.5;background:#f0ff44;opacity:.8"></div>
+        <div style="flex:1.5;background:#ff4466;opacity:.8"></div>
+      </div>
+      <div class="bmi-pointer-wrap"><div class="bmi-pointer" style="left:${pct}%">▲ ${bmi}</div></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px"><span>&lt;18.5</span><span>18.5–24.9</span><span>25–29.9</span><span>30+</span></div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-box"><div class="stat-box-label">Weight</div><div class="stat-box-value">${w}<span class="stat-box-unit"> kg</span></div></div>
+      <div class="stat-box"><div class="stat-box-label">Height</div><div class="stat-box-value">${h}<span class="stat-box-unit"> cm</span></div></div>
+      <div class="stat-box"><div class="stat-box-label">TDEE</div><div class="stat-box-value">${tdee}<span class="stat-box-unit"> kcal</span></div></div>
+      <div class="stat-box"><div class="stat-box-label">Protein Target</div><div class="stat-box-value">${targetProtein}<span class="stat-box-unit"> g/day</span></div></div>
+    </div>
+    ${recommendation}
+    <div id="ai-advice-area"><div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">Click "Get AI Analysis" for personalised recommendations</div></div>`;
+}
+
+function syncGoalToDiet() {
+  const goalEl = document.querySelector('#screen-profile .tag-group .tag.selected[onclick*="goal"]');
+  const goalText = goalEl ? goalEl.textContent.trim() : '';
+  const sel = document.getElementById('diet-goal');
+  if (!sel) return;
+  if (goalText.includes('Gain')) sel.value = 'gain';
+  else if (goalText.includes('Lose')) sel.value = 'loss';
+  else if (goalText.includes('Stronger')) sel.value = 'strength';
+  else sel.value = 'maintenance';
+  const wEl = document.getElementById('p-weight');
+  const dw = document.getElementById('diet-weight');
+  if (wEl && wEl.value && dw) dw.value = wEl.value;
+}
+
+async function generateAIAdvice() {
+  const name = document.getElementById('p-name').value || 'there';
+  const age = document.getElementById('p-age').value || '19';
+  const weight = document.getElementById('p-weight').value || '56';
+  const height = document.getElementById('p-height').value || '175';
+  const goalEl = document.querySelector('#screen-profile .tag-group .tag.selected[onclick*="goal"]');
+  const goal = goalEl ? goalEl.textContent : 'Gain Muscle';
+  const injuries = [...document.querySelectorAll('#screen-profile .tag-group .tag.selected[onclick*="toggleTag"]')]
+    .map(t => t.textContent).join(', ') || 'Back Pain';
+  const area = document.getElementById('ai-advice-area');
+  if (!area) { calcBMI(); setTimeout(generateAIAdvice, 200); return; }
+  area.innerHTML = `<div class="ai-response"><div class="loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div> Generating your plan…</div></div>`;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514", max_tokens: 1000,
+        messages: [{role:"user",content:`You are a professional gym trainer and sports nutritionist. Provide personalised advice for: Name: ${name}, Age: ${age}, Weight: ${weight}kg, Height: ${height}cm, Goal: ${goal}, Injuries: ${injuries}. Structure with HTML <h4> headings: 1) Your Body Analysis 2) Your 3 Top Priorities 3) Exercises Tailored To Your Issues 4) Indian Diet Recommendations 5) The One Key Habit. Use <ul><li> lists. Be specific, no filler. Under 380 words.`}]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content?.map(c => c.text||'').join('') || 'Analysis unavailable.';
+    area.innerHTML = `<div style="font-size:11px;color:var(--accent2);font-weight:700;letter-spacing:.8px;margin-bottom:8px">🤖 AI ANALYSIS FOR ${name.toUpperCase()}</div><div class="ai-response">${txt}</div>`;
+  } catch(e) {
+    area.innerHTML = `<div class="ai-response"><h4>Quick Analysis</h4><p>At ${weight}kg your immediate priority is caloric surplus (~${Math.round(Number(weight)*35+500)} kcal/day). With back pain, strengthen core first: Plank, Bird Dog, Dead Bug every session. Protein target: ${Math.round(Number(weight)*1.8)}g/day from eggs, dal, milk, and chicken 3×/week.</p></div>`;
+  }
+}
+
+// ============================================================
+// DYNAMIC DIET PLAN GENERATOR
+// ============================================================
+function generateDietPlan() {
+  const weight = parseFloat(document.getElementById('diet-weight').value) || 70;
+  const height = parseFloat(document.getElementById('p-height').value) || 175;
+  const goal = document.getElementById('diet-goal').value;
+  const activity = document.getElementById('diet-activity').value;
+  const dietType = document.getElementById('diet-type').value;
+
+  // Calculate BMI for smart warnings
+  const bmi = (weight / ((height/100)**2)).toFixed(1);
+  const isUnderweight = bmi < 18.5;
+  const isNormal = bmi >= 18.5 && bmi < 25;
+  const isOverweight = bmi >= 25 && bmi < 30;
+  const isObese = bmi >= 30;
+
+  // Generate BMI-based warning if goal doesn't match BMI
+  let bmiWarning = '';
+  if (isUnderweight && goal === 'loss') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,100,100,.15);border-color:rgba(255,100,100,.3);color:#ff6464;margin-bottom:16px">
+      ⚠️ <strong>NOT RECOMMENDED FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Losing weight could harm your health.
+      <br><strong>✅ HIGHLY RECOMMENDED:</strong> Weight Gain (+400 kcal/day) — Build muscle first!
+    </div>`;
+  } else if (isUnderweight && goal === 'maintenance') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,200,100,.15);border-color:rgba(255,200,100,.3);color:#ffb844;margin-bottom:16px">
+      ⚠️ <strong>NOT IDEAL FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Maintenance won't help you gain needed weight.
+      <br><strong>✅ BETTER CHOICE:</strong> Weight Gain (+400 kcal/day) — Gain 0.5–1kg monthly!
+    </div>`;
+  } else if ((isOverweight || isObese) && goal === 'gain') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,200,100,.15);border-color:rgba(255,200,100,.3);color:#ffb844;margin-bottom:16px">
+      ⚠️ <strong>RISKY FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (${isOverweight ? 'Overweight' : 'Obese'}). Weight gain could increase fat instead of muscle.
+      <br><strong>✅ BETTER CHOICE:</strong> Fat Loss (-400 kcal/day) — Lose fat, then gain lean muscle!
+    </div>`;
+  } else if (isUnderweight && goal === 'gain') {
+    bmiWarning = `<div class="info-box" style="background:rgba(68,255,136,.07);border-color:rgba(68,255,136,.2);color:var(--green);margin-bottom:16px">
+      ✅ <strong>PERFECT FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Weight gain is exactly what you need!
+      <br>Focus: Gain 0.5–1kg monthly with 1.9g protein/kg for maximum muscle.
+    </div>`;
+  } else if ((isOverweight || isObese) && goal === 'loss') {
+    bmiWarning = `<div class="info-box" style="background:rgba(68,255,136,.07);border-color:rgba(68,255,136,.2);color:var(--green);margin-bottom:16px">
+      ✅ <strong>PERFECT FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (${isOverweight ? 'Overweight' : 'Obese'}). Fat loss is exactly what you need!
+      <br>Focus: Lose 0.5–1kg weekly while preserving muscle with high protein.
+    </div>`;
+  }
+
+  // Step 1: Calculate TDEE (Mifflin-St Jeor simplified, age 25 neutral)
+  const bmr = 10 * weight + 6.25 * 170 - 5 * 25 + 5;
+  const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity];
+  const tdee = Math.round(bmr * actMult);
+
+  // Step 2: Calorie target by goal
+  let calTarget, proteinFactor, proteinTarget, carbTarget, fatTarget, logicNote;
+
+  if (goal === 'gain') {
+    calTarget = tdee + 400;
+    // 1.8–2.0g per kg for muscle gain
+    proteinFactor = 1.9;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 1.0);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `For muscle gain at ${weight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong> to drive muscle synthesis. Carbs are high to fuel training and recovery.`;
+  } else if (goal === 'loss') {
+    calTarget = tdee - 400;
+    // 1.3–1.5g per kg for fat loss — muscle-preserving, realistic
+    // For a 94kg person this gives ~122–141g (realistic window), NOT the excessive 169g+
+    proteinFactor = weight > 80 ? 1.3 : (weight > 60 ? 1.4 : 1.5);
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.7);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    carbTarget = Math.max(carbTarget, 80); // floor to avoid too-low carbs
+    logicNote = `For fat loss at ${weight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(weight*1.3)}–${Math.round(weight*1.5)}g). This prevents muscle loss without the excessive 2.2g multiplier misconception. Carbs reduced, fat moderate.`;
+  } else if (goal === 'strength') {
+    calTarget = tdee + 200;
+    proteinFactor = 2.0;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.9);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `For strength at ${weight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong> to support high-intensity training adaptation. Moderate carbs for performance.`;
+  } else {
+    calTarget = tdee;
+    proteinFactor = 1.6;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.8);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `Maintenance at ${weight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong> to preserve muscle mass. Balanced macros.`;
+  }
+
+  // Step 3: Build meals dynamically based on goal + weight + diet type
+  const isHighWeight = weight > 75;
+  const isLoss = goal === 'loss';
+  const isGain = goal === 'gain';
+  const hasNonVeg = dietType === 'nonveg' || dietType === 'fullnonveg';
+  const hasEggs = dietType !== 'veg';
+
+  // Protein portions scale intelligently with weight and goal
+  // Weight Loss: Heavier users get more protein but realistic 1.3-1.5g/kg, not excessive
+  // Muscle Gain: Carbs scale UP for heavier users to fuel intense training
+  const eggsCount = isLoss ? (weight > 85 ? 3 : weight > 70 ? 3 : 2) : (isGain ? (weight > 85 ? 4 : weight > 70 ? 3 : 3) : 3);
+  const chickenG = hasNonVeg ? (isLoss ? Math.round(weight * 1.2) : Math.round(weight * 1.4)) : 0;
+  const dalG = isLoss ? Math.round(120 + weight * 0.3) : (isGain ? Math.round(140 + weight * 0.5) : 130);
+  const soyaG = isLoss && weight > 70 ? 80 : (isLoss ? 60 : 0); // soya chunks more for heavier loss users
+  const riceG = isLoss ? Math.round(70 + weight * 0.2) : (isGain ? Math.round(120 + weight * 0.6) : 100);
+  const rotiCount = isLoss ? (weight > 80 ? 3 : 2) : (isGain ? (weight > 80 ? 6 : weight > 65 ? 5 : 4) : 3);
+  const oatsG = isGain ? Math.round(50 + weight * 0.4) : (isLoss ? 0 : 50);
+  const bananaCount = isGain ? (weight > 80 ? 3 : weight > 65 ? 2 : 2) : (isLoss ? 1 : 1);
+  const milkMl = isGain ? Math.round(250 + weight * 1.5) : (isLoss ? 250 : 350);
+  const peanutButterTbsp = isGain ? 2 : (isLoss ? 0 : 1);
+  const paneerG = !hasNonVeg ? (isLoss ? 80 : 120) : 0;
+
+  const meals = [
+    {
+      title:"Breakfast", em:"🍳", time:"7:00–8:00 AM",
+      foods: [
+        hasEggs ? {name:`Boiled Eggs ×${eggsCount}`, p: eggsCount*6, c: 0, f: eggsCount*5, cal: eggsCount*78} : {name:`Paneer ${paneerG}g`, p:Math.round(paneerG*0.18), c:1, f:Math.round(paneerG*0.21), cal:Math.round(paneerG*2.65)},
+        isGain && oatsG > 0 ? {name:`Oats ${oatsG}g with milk`, p:Math.round(oatsG*0.17), c:Math.round(oatsG*0.66), f:Math.round(oatsG*0.07), cal:Math.round(oatsG*3.89)} : null,
+        {name:`Banana ×${bananaCount}`, p:Math.round(bananaCount*1.1), c:Math.round(bananaCount*23), f:0, cal:Math.round(bananaCount*89)},
+        {name:`Whole Milk ${milkMl}ml`, p:Math.round(milkMl*0.032), c:Math.round(milkMl*0.048), f:Math.round(milkMl*0.033), cal:Math.round(milkMl*0.61)},
+        {name:"Soaked Almonds ×10", p:2, c:2, f:5, cal:58}
+      ].filter(Boolean)
+    },
+    {
+      title: isLoss ? "Mid-Morning Protein Snack" : "Mid-Morning Snack", em:"🥛", time:"10:30–11:00 AM",
+      foods: [
+        isLoss && soyaG > 0 ? {name:`Spiced Boiled Soya Chunks ${soyaG}g`, p:Math.round(soyaG*0.52), c:Math.round(soyaG*0.33), f:0, cal:Math.round(soyaG*3.45)} : null,
+        isLoss ? {name:"Dahi 150g", p:5, c:7, f:5, cal:92} : null,
+        !isLoss && peanutButterTbsp > 0 ? {name:`Peanut Butter ${peanutButterTbsp} tbsp on roti ×2`, p:Math.round(peanutButterTbsp*4+7), c:Math.round(peanutButterTbsp*3.2+40), f:Math.round(peanutButterTbsp*8+3), cal:Math.round(peanutButterTbsp*94+208)} : null,
+        !isLoss ? {name:`Banana ×1`, p:1, c:23, f:0, cal:89} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Lunch", em:"🍱", time:"1:00–1:30 PM",
+      foods: [
+        hasNonVeg && !isLoss ? {name:`Grilled Chicken Breast ${Math.round(chickenG*0.5)}g`, p:Math.round(chickenG*0.5*0.31), c:0, f:Math.round(chickenG*0.5*0.036), cal:Math.round(chickenG*0.5*1.65)} : null,
+        hasNonVeg && isLoss ? {name:`Grilled Chicken / Paneer ${Math.round(chickenG*0.4)}g`, p:Math.round(chickenG*0.4*0.31), c:0, f:Math.round(chickenG*0.4*0.036), cal:Math.round(chickenG*0.4*1.65)} : null,
+        !hasNonVeg ? {name:`Paneer ${Math.round(paneerG*0.7)}g`, p:Math.round(paneerG*0.7*0.18), c:1, f:Math.round(paneerG*0.7*0.21), cal:Math.round(paneerG*0.7*2.65)} : null,
+        {name:`Dal ${dalG}g`, p:Math.round(dalG*0.09), c:Math.round(dalG*0.2), f:0, cal:Math.round(dalG*1.16)},
+        {name:`Cooked Rice ${riceG}g`, p:Math.round(riceG*0.027), c:Math.round(riceG*0.28), f:0, cal:Math.round(riceG*1.3)},
+        {name:`Roti ×${Math.ceil(rotiCount*0.4)}`, p:Math.round(Math.ceil(rotiCount*0.4)*3.5), c:Math.round(Math.ceil(rotiCount*0.4)*20), f:Math.round(Math.ceil(rotiCount*0.4)*1.5), cal:Math.round(Math.ceil(rotiCount*0.4)*104)},
+        {name:"Sabzi / Salad 100g", p:2, c:9, f:1, cal:50},
+        isLoss ? {name:"Dahi 100g", p:3.5, c:5, f:3, cal:61} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Pre-Workout Meal", em:"⚡", time:"4:30–5:00 PM",
+      foods: [
+        {name:`Roti ×${Math.max(1,Math.floor(rotiCount*0.25))}`, p:Math.max(1,Math.floor(rotiCount*0.25))*3.5, c:Math.max(1,Math.floor(rotiCount*0.25))*20, f:Math.max(1,Math.floor(rotiCount*0.25))*1.5, cal:Math.max(1,Math.floor(rotiCount*0.25))*104},
+        isGain ? {name:"Banana ×1", p:1, c:23, f:0, cal:89} : null,
+        {name:"Dal 80g", p:7, c:16, f:0, cal:93}
+      ].filter(Boolean)
+    },
+    {
+      title:"Post-Workout (Critical)", em:"🔥", time:"7:30–8:00 PM",
+      foods: [
+        hasEggs ? {name:`Eggs ×${Math.max(2,Math.floor(eggsCount*0.7))}`, p:Math.max(2,Math.floor(eggsCount*0.7))*6, c:0, f:Math.max(2,Math.floor(eggsCount*0.7))*5, cal:Math.max(2,Math.floor(eggsCount*0.7))*78} : null,
+        {name:`Whole Milk ${Math.round(milkMl*0.5)}ml`, p:Math.round(milkMl*0.5*0.032), c:Math.round(milkMl*0.5*0.048), f:Math.round(milkMl*0.5*0.033), cal:Math.round(milkMl*0.5*0.61)},
+        isGain ? {name:"Banana ×1", p:1, c:23, f:0, cal:89} : null,
+        hasNonVeg && isLoss ? {name:`Grilled Chicken ${Math.round(chickenG*0.3)}g`, p:Math.round(chickenG*0.3*0.31), c:0, f:Math.round(chickenG*0.3*0.036), cal:Math.round(chickenG*0.3*1.65)} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Dinner", em:"🍽️", time:"9:00–9:30 PM",
+      foods: [
+        hasNonVeg ? {name:`Grilled Chicken / Fish ${Math.round(chickenG*0.3)}g`, p:Math.round(chickenG*0.3*0.31), c:0, f:Math.round(chickenG*0.3*0.036), cal:Math.round(chickenG*0.3*1.65)} : null,
+        !hasNonVeg ? {name:`Paneer / Dal mix 120g`, p:12, c:10, f:8, cal:160} : null,
+        {name:`Roti ×${Math.max(1,Math.floor(rotiCount*0.35))}`, p:Math.max(1,Math.floor(rotiCount*0.35))*3.5, c:Math.max(1,Math.floor(rotiCount*0.35))*20, f:Math.max(1,Math.floor(rotiCount*0.35))*1.5, cal:Math.max(1,Math.floor(rotiCount*0.35))*104},
+        isLoss ? {name:"Spinach / Broccoli 100g", p:3, c:4, f:0.5, cal:40} : {name:"Sabzi 100g", p:2, c:9, f:1, cal:50},
+        {name:`Warm Milk ${Math.round(milkMl*0.3)}ml`, p:Math.round(milkMl*0.3*0.032), c:Math.round(milkMl*0.3*0.048), f:Math.round(milkMl*0.3*0.033), cal:Math.round(milkMl*0.3*0.61)}
+      ].filter(Boolean)
+    }
+  ];
+
+  // Calculate totals
+  let totalCal=0, totalP=0, totalC=0, totalF=0;
+  meals.forEach(m => m.foods.forEach(f => { totalCal+=f.cal||0; totalP+=f.p||0; totalC+=f.c||0; totalF+=f.f||0; }));
+
+  // Update tracker targets
+  targetCal = calTarget;
+  targetProtein = proteinTarget;
+  document.getElementById('nt-prot-t').textContent = proteinTarget;
+  document.getElementById('cal-target-display').textContent = calTarget;
+
+  // Show macro summary
+  document.getElementById('diet-macro-summary').style.display = 'block';
+  document.getElementById('diet-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-box-label">Daily Calories</div><div class="stat-box-value">${calTarget}<span class="stat-box-unit"> kcal</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Protein</div><div class="stat-box-value">${proteinTarget}<span class="stat-box-unit"> g</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Carbs</div><div class="stat-box-value">${carbTarget}<span class="stat-box-unit"> g</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Fat</div><div class="stat-box-value">${fatTarget}<span class="stat-box-unit"> g</span></div></div>`;
+  document.getElementById('diet-logic-note').innerHTML = `📊 <strong>How these numbers were calculated:</strong> ${logicNote}`;
+
+  // Render meals with BMI warning if applicable
+  document.getElementById('diet-meals-output').innerHTML = bmiWarning + meals.map(m => {
+    const mealCal = Math.round(m.foods.reduce((a,f) => a + (f.cal||0), 0));
+    const mealP = Math.round(m.foods.reduce((a,f) => a + (f.p||0), 0));
+    return `<div class="diet-meal-card">
+      <div class="diet-meal-header">
+        <div class="diet-meal-title">${m.em} ${m.title}<span style="font-size:11px;color:var(--muted);font-weight:400">${m.time}</span></div>
+        <div class="diet-meal-cals">~${mealCal} kcal · P:${mealP}g</div>
+      </div>
+      ${m.foods.map(f => `<div class="diet-food-row">
+        <span class="diet-food-name">${f.name}</span>
+        <span class="diet-food-macros">P:${Math.round(f.p||0)}g C:${Math.round(f.c||0)}g F:${Math.round(f.f||0)}g · ${Math.round(f.cal||0)}kcal</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PPL WORKOUT TRACKER
+// ============================================================
+function renderPPL() {
+  ['push','pull','legs'].forEach(day => {
+    const exs = PPL_DATA[day];
+    const container = document.getElementById(`${day}-exercises`);
+    if (!container) return;
+    container.innerHTML = exs.map((ex, i) => `
+      <div class="workout-exercise-item" id="${day}-ex-${i}">
+        <div class="workout-checkbox ${pplChecked[day][i] ? 'done' : ''}" onclick="toggleExercise('${day}',${i})"></div>
+        <div class="workout-ex-info">
+          <div class="workout-ex-name" style="${pplChecked[day][i] ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
+          <div class="workout-ex-meta">
+            <span class="chip chip-muscle" style="margin-right:5px;font-size:10px">🎯 ${ex.muscles}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4">${ex.note}</div>
+        </div>
+        <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
+      </div>`).join('');
+    updatePPLProgress(day);
+  });
+}
+
+function toggleExercise(day, i) {
+  pplChecked[day][i] = !pplChecked[day][i];
+  renderPPL();
+}
+
+function updatePPLProgress(day) {
+  const total = PPL_DATA[day].length;
+  const done = Object.values(pplChecked[day]).filter(Boolean).length;
+  const pct = Math.round((done/total)*100);
+  const bar = document.getElementById(`${day}-progress`);
+  const label = document.getElementById(`${day}-progress-label`);
+  if (bar) bar.style.width = pct + '%';
+  if (label) label.textContent = `${done} / ${total} exercises completed${done===total ? ' — Great work! 💪' : ''}`;
+}
+
+function switchPPL(day, btn) {
+  document.querySelectorAll('.ppl-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ppl-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ppl-' + day).classList.add('active');
+  btn.classList.add('active');
+}
+
+function renderWeeklySplit() {
+  const el = document.getElementById('weekly-split');
+  if (!el) return;
+  el.innerHTML = WEEKLY_SPLIT.map((d,i) => `
+    <div class="plan-day-card" id="wday-${i}">
+      <div class="plan-day-header" onclick="this.parentElement.classList.toggle('open')">
+        <div>
+          <div class="plan-day-name" style="color:${d.color}">${d.day}</div>
+          <div class="plan-day-focus">${d.focus}</div>
+        </div>
+        <span style="color:var(--muted);font-size:13px">▼</span>
+      </div>
+      <div class="plan-day-body">
+        ${d.exs.map(e => `<div class="plan-exercise-row"><span class="plan-ex-name">${e.n}</span><span class="plan-ex-sets">${e.s}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// RECOVERY DESK
+// ============================================================
+function setRecoveryArea(area, btn) {
+  currentRecoveryArea = area;
+  document.querySelectorAll('.recovery-area-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecovery();
+}
+function setRecoveryType(type, btn) {
+  currentRecoveryType = type;
+  document.querySelectorAll('.recovery-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecovery();
+}
+function renderRecovery() {
+  const data = RECOVERY_DATA[currentRecoveryArea]?.[currentRecoveryType];
+  if (!data) return;
+  const isAcute = currentRecoveryType === 'acute';
+  const el = document.getElementById('recovery-protocol-output');
+  el.innerHTML = `
+    <div class="recovery-protocol">
+      <div style="background:${isAcute?'rgba(255,68,102,.07)':'rgba(240,255,68,.06)'};border:1px solid ${isAcute?'rgba(255,68,102,.25)':'rgba(240,255,68,.2)'};border-radius:13px;padding:20px;margin-bottom:20px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:${data.color};margin-bottom:8px">${data.title}</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6">${data.desc}</p>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <h3 style="font-size:14px;margin-bottom:14px;color:${data.color}">📋 ${isAcute?'⚠️ Immediate Action Protocol':'Recovery Protocol'}</h3>
+        ${data.protocol.map((p,i) => `<div style="display:flex;align-items:start;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <div style="width:22px;height:22px;border-radius:50%;background:${isAcute?'var(--red)':'var(--accent)'};color:${isAcute?'#fff':'#000'};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+          <span style="color:var(--muted);line-height:1.5">${p}</span>
+        </div>`).join('')}
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:14px">🔄 Exercise Substitutions</h3>
+        <div style="display:flex;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+          <span style="flex:1">❌ AVOID</span>
+          <span style="width:24px"></span>
+          <span style="flex:1">✅ DO INSTEAD</span>
+        </div>
+        ${data.subs.map(s => `<div class="substitution-row">
+          <span class="sub-avoid">${s.avoid}</span>
+          <span class="sub-arrow">→</span>
+          <span class="sub-do">${s.do}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// FOOD TRACKER
+// ============================================================
+function searchFood() {
+  const q = document.getElementById('food-search-input').value.toLowerCase();
+  const sugg = document.getElementById('food-suggestions');
+  if (!q) { sugg.style.display='none'; return; }
+  const results = FOOD_DB.filter(f => f.n.toLowerCase().includes(q)).slice(0,7);
+  if (!results.length) { sugg.style.display='none'; return; }
+  sugg.style.display = 'block';
+  sugg.innerHTML = results.map(f => `
+    <div class="food-suggestion-item" onclick="addFood('${f.n}')">
+      <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
+      <div class="food-item-cal">${f.cal}kcal</div>
+    </div>`).join('');
+}
+
+function addFood(name) {
+  const food = FOOD_DB.find(f => f.n === name);
+  if (!food) return;
+  const qty = prompt(`Servings of "${name}"?\n1 serving = ${food.s}`, "1");
+  if (!qty || isNaN(qty) || Number(qty) <= 0) return;
+  const q = parseFloat(qty);
+  foodLog.push({...food, qty:q, uid:Date.now()});
+  document.getElementById('food-search-input').value = '';
+  document.getElementById('food-suggestions').style.display = 'none';
+  updateNutritionDisplay();
+  renderFoodLog();
+}
+
+function removeFood(uid) {
+  foodLog = foodLog.filter(f => f.uid !== uid);
+  updateNutritionDisplay();
+  renderFoodLog();
+}
+
+function clearFoodLog() {
+  if (confirm('Clear all food entries?')) { foodLog=[]; updateNutritionDisplay(); renderFoodLog(); }
+}
+
+function getTotals() {
+  return foodLog.reduce((a,f) => ({
+    cal: a.cal + f.cal*f.qty, p: a.p + f.p*f.qty, c: a.c + f.c*f.qty,
+    f: a.f + f.f*f.qty, fi: a.fi + (f.fi||0)*f.qty,
+    vitC: a.vitC + (f.vitC||0)*f.qty, vitD: a.vitD + (f.vitD||0)*f.qty,
+    ca: a.ca + (f.ca||0)*f.qty, fe: a.fe + (f.fe||0)*f.qty, k: a.k + (f.k||0)*f.qty
+  }), {cal:0,p:0,c:0,f:0,fi:0,vitC:0,vitD:0,ca:0,fe:0,k:0});
+}
+
+function updateNutritionDisplay() {
+  const t = getTotals();
+  const circumference = 427;
+  const pct = Math.min(1, t.cal / targetCal);
+  const ring = document.getElementById('cal-ring');
+  if (ring) ring.style.strokeDashoffset = circumference - pct * circumference;
+  const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=Math.round(val); };
+  const setW = (id, val, max) => { const e=document.getElementById(id); if(e) e.style.width=Math.min(100,(val/max)*100)+'%'; };
+  setEl('cal-consumed', t.cal);
+  const calTDisp = document.getElementById('cal-target-display');
+  if (calTDisp) calTDisp.textContent = targetCal;
+  const rem = targetCal - t.cal;
+  const remEl = document.getElementById('cal-remaining-display');
+  if (remEl) { remEl.textContent = rem>0?`${Math.round(rem)} left`:`${Math.round(-rem)} over!`; remEl.style.color=rem>0?'var(--accent2)':'var(--red)'; }
+  setEl('nt-prot',t.p); setEl('nt-carb',t.c); setEl('nt-fat',t.f); setEl('nt-fiber',t.fi);
+  setW('pb-prot',t.p,targetProtein); setW('pb-carb',t.c,350); setW('pb-fat',t.f,90); setW('pb-fiber',t.fi,30);
+  const vitamins = [
+    {n:'Vitamin C',v:t.vitC,tg:90,u:'mg',c:'#ff8844'},
+    {n:'Vitamin D',v:t.vitD,tg:600,u:'IU',c:'#f0ff44'},
+    {n:'Calcium',v:t.ca,tg:1000,u:'mg',c:'#44ffcc'},
+    {n:'Iron',v:t.fe,tg:18,u:'mg',c:'#ff4466'},
+    {n:'Potassium',v:t.k,tg:4700,u:'mg',c:'#4d8fff'}
+  ];
+  const vd = document.getElementById('vit-display');
+  if (vd) vd.innerHTML = vitamins.map(v => {
+    const p = Math.min(100,(v.v/v.tg)*100);
+    const st = p>=80?{t:'✅ Good',c:'var(--green)'}:p>=40?{t:'⚠️ Low',c:'var(--accent)'}:{t:'❌ Very Low',c:'var(--red)'};
+    return `<div class="vitamin-row"><div class="vitamin-name">${v.n}</div><div class="vitamin-bar-wrap"><div class="vitamin-bar"><div class="vitamin-bar-fill" style="width:${p}%;background:${v.c}"></div></div></div><div class="vitamin-amount">${Math.round(v.v)}/${v.tg}${v.u}</div><div class="vitamin-status" style="color:${st.c}">${st.t}</div></div>`;
+  }).join('');
+}
+
+function renderFoodLog() {
+  const list = document.getElementById('food-log-list');
+  if (!list) return;
+  if (!foodLog.length) { list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Search and add foods above to track today</div>'; return; }
+  list.innerHTML = foodLog.map(f => `
+    <div class="food-log-item">
+      <div><div class="food-log-name">${f.n}${f.qty!==1?` ×${f.qty}`:''}</div><div class="food-log-amount">${f.s} × ${f.qty} = ${Math.round(f.cal*f.qty)} kcal</div></div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="food-log-macros">
+          <span class="macro-pill macro-p">P:${Math.round(f.p*f.qty)}g</span>
+          <span class="macro-pill macro-c">C:${Math.round(f.c*f.qty)}g</span>
+          <span class="macro-pill macro-f">F:${Math.round(f.f*f.qty)}g</span>
+        </div>
+        <button class="remove-food" onclick="removeFood(${f.uid})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// MYTHS
+// ============================================================
+function renderMyths() {
+  const el = document.getElementById('myths-grid');
+  if (!el) return;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    ${MYTHS.map(m => `<div style="display:flex;flex-direction:column;gap:10px">
+      <div class="myth-card"><p style="font-size:13px;font-weight:600;color:var(--red);line-height:1.5;padding-right:48px">"${m.m}"</p></div>
+      <div class="fact-card"><div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-right:42px">THE TRUTH:</div><p style="font-size:12px;color:var(--muted);line-height:1.55;padding-right:42px">${m.f}</p></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ============================================================
+// RESPONSIVE + INIT
+// ============================================================
+function fixLayout() {
+  const w = window.innerWidth < 720;
+  const pg = document.getElementById('profile-grid'); if(pg) pg.style.gridTemplateColumns = w?'1fr':'1fr 1fr';
+}
+window.addEventListener('resize', fixLayout);
+fixLayout();
+document.addEventListener('click', e => {
+  if (!e.target.closest('.food-search-wrap')) {
+    const s = document.getElementById('food-suggestions'); if(s) s.style.display='none';
+  }
+});
+// Initial renders
+renderMyths();
+renderRecovery();
+</script>
+</body>
+</html>
