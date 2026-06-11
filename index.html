@@ -96,14 +96,19 @@
   </div>
 </header>
 
-<div class="mobile-nav" id="mobile-nav" style="display:none"><div class="mobile-nav-inner">
-  <button class="mobile-nav-btn active" onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
-  <button class="mobile-nav-btn" onclick="showScreen('profile')"><span class="icon">📊</span>Profile</button>
-  <button class="mobile-nav-btn" onclick="showScreen('gym')"><span class="icon">💪</span>Gym</button>
-  <button class="mobile-nav-btn" onclick="showScreen('diet')"><span class="icon">🥗</span>Diet</button>
-  <button class="mobile-nav-btn" onclick="showScreen('recovery')"><span class="icon">🩹</span>Recovery</button>
-  <button class="mobile-nav-btn" style="position:fixed;bottom:68px;right:0;width:auto;border-radius:50%;background:rgba(255,68,102,.15)" onclick="logout()">🚪</button>
-</div></div>
+<div class="mobile-nav" id="mobile-nav" style="display:none">
+  <div class="mobile-user-bar" id="mobile-user-bar">
+    <span id="mobile-user-display">👤</span>
+    <button onclick="logout()" style="background:rgba(255,68,102,.15);border:1px solid rgba(255,68,102,.3);color:#ff4466;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Logout</button>
+  </div>
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn active" onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
+    <button class="mobile-nav-btn" onclick="showScreen('profile')"><span class="icon">📊</span>Profile</button>
+    <button class="mobile-nav-btn" onclick="showScreen('gym')"><span class="icon">💪</span>Gym</button>
+    <button class="mobile-nav-btn" onclick="showScreen('diet')"><span class="icon">🥗</span>Diet</button>
+    <button class="mobile-nav-btn" onclick="showScreen('recovery')"><span class="icon">🩹</span>Recovery</button>
+  </div>
+</div>
 
 <!-- ===== HOME ===== -->
 <div id="screen-home" class="screen">

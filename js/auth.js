@@ -156,16 +156,14 @@ async function logout() {
 }
 
 function updateAuthDisplay() {
-  const display = document.getElementById('auth-user-display');
-  if (!display || !currentUser) return;
-  if (isGuest) {
-    display.textContent = '👤 Guest';
-    return;
-  }
-  // Show profile name if filled, otherwise email
   const profileName = document.getElementById('p-name')?.value;
-  const label = profileName ? profileName : currentUser.email;
-  display.textContent = `✅ ${label}`;
+  const label = isGuest ? 'Guest' : (profileName || currentUser?.email || '');
+  const badge = isGuest ? '👤' : '✅';
+  const text = `${badge} ${label}`;
+  const desktop = document.getElementById('auth-user-display');
+  const mobile = document.getElementById('mobile-user-display');
+  if (desktop) desktop.textContent = text;
+  if (mobile) mobile.textContent = text;
 }
 
 function togglePwdVisibility(inputId, btn) {
