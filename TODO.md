@@ -133,3 +133,67 @@ Stack: HTML + vanilla JS split into css/ and js/ modules + Supabase backend
 Files: index.html, css/styles.css, js/data.js, js/auth.js, js/app.js, js/diet.js, js/gym.js, js/recovery.js
 Live: https://fiteasy.netlify.app
 Supabase project: tlzymwuoedjyzpkockfe.supabase.co
+
+---
+
+## 🐛 NEW BUGS FOUND (Full Code Audit)
+
+### ⬜ BUG: updateAuthDisplay called too early on load
+- Called in showMainApp() before profile data is loaded from Supabase
+- So it shows email not name even if user has a saved name
+- Fix: call updateAuthDisplay() again AFTER loadUserData() setTimeout completes
+
+### ⬜ BUG: autoSave() is not async-safe
+- autoSave() calls saveUserData() which is async but autoSave is not awaited
+- The setInterval(autoSave, 30000) will fire and not wait for completion
+- Fix: make autoSave async and await saveUserData()
+
+### ⬜ BUG: foodLog daily reset missing
+- foodLog is saved to Supabase but never resets for a new day
+- User's yesterday food shows today too
+- Fix: save foodLog with a date key, reset if date changed on load
+
+### ⬜ BUG: diet screen food log not rendered on login
+- renderFoodLog() and updateNutritionDisplay() not called after loadUserData()
+- So food log loaded from Supabase is invisible until user visits diet tab
+- Fix: call renderFoodLog() and updateNutritionDisplay() at end of loadUserData()
+
+### ⬜ BUG: targetCal and targetProtein reset to defaults on page load
+- Set to 2800/100 in data.js but not restored from Supabase
+- Diet targets lost after refresh even if diet plan was generated before
+- Fix: save targetCal and targetProtein in Supabase data object, restore on load
+
+### ⬜ BUG: gym screen PPL not re-rendered after data load
+- pplChecked restored from Supabase but renderPPL() not called after
+- Checkboxes show unchecked even if user had checked them
+- Fix: call renderPPL() at end of loadUserData() if gym screen is active, or always
+
+### ⬜ BUG: email confirmation flow broken
+- After signup Supabase sends confirmation email
+- But app shows "Check your email" in the error box (red styled) not a success box
+- Fix: style confirmation message green, add separate success div
+
+### ⬜ BUG: food search item IDs break with special characters
+- food name used as DOM id: `qty-${f.n.replace(/\s+/g,'_')}`
+- Food names with brackets, slashes, commas will create invalid IDs
+- Fix: use index instead of name for qty input ID, or sanitize more aggressively
+
+### ⬜ BUG: recovery.js references currentRecoveryArea/Type but they're in data.js
+- If scripts load out of order, recovery functions break
+- Currently works but fragile — fix: add null checks in renderRecovery()
+
+### ⬜ BUG: beforeunload save is unreliable on mobile
+- window beforeunload doesn't reliably fire on iOS Safari / Android Chrome
+- Data may not save when user closes tab on phone
+- Fix: save on every meaningful action (already doing autoSave on input change) + add visibilitychange event listener
+
+### ⬜ BUG: guest mode has no data persistence at all
+- Guest data gone on refresh — expected, but no warning shown during use
+- Fix: show a persistent banner "You're in guest mode — data won't be saved" 
+
+### ⬜ BUG: diet screen weight input disconnected from profile weight
+- User fills profile weight but diet screen has its own weight input
+- syncProfileToDiet() exists but only runs when switching to diet tab
+- If user changes profile weight and stays on profile, diet isn't updated
+- Fix: call syncProfileToDiet() in calcBMI() too
+
