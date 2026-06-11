@@ -4,13 +4,7 @@ const SUPABASE_KEY = 'sb_publishable_g2v4_kC-KLAGLpB-layAZw_Ud_aNskR';
 const { createClient } = window.supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── STATE ────────────────────────────────────────────────────
-let currentUser = null;
-let isGuest = false;
-let foodLog = [];
-let targetCal = 2800, targetProtein = 100;
-let currentRecoveryArea = 'back', currentRecoveryType = 'doms';
-let pplChecked = { push: {}, pull: {}, legs: {} };
+// State is declared in data.js
 
 // ── INIT ─────────────────────────────────────────────────────
 async function initAuth() {
