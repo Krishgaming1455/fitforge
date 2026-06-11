@@ -215,11 +215,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input class="form-input" id="auth-signup-password" type="password" placeholder="Min 6 characters">
+          <div style="position:relative">
+            <input class="form-input" id="auth-signup-password" type="password" placeholder="Min 6 characters" style="padding-right:44px">
+            <button type="button" onclick="togglePwdVisibility('auth-signup-password',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Confirm Password</label>
-          <input class="form-input" id="auth-signup-confirm" type="password" placeholder="Confirm password">
+          <div style="position:relative">
+            <input class="form-input" id="auth-signup-confirm" type="password" placeholder="Confirm password" style="padding-right:44px">
+            <button type="button" onclick="togglePwdVisibility('auth-signup-confirm',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+          </div>
         </div>
         <div id="auth-signup-error" class="auth-error"></div>
         <button class="btn-primary btn-full" onclick="handleSignup()">🚀 Create Account</button>
@@ -238,7 +244,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input class="form-input" id="auth-login-password" type="password" placeholder="Your password">
+          <div style="position:relative">
+            <input class="form-input" id="auth-login-password" type="password" placeholder="Your password" style="padding-right:44px">
+            <button type="button" onclick="togglePwdVisibility('auth-login-password',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+          </div>
         </div>
         <div id="auth-login-error" class="auth-error"></div>
         <button class="btn-primary btn-full" onclick="handleLogin()">🔓 Login</button>
@@ -925,6 +934,13 @@ function updateAuthDisplay() {
   }
 }
 
+function togglePwdVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
+}
+
 function showError(element, message) {
   element.textContent = message;
   element.style.display = 'block';
@@ -979,6 +995,8 @@ function saveUserData() {
         age: document.getElementById('p-age')?.value || '',
         weight: document.getElementById('p-weight')?.value || '',
         height: document.getElementById('p-height')?.value || '',
+        goalTags: [...document.querySelectorAll('[onclick*="selectTag"]')].filter(t => t.classList.contains('selected')).map(t => t.textContent.trim()),
+        injuryTags: [...document.querySelectorAll('[onclick*="toggleTag"]')].filter(t => t.classList.contains('selected')).map(t => t.textContent.trim()),
       },
       foodLog: foodLog,
       pplChecked: pplChecked,
@@ -1025,6 +1043,19 @@ function loadUserData() {
         if (ageEl) ageEl.value = p.age || '';
         if (weightEl) weightEl.value = p.weight || '';
         if (heightEl) heightEl.value = p.height || '';
+
+        // Restore goal tags
+        if (p.goalTags?.length) {
+          document.querySelectorAll('[onclick*="selectTag"]').forEach(t => {
+            if (p.goalTags.includes(t.textContent.trim())) t.classList.add('selected');
+          });
+        }
+        // Restore injury tags
+        if (p.injuryTags?.length) {
+          document.querySelectorAll('[onclick*="toggleTag"]').forEach(t => {
+            if (p.injuryTags.includes(t.textContent.trim())) t.classList.add('selected');
+          });
+        }
         
         if (p.weight && p.height) calcBMI();
       }, 100);
@@ -1086,7 +1117,7 @@ function showScreen(name) {
   document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ntNames[i] === name));
   document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
   window.scrollTo({top:0,behavior:'smooth'});
-  if (name === 'gym') { renderPPL(); renderWeeklySplit(); }
+  if (name === 'gym') { checkDailyWorkoutReset(); renderPPL(); renderWeeklySplit(); }
   if (name === 'myths') renderMyths();
   if (name === 'recovery') renderRecovery();
   if (name === 'diet') {
@@ -1120,7 +1151,8 @@ function calcBMI() {
     bmi < 25 ? {l:'Normal Weight',c:'var(--green)'} :
     bmi < 30 ? {l:'Overweight',c:'var(--accent)'} : {l:'Obese',c:'var(--red)'};
   const pct = Math.min(100, Math.max(0, ((bmi - 10) / 30) * 100));
-  const bmr = Math.round(10*w + 6.25*h - 5*25 + 5);
+  const age = parseFloat(document.getElementById('p-age').value) || 25;
+  const bmr = Math.round(10*w + 6.25*h - 5*age + 5);
   const tdee = Math.round(bmr * 1.55);
   const calTarget = Math.round(tdee + 400);
   targetCal = calTarget;
@@ -1299,7 +1331,8 @@ function generateDietPlan() {
     </div>`;
   }
 
-  const bmr = 10 * weight + 6.25 * 170 - 5 * 25 + 5;
+  const age = parseFloat(document.getElementById('p-age').value) || 25;
+  const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
   const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity];
   const tdee = Math.round(bmr * actMult);
 
@@ -1452,6 +1485,18 @@ function generateDietPlan() {
 // PPL WORKOUT TRACKER
 // ============================================================
 
+function checkDailyWorkoutReset() {
+  const today = new Date().toDateString();
+  const lastDate = localStorage.getItem('fitforge_last_workout_date');
+  if (lastDate && lastDate !== today) {
+    if (confirm('New day! Reset yesterday\'s workout checkboxes? \n[OK] = Reset  [Cancel] = Keep')) {
+      pplChecked = { push: {}, pull: {}, legs: {} };
+      autoSave();
+    }
+  }
+  localStorage.setItem('fitforge_last_workout_date', today);
+}
+
 function renderTodayBanner() {
   const todayPPL = getTodayPPL();
   const dayName = DAY_NAMES[new Date().getDay()];
@@ -1514,11 +1559,14 @@ function renderPPL() {
     const exs = PPL_DATA[day];
     const container = document.getElementById(`${day}-exercises`);
     if (!container) return;
-    container.innerHTML = exs.map((ex, i) => `
+    container.innerHTML = exs.map((ex, i) => {
+      const key = ex.name;
+      const done = pplChecked[day][key] || false;
+      return `
       <div class="workout-exercise-item" id="${day}-ex-${i}">
-        <div class="workout-checkbox ${pplChecked[day][i] ? 'done' : ''}" onclick="toggleExercise('${day}',${i})"></div>
+        <div class="workout-checkbox ${done ? 'done' : ''}" onclick="toggleExercise('${day}','${key}')"></div>
         <div class="workout-ex-info">
-          <div class="workout-ex-name" style="${pplChecked[day][i] ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
+          <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
           <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
             <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${ex.muscles}</span>
             <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>
@@ -1526,13 +1574,14 @@ function renderPPL() {
           <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
         </div>
         <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     updatePPLProgress(day);
   });
 }
 
-function toggleExercise(day, i) {
-  pplChecked[day][i] = !pplChecked[day][i];
+function toggleExercise(day, key) {
+  pplChecked[day][key] = !pplChecked[day][key];
   renderPPL();
   autoSave();
 }
@@ -1557,19 +1606,25 @@ function switchPPL(day, btn) {
 function renderWeeklySplit() {
   const el = document.getElementById('weekly-split');
   if (!el) return;
-  el.innerHTML = WEEKLY_SPLIT.map((d,i) => `
-    <div class="plan-day-card" id="wday-${i}">
+  const todayName = DAY_NAMES[new Date().getDay()];
+  el.innerHTML = WEEKLY_SPLIT.map((d,i) => {
+    const isToday = d.day === todayName;
+    return `
+    <div class="plan-day-card ${isToday ? 'open' : ''}" id="wday-${i}" style="${isToday ? `border-color:${d.color};box-shadow:0 0 18px rgba(68,255,204,.08)` : ''}">
       <div class="plan-day-header" onclick="this.parentElement.classList.toggle('open')">
-        <div>
-          <div class="plan-day-name" style="color:${d.color}">${d.day}</div>
-          <div class="plan-day-focus">${d.focus}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div>
+            <div class="plan-day-name" style="color:${d.color}">${d.day}${isToday ? ' <span style="font-size:10px;background:'+d.color+';color:#000;padding:2px 7px;border-radius:4px;font-weight:800;vertical-align:middle">TODAY</span>' : ''}</div>
+            <div class="plan-day-focus">${d.focus}</div>
+          </div>
         </div>
         <span style="color:var(--muted);font-size:13px">▼</span>
       </div>
       <div class="plan-day-body">
         ${d.exs.map(e => `<div class="plan-exercise-row"><span class="plan-ex-name">${e.n}</span><span class="plan-ex-sets">${e.s}</span></div>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -1636,18 +1691,27 @@ function searchFood() {
   if (!results.length) { sugg.style.display='none'; return; }
   sugg.style.display = 'block';
   sugg.innerHTML = results.map(f => `
-    <div class="food-suggestion-item" onclick="addFood('${f.n}')">
-      <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
-      <div class="food-item-cal">${f.cal}kcal</div>
+    <div class="food-suggestion-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
+        <div class="food-item-cal">${f.cal}kcal</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" min="0.5" max="20" step="0.5" value="1" id="qty-${f.n.replace(/\s+/g,'_')}"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
+          onclick="event.stopPropagation()" />
+        <span style="font-size:11px;color:var(--muted)">servings</span>
+        <button onclick="addFood('${f.n}')" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
+      </div>
     </div>`).join('');
 }
 
 function addFood(name) {
   const food = FOOD_DB.find(f => f.n === name);
   if (!food) return;
-  const qty = prompt(`Servings of "${name}"?\n1 serving = ${food.s}`, "1");
-  if (!qty || isNaN(qty) || Number(qty) <= 0) return;
-  const q = parseFloat(qty);
+  const qtyEl = document.getElementById('qty-' + name.replace(/\s+/g,'_'));
+  const q = qtyEl ? parseFloat(qtyEl.value) : 1;
+  if (!q || isNaN(q) || q <= 0) return;
   foodLog.push({...food, qty:q, uid:Date.now()});
   document.getElementById('food-search-input').value = '';
   document.getElementById('food-suggestions').style.display = 'none';
