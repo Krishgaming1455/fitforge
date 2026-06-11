@@ -2,7 +2,7 @@ function checkDailyWorkoutReset() {
   const today = new Date().toDateString();
   const lastDate = localStorage.getItem('fitforge_last_workout_date');
   if (lastDate && lastDate !== today) {
-    if (confirm('New day! Reset yesterday\'s workout checkboxes? \n[OK] = Reset  [Cancel] = Keep')) {
+    if (confirm('New day! Reset yesterday\'s workout checkboxes?\n[OK] = Reset  [Cancel] = Keep')) {
       pplChecked = { push: {}, pull: {}, legs: {} };
       autoSave();
     }

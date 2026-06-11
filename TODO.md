@@ -1,143 +1,135 @@
 # FitForge — Bugs & Features TODO
-
-## 🐛 BUGS TO FIX (Priority Order)
-
-### ✅ 1. BMI / TDEE Uses Hardcoded Age & Height — FIXED
-- Read actual `p-age` and `p-height` in both `calcBMI()` and `generateDiet()`
-
-### ✅ 2. Profile Tags Not Saving to localStorage — FIXED
-- `saveUserData()` now serializes selected goal + injury tags
-- `loadUserData()` re-applies `.selected` class on restore
-
-### ✅ 3. pplChecked Index Mismatch on Week A/B Change — FIXED
-- pplChecked now uses `ex.name` as key instead of array index
-
-### ✅ 4. Food Entry Uses Native `prompt()` Popup — FIXED
-- Replaced with inline quantity input + Add button in suggestion list
-
-### 5. Diet Generation Ignores User Height from Profile
-- **Status:** Partially fixed in Bug #1 — height is already read from `p-height`
-- **Remaining:** If user hasn't filled profile height, diet defaults to 175cm fallback (acceptable)
+Last updated: Session 4
 
 ---
 
-## ✨ FEATURES TO ADD
+## 🐛 BUGS
 
-### ⬜ 1. Water Intake Tracker (Easy/Quick)
-- Add to Diet or Home screen
-- 8 glass buttons (250ml each), tap to fill
-- Show daily total (e.g. 1.5L / 2L)
-- Save to localStorage per day
-- Reset at midnight (check date on load)
+### ✅ BMI / TDEE hardcoded age & height — FIXED
+### ✅ Profile tags not saving — FIXED
+### ✅ pplChecked index mismatch — FIXED
+### ✅ Food entry uses prompt() — FIXED
+### ✅ Supabase global name conflict — FIXED
+### ✅ Duplicate state declarations crashing auth — FIXED
+### ✅ Mobile nav missing user display + logout — FIXED
 
-### ⬜ 2. Workout History Log (Medium)
-- Add "✅ Finish Workout" button at bottom of each PPL panel
-- On click: save `{ date, dayType, week, exercisesCompleted }` to localStorage array
-- Show last 7 sessions as simple list on gym screen
-- Helps user see streak and consistency
+### ✅ saveUserData / loadUserData broken syntax — FIXED THIS SESSION
+- Had leftover `await supabase` line above `sb.from()` — syntax error meant data never saved or loaded
 
-### ⬜ 3. Progressive Overload Tracker (Medium)
-- Each exercise card gets a small "Log Weight" button
-- Opens inline input: weight (kg) + reps done
-- Saves to localStorage keyed by `exerciseName + date`
-- Shows previous session's weight below exercise name
-- e.g. "Last session: 20kg × 10"
+### ⬜ Data sync on mobile not confirmed working yet
+- Fix pushed — needs testing after deploy
+- If still broken: check Supabase dashboard → Table Editor → user_profiles → see if rows exist
 
-### ⬜ 4. Rest Day Content (Easy)
-- Sunday shows nothing useful currently
-- Add dedicated rest day panel with stretching routine, foam rolling, sleep tips
+### ⬜ Gym section today's workout not auto-showing on mobile
+- renderTodayBanner() runs but DOM elements may not exist yet on mobile
+- Fix: add null checks and delay render until DOM ready
 
-### ⬜ 5. Workout Timer (Easy)
-- Rest timer between sets: 60s / 90s / 120s buttons
-- Floating pill at bottom of screen when counting down
-- Saves preferred rest time to localStorage
+### ⬜ Home screen is empty — no summary
+- Currently just shows "BUILD YOUR BEST BODY" static text
+- Needs: today's workout type, calories logged, water intake, streak
 
 ---
 
-## 🎨 UI IMPROVEMENTS
+## ✨ FEATURES TO ADD (Priority Order)
 
-### ✅ Weekly Split — Highlight Today's Day — FIXED
-- Today's day auto-expands and shows "TODAY" badge
+### ⬜ 1. Home Screen Dashboard (HIGH PRIORITY)
+- Today's workout card (push/pull/legs/rest with day name)
+- Calories logged today vs target
+- Water intake progress
+- Workout streak counter
+- Quick links to each section
 
-### ✅ Auth Screen — Password Show/Hide Toggle — FIXED
-- Eye icon added to all password fields
+### ⬜ 2. Water Intake Tracker
+- 8 glass buttons (250ml each)
+- Daily total display (e.g. 1.5L / 2L goal)
+- Save in Supabase with date key
+- Auto-reset each new day
 
-### ✅ Daily Workout Reset — FIXED
-- On gym screen load, if date changed since last visit → prompts to reset checkboxes
+### ⬜ 3. Workout History Log
+- "Finish Workout" button at bottom of each PPL panel
+- Saves { date, dayType, week, exercisesCompleted } to Supabase
+- Shows last 7 sessions on gym screen
+- Streak counter
 
-### ⬜ Mobile Food Search Keyboard Issue
-- Suggestions dropdown gets hidden behind keyboard on mobile
-- Fix: scroll suggestion list into view on focus
+### ⬜ 4. Progressive Overload Tracker
+- "Log Weight" button per exercise
+- Inline input: weight (kg) + reps
+- Saves to Supabase keyed by exerciseName
+- Shows "Last session: 20kg × 10" under each exercise
 
-### ⬜ Warmup Section Auto-Open on Today's Tab
-- If it's the user's workout day, warmup should be expanded automatically
+### ⬜ 5. Rest Day Content
+- Dedicated panel when today is Sunday
+- Stretching routine, foam rolling guide, sleep tips
+
+### ⬜ 6. Workout Timer
+- 60s / 90s / 120s rest timer buttons
+- Floating pill UI at bottom when counting down
+- Audio beep when done
 
 ---
 
-## 📝 NOTES FOR NEXT SESSION
-
-When starting next Claude session, paste this file + say:
-"Continue FitForge fixes — start with Feature #1 (Water Tracker) then Feature #2 (Workout History)"
-
-Repo: https://github.com/Krishgaming1455/fitforge.git
-Main file: index.html (single file app, ~1800 lines)
-Stack: Vanilla HTML/CSS/JS, localStorage for data, no frameworks
-
----
-
-## 🏋️ FEATURES FROM TOP GYM APPS (Research)
+## 🏋️ FEATURES FROM TOP GYM APPS
 
 ### From MyFitnessPal
-- ⬜ **Calorie burn from workout** — subtract estimated calories burned when user logs a workout session
-- ⬜ **Macro pie chart** — visual donut chart showing protein/carb/fat split for the day
-- ⬜ **Meal copy** — "Copy yesterday's breakfast" button to avoid re-logging same foods daily
-- ⬜ **Net calories display** = calories eaten − calories burned (show separately from gross intake)
-- ⬜ **Weekly nutrition report** — average macros over 7 days, not just today's snapshot
+- ⬜ Macro pie chart — donut chart showing protein/carb/fat split
+- ⬜ Meal copy — "Copy yesterday's breakfast" button
+- ⬜ Net calories = eaten − burned
+- ⬜ Weekly nutrition report — 7 day average macros
 
 ### From Jefit
-- ⬜ **Muscle heatmap** — SVG front+back body diagram, highlight which muscles trained today/this week
-- ⬜ **1RM calculator** — input weight + reps → auto-calculates 1 rep max (Epley formula: weight × (1 + reps/30))
-- ⬜ **Workout volume tracker** — total sets × reps × weight per session, show weekly volume trend
-- ⬜ **Exercise swap** — if user can't do an exercise, suggest equivalent (e.g. no cable? → dumbbell version)
-- ⬜ **Rest timer with sound** — audio beep when rest period ends, not just visual countdown
+- ⬜ Muscle heatmap — SVG body diagram highlighting trained muscles
+- ⬜ 1RM calculator — weight + reps → Epley formula
+- ⬜ Workout volume tracker — sets × reps × weight trend
+- ⬜ Exercise swap suggestions
+- ⬜ Rest timer with sound
 
-### From Fitbod (Paid ~$12/mo)
-- ⬜ **Fatigue-based selection** — track which muscles worked recently, auto-warn if hitting same muscle too soon
-- ⬜ **Progressive overload nudge** — if user completes all reps 2 sessions in a row, suggest +5% weight
-- ⬜ **Workout rating** — rate session 1–5 stars after finishing. Track trend over time
-- ⬜ **Body part recovery indicator** — "Chest: 80% recovered" based on days since last push session
+### From Fitbod
+- ⬜ Fatigue-based warnings — warn if hitting same muscle too soon
+- ⬜ Progressive overload nudge — suggest +5% after 2 easy sessions
+- ⬜ Workout rating 1–5 stars
+- ⬜ Body part recovery indicator
 
 ### From Strong App
-- ⬜ **Plate calculator** — enter target barbell weight, show which plates to load each side
-- ⬜ **Personal records (PRs)** — auto-detect when user beats previous best weight/reps, show celebration 🏆
-- ⬜ **Session notes** — free text per workout ("felt tired", "left knee issue today")
-- ⬜ **Exercise history graph** — line chart of weight used over last 10 sessions per exercise
+- ⬜ Plate calculator — show which plates to load each side
+- ⬜ Personal records (PRs) — celebrate when user beats best
+- ⬜ Session notes — free text per workout
+- ⬜ Exercise history graph — line chart over last 10 sessions
 
 ### From Cronometer
-- ⬜ **Micronutrient gap alert** — if Vitamin D or Iron below 50% for 3 consecutive days, show warning banner
-- ⬜ **Protein per meal check** — show if protein is distributed well across meals (aim 30–40g per meal)
-- ⬜ **Hydration reminder** — on-screen reminder to drink water every 2 hours while app is open
+- ⬜ Micronutrient gap alerts
+- ⬜ Protein per meal distribution check
+- ⬜ Hydration reminder every 2 hours
 
 ### From Nike Training Club
-- ⬜ **Experience level mode** — Beginner / Intermediate / Advanced toggle in profile, show different exercise variations
-- ⬜ **Workout streak counter** — consecutive days with a logged workout, streak flame 🔥 display
-- ⬜ **Exercise GIF/demo link** — small "How to" button per exercise linking to a form demo
+- ⬜ Experience level mode (Beginner/Intermediate/Advanced)
+- ⬜ Workout streak counter with flame 🔥
+- ⬜ Exercise GIF/demo link per exercise
 
 ### From Whoop / Garmin
-- ⬜ **Daily recovery score** — simple 1–10 score user inputs (sleep quality + energy level), shown on home screen
-- ⬜ **High training load warning** — if 5 workouts logged in 6 days, show "Consider rest tomorrow" alert
+- ⬜ Daily recovery score (1–10 user input)
+- ⬜ High training load warning after 5 sessions in 6 days
 
 ---
 
-## 📝 UPDATED NOTES FOR NEXT SESSION
+## 🎨 UI FIXES REMAINING
 
-Start with remaining features in order:
-1. Water Tracker (easy)
-2. Workout History Log (medium)
-3. Progressive Overload Tracker (medium)
-4. Rest Day Content (easy)
-5. Workout Timer with sound (easy)
-6. Then pick from gym app research list above
+### ⬜ Mobile food search hidden behind keyboard
+- Scroll suggestion list into view on input focus
+
+### ⬜ Warmup auto-open on today's tab
+- If it's user's workout day, warmup section should expand automatically
+
+### ⬜ Gym screen today banner elements missing on mobile
+- Add null checks before accessing today-banner DOM elements
+
+---
+
+## 📝 NEXT SESSION INSTRUCTIONS
+
+Say: "Continue FitForge — check TODO.md, start with Home Screen Dashboard then Water Tracker"
 
 Repo: https://github.com/Krishgaming1455/fitforge.git
-Main file: index.html (~1800 lines), Stack: Vanilla HTML/CSS/JS + localStorage
+Stack: HTML + vanilla JS split into css/ and js/ modules + Supabase backend
+Files: index.html, css/styles.css, js/data.js, js/auth.js, js/app.js, js/diet.js, js/gym.js, js/recovery.js
+Live: https://fiteasy.netlify.app
+Supabase project: tlzymwuoedjyzpkockfe.supabase.co

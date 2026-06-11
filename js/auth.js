@@ -196,8 +196,8 @@ async function saveUserData() {
     lastUpdated: new Date().toISOString()
   };
 
-  const { error } = await supabase
-    sb.from('user_profiles')
+  const { error } = await sb
+    .from('user_profiles')
     .upsert({ id: currentUser.id, data, updated_at: new Date().toISOString() });
 
   if (error) console.error('Save error:', error.message);
@@ -208,8 +208,8 @@ async function saveUserData() {
 async function loadUserData() {
   if (!currentUser || isGuest) return;
 
-  const { data: row, error } = await supabase
-    sb.from('user_profiles')
+  const { data: row, error } = await sb
+    .from('user_profiles')
     .select('data')
     .eq('id', currentUser.id)
     .single();
