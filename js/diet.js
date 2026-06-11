@@ -1,0 +1,312 @@
+function generateDietPlan() {
+  const weight = parseFloat(document.getElementById('diet-weight').value) || 70;
+  const height = parseFloat(document.getElementById('p-height').value) || 175;
+  const goal = document.getElementById('diet-goal').value;
+  const activity = document.getElementById('diet-activity').value;
+  const dietType = document.getElementById('diet-type').value;
+
+  // Calculate BMI for smart warnings
+  const bmi = (weight / ((height/100)**2)).toFixed(1);
+  const isUnderweight = bmi < 18.5;
+  const isNormal = bmi >= 18.5 && bmi < 25;
+  const isOverweight = bmi >= 25 && bmi < 30;
+  const isObese = bmi >= 30;
+
+  // Generate BMI-based warning if goal doesn't match BMI
+  let bmiWarning = '';
+  if (isUnderweight && goal === 'loss') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,100,100,.15);border-color:rgba(255,100,100,.3);color:#ff6464;margin-bottom:16px">
+      ⚠️ <strong>NOT RECOMMENDED FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Losing weight could harm your health.
+      <br><strong>✅ HIGHLY RECOMMENDED:</strong> Weight Gain (+400 kcal/day) — Build muscle first!
+    </div>`;
+  } else if (isUnderweight && goal === 'maintenance') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,200,100,.15);border-color:rgba(255,200,100,.3);color:#ffb844;margin-bottom:16px">
+      ⚠️ <strong>NOT IDEAL FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Maintenance won't help you gain needed weight.
+      <br><strong>✅ BETTER CHOICE:</strong> Weight Gain (+400 kcal/day) — Gain 0.5–1kg monthly!
+    </div>`;
+  } else if ((isOverweight || isObese) && goal === 'gain') {
+    bmiWarning = `<div class="info-box" style="background:rgba(255,200,100,.15);border-color:rgba(255,200,100,.3);color:#ffb844;margin-bottom:16px">
+      ⚠️ <strong>RISKY FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (${isOverweight ? 'Overweight' : 'Obese'}). Weight gain could increase fat instead of muscle.
+      <br><strong>✅ BETTER CHOICE:</strong> Fat Loss (-400 kcal/day) — Lose fat, then gain lean muscle!
+    </div>`;
+  } else if (isUnderweight && goal === 'gain') {
+    bmiWarning = `<div class="info-box" style="background:rgba(68,255,136,.07);border-color:rgba(68,255,136,.2);color:var(--green);margin-bottom:16px">
+      ✅ <strong>PERFECT FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (Underweight). Weight gain is exactly what you need!
+      <br>Focus: Gain 0.5–1kg monthly with 1.9g protein/kg for maximum muscle.
+    </div>`;
+  } else if ((isOverweight || isObese) && goal === 'loss') {
+    bmiWarning = `<div class="info-box" style="background:rgba(68,255,136,.07);border-color:rgba(68,255,136,.2);color:var(--green);margin-bottom:16px">
+      ✅ <strong>PERFECT FOR YOUR BMI</strong><br>
+      Your BMI is ${bmi} (${isOverweight ? 'Overweight' : 'Obese'}). Fat loss is exactly what you need!
+      <br>Focus: Lose 0.5–1kg weekly while preserving muscle with high protein.
+    </div>`;
+  }
+
+  const age = parseFloat(document.getElementById('p-age').value) || 25;
+  const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+  const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity];
+  const tdee = Math.round(bmr * actMult);
+
+  let calTarget, proteinFactor, proteinTarget, carbTarget, fatTarget, logicNote;
+
+  if (goal === 'gain') {
+    calTarget = tdee + 400;
+    proteinFactor = 1.9;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 1.0);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `For muscle gain at ${weight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong>. Carbs are high to fuel training.`;
+  } else if (goal === 'loss') {
+    calTarget = tdee - 400;
+    proteinFactor = weight > 80 ? 1.3 : (weight > 60 ? 1.4 : 1.5);
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.7);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    carbTarget = Math.max(carbTarget, 80);
+    logicNote = `For fat loss at ${weight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(weight*1.3)}–${Math.round(weight*1.5)}g). Carbs reduced, fat moderate.`;
+  } else if (goal === 'strength') {
+    calTarget = tdee + 200;
+    proteinFactor = 2.0;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.9);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `For strength at ${weight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
+  } else {
+    calTarget = tdee;
+    proteinFactor = 1.6;
+    proteinTarget = Math.round(weight * proteinFactor);
+    fatTarget = Math.round(weight * 0.8);
+    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    logicNote = `Maintenance at ${weight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
+  }
+
+  const isHighWeight = weight > 75;
+  const isLoss = goal === 'loss';
+  const isGain = goal === 'gain';
+  const hasNonVeg = dietType === 'nonveg' || dietType === 'fullnonveg';
+  const hasEggs = dietType !== 'veg';
+
+  const eggsCount = isLoss ? (weight > 85 ? 3 : weight > 70 ? 3 : 2) : (isGain ? (weight > 85 ? 4 : weight > 70 ? 3 : 3) : 3);
+  const chickenG = hasNonVeg ? (isLoss ? Math.round(weight * 1.2) : Math.round(weight * 1.4)) : 0;
+  const dalG = isLoss ? Math.round(120 + weight * 0.3) : (isGain ? Math.round(140 + weight * 0.5) : 130);
+  const soyaG = isLoss && weight > 70 ? 80 : (isLoss ? 60 : 0);
+  const riceG = isLoss ? Math.round(70 + weight * 0.2) : (isGain ? Math.round(120 + weight * 0.6) : 100);
+  const rotiCount = isLoss ? (weight > 80 ? 3 : 2) : (isGain ? (weight > 80 ? 6 : weight > 65 ? 5 : 4) : 3);
+  const oatsG = isGain ? Math.round(50 + weight * 0.4) : (isLoss ? 0 : 50);
+  const bananaCount = isGain ? (weight > 80 ? 3 : weight > 65 ? 2 : 2) : (isLoss ? 1 : 1);
+  const milkMl = isGain ? Math.round(250 + weight * 1.5) : (isLoss ? 250 : 350);
+  const paneerG = !hasNonVeg ? (isLoss ? 80 : 120) : 0;
+
+  const meals = [
+    {
+      title:"Breakfast", em:"🍳", time:"7:00–8:00 AM",
+      foods: [
+        hasEggs ? {name:`Boiled Eggs ×${eggsCount}`, p: eggsCount*6, c: 0, f: eggsCount*5, cal: eggsCount*78} : {name:`Paneer ${paneerG}g`, p:Math.round(paneerG*0.18), c:1, f:Math.round(paneerG*0.21), cal:Math.round(paneerG*2.65)},
+        isGain && oatsG > 0 ? {name:`Oats ${oatsG}g with milk`, p:Math.round(oatsG*0.17), c:Math.round(oatsG*0.66), f:Math.round(oatsG*0.07), cal:Math.round(oatsG*3.89)} : null,
+        {name:`Banana ×${bananaCount}`, p:Math.round(bananaCount*1.1), c:Math.round(bananaCount*23), f:0, cal:Math.round(bananaCount*89)},
+        {name:`Whole Milk ${milkMl}ml`, p:Math.round(milkMl*0.032), c:Math.round(milkMl*0.048), f:Math.round(milkMl*0.033), cal:Math.round(milkMl*0.61)},
+        {name:"Soaked Almonds ×10", p:2, c:2, f:5, cal:58}
+      ].filter(Boolean)
+    },
+    {
+      title: isLoss ? "Mid-Morning Protein Snack" : "Mid-Morning Snack", em:"🥛", time:"10:30–11:00 AM",
+      foods: [
+        isLoss && soyaG > 0 ? {name:`Spiced Boiled Soya Chunks ${soyaG}g`, p:Math.round(soyaG*0.52), c:Math.round(soyaG*0.33), f:0, cal:Math.round(soyaG*3.45)} : null,
+        isLoss ? {name:"Dahi 150g", p:5, c:7, f:5, cal:92} : null,
+        !isLoss ? {name:`Banana ×1`, p:1, c:23, f:0, cal:89} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Lunch", em:"🍱", time:"1:00–1:30 PM",
+      foods: [
+        hasNonVeg && !isLoss ? {name:`Grilled Chicken Breast ${Math.round(chickenG*0.5)}g`, p:Math.round(chickenG*0.5*0.31), c:0, f:Math.round(chickenG*0.5*0.036), cal:Math.round(chickenG*0.5*1.65)} : null,
+        hasNonVeg && isLoss ? {name:`Grilled Chicken / Paneer ${Math.round(chickenG*0.4)}g`, p:Math.round(chickenG*0.4*0.31), c:0, f:Math.round(chickenG*0.4*0.036), cal:Math.round(chickenG*0.4*1.65)} : null,
+        !hasNonVeg ? {name:`Paneer ${Math.round(paneerG*0.7)}g`, p:Math.round(paneerG*0.7*0.18), c:1, f:Math.round(paneerG*0.7*0.21), cal:Math.round(paneerG*0.7*2.65)} : null,
+        {name:`Dal ${dalG}g`, p:Math.round(dalG*0.09), c:Math.round(dalG*0.2), f:0, cal:Math.round(dalG*1.16)},
+        {name:`Cooked Rice ${riceG}g`, p:Math.round(riceG*0.027), c:Math.round(riceG*0.28), f:0, cal:Math.round(riceG*1.3)},
+        {name:`Roti ×${Math.ceil(rotiCount*0.4)}`, p:Math.round(Math.ceil(rotiCount*0.4)*3.5), c:Math.round(Math.ceil(rotiCount*0.4)*20), f:Math.round(Math.ceil(rotiCount*0.4)*1.5), cal:Math.round(Math.ceil(rotiCount*0.4)*104)},
+        {name:"Sabzi / Salad 100g", p:2, c:9, f:1, cal:50},
+        isLoss ? {name:"Dahi 100g", p:3.5, c:5, f:3, cal:61} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Pre-Workout Meal", em:"⚡", time:"4:30–5:00 PM",
+      foods: [
+        {name:`Roti ×${Math.max(1,Math.floor(rotiCount*0.25))}`, p:Math.max(1,Math.floor(rotiCount*0.25))*3.5, c:Math.max(1,Math.floor(rotiCount*0.25))*20, f:Math.max(1,Math.floor(rotiCount*0.25))*1.5, cal:Math.max(1,Math.floor(rotiCount*0.25))*104},
+        isGain ? {name:"Banana ×1", p:1, c:23, f:0, cal:89} : null,
+        {name:"Dal 80g", p:7, c:16, f:0, cal:93}
+      ].filter(Boolean)
+    },
+    {
+      title:"Post-Workout (Critical)", em:"🔥", time:"7:30–8:00 PM",
+      foods: [
+        hasEggs ? {name:`Eggs ×${Math.max(2,Math.floor(eggsCount*0.7))}`, p:Math.max(2,Math.floor(eggsCount*0.7))*6, c:0, f:Math.max(2,Math.floor(eggsCount*0.7))*5, cal:Math.max(2,Math.floor(eggsCount*0.7))*78} : null,
+        {name:`Whole Milk ${Math.round(milkMl*0.5)}ml`, p:Math.round(milkMl*0.5*0.032), c:Math.round(milkMl*0.5*0.048), f:Math.round(milkMl*0.5*0.033), cal:Math.round(milkMl*0.5*0.61)},
+        isGain ? {name:"Banana ×1", p:1, c:23, f:0, cal:89} : null,
+        hasNonVeg && isLoss ? {name:`Grilled Chicken ${Math.round(chickenG*0.3)}g`, p:Math.round(chickenG*0.3*0.31), c:0, f:Math.round(chickenG*0.3*0.036), cal:Math.round(chickenG*0.3*1.65)} : null
+      ].filter(Boolean)
+    },
+    {
+      title:"Dinner", em:"🍽️", time:"9:00–9:30 PM",
+      foods: [
+        hasNonVeg ? {name:`Grilled Chicken / Fish ${Math.round(chickenG*0.3)}g`, p:Math.round(chickenG*0.3*0.31), c:0, f:Math.round(chickenG*0.3*0.036), cal:Math.round(chickenG*0.3*1.65)} : null,
+        !hasNonVeg ? {name:`Paneer / Dal mix 120g`, p:12, c:10, f:8, cal:160} : null,
+        {name:`Roti ×${Math.max(1,Math.floor(rotiCount*0.35))}`, p:Math.max(1,Math.floor(rotiCount*0.35))*3.5, c:Math.max(1,Math.floor(rotiCount*0.35))*20, f:Math.max(1,Math.floor(rotiCount*0.35))*1.5, cal:Math.max(1,Math.floor(rotiCount*0.35))*104},
+        isLoss ? {name:"Spinach / Broccoli 100g", p:3, c:4, f:0.5, cal:40} : {name:"Sabzi 100g", p:2, c:9, f:1, cal:50},
+        {name:`Warm Milk ${Math.round(milkMl*0.3)}ml`, p:Math.round(milkMl*0.3*0.032), c:Math.round(milkMl*0.3*0.048), f:Math.round(milkMl*0.3*0.033), cal:Math.round(milkMl*0.3*0.61)}
+      ].filter(Boolean)
+    }
+  ];
+
+  let totalCal=0, totalP=0, totalC=0, totalF=0;
+  meals.forEach(m => m.foods.forEach(f => { totalCal+=f.cal||0; totalP+=f.p||0; totalC+=f.c||0; totalF+=f.f||0; }));
+
+  targetCal = calTarget;
+  targetProtein = proteinTarget;
+  document.getElementById('nt-prot-t').textContent = proteinTarget;
+  document.getElementById('cal-target-display').textContent = calTarget;
+
+  document.getElementById('diet-macro-summary').style.display = 'block';
+  document.getElementById('diet-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-box-label">Daily Calories</div><div class="stat-box-value">${calTarget}<span class="stat-box-unit"> kcal</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Protein</div><div class="stat-box-value">${proteinTarget}<span class="stat-box-unit"> g</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Carbs</div><div class="stat-box-value">${carbTarget}<span class="stat-box-unit"> g</span></div></div>
+    <div class="stat-box"><div class="stat-box-label">Fat</div><div class="stat-box-value">${fatTarget}<span class="stat-box-unit"> g</span></div></div>`;
+  document.getElementById('diet-logic-note').innerHTML = `📊 <strong>How these numbers were calculated:</strong> ${logicNote}`;
+
+  document.getElementById('diet-meals-output').innerHTML = `${bmiWarning}` + meals.map(m => {
+    const mealCal = Math.round(m.foods.reduce((a,f) => a + (f.cal||0), 0));
+    const mealP = Math.round(m.foods.reduce((a,f) => a + (f.p||0), 0));
+    return `<div class="diet-meal-card">
+      <div class="diet-meal-header">
+        <div class="diet-meal-title">${m.em} ${m.title}<span style="font-size:11px;color:var(--muted);font-weight:400">${m.time}</span></div>
+        <div class="diet-meal-cals">~${mealCal} kcal · P:${mealP}g</div>
+      </div>
+      ${m.foods.map(f => `<div class="diet-food-row">
+        <span class="diet-food-name">${f.name}</span>
+        <span class="diet-food-macros">P:${Math.round(f.p||0)}g C:${Math.round(f.c||0)}g F:${Math.round(f.f||0)}g · ${Math.round(f.cal||0)}kcal</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+  
+  autoSave();
+}
+
+// ============================================================
+// PPL WORKOUT TRACKER
+// ============================================================
+
+function searchFood() {
+  const q = document.getElementById('food-search-input').value.toLowerCase();
+  const sugg = document.getElementById('food-suggestions');
+  if (!q) { sugg.style.display='none'; return; }
+  const results = FOOD_DB.filter(f => f.n.toLowerCase().includes(q)).slice(0,7);
+  if (!results.length) { sugg.style.display='none'; return; }
+  sugg.style.display = 'block';
+  sugg.innerHTML = results.map(f => `
+    <div class="food-suggestion-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
+        <div class="food-item-cal">${f.cal}kcal</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" min="0.5" max="20" step="0.5" value="1" id="qty-${f.n.replace(/\s+/g,'_')}"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
+          onclick="event.stopPropagation()" />
+        <span style="font-size:11px;color:var(--muted)">servings</span>
+        <button onclick="addFood('${f.n}')" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
+      </div>
+    </div>`).join('');
+}
+
+function addFood(name) {
+  const food = FOOD_DB.find(f => f.n === name);
+  if (!food) return;
+  const qtyEl = document.getElementById('qty-' + name.replace(/\s+/g,'_'));
+  const q = qtyEl ? parseFloat(qtyEl.value) : 1;
+  if (!q || isNaN(q) || q <= 0) return;
+  foodLog.push({...food, qty:q, uid:Date.now()});
+  document.getElementById('food-search-input').value = '';
+  document.getElementById('food-suggestions').style.display = 'none';
+  updateNutritionDisplay();
+  renderFoodLog();
+  autoSave();
+}
+
+function removeFood(uid) {
+  foodLog = foodLog.filter(f => f.uid !== uid);
+  updateNutritionDisplay();
+  renderFoodLog();
+  autoSave();
+}
+
+function clearFoodLog() {
+  if (confirm('Clear all food entries?')) { foodLog=[]; updateNutritionDisplay(); renderFoodLog(); autoSave(); }
+}
+
+function getTotals() {
+  return foodLog.reduce((a,f) => ({
+    cal: a.cal + f.cal*f.qty, p: a.p + f.p*f.qty, c: a.c + f.c*f.qty,
+    f: a.f + f.f*f.qty, fi: a.fi + (f.fi||0)*f.qty,
+    vitC: a.vitC + (f.vitC||0)*f.qty, vitD: a.vitD + (f.vitD||0)*f.qty,
+    ca: a.ca + (f.ca||0)*f.qty, fe: a.fe + (f.fe||0)*f.qty, k: a.k + (f.k||0)*f.qty
+  }), {cal:0,p:0,c:0,f:0,fi:0,vitC:0,vitD:0,ca:0,fe:0,k:0});
+}
+
+function updateNutritionDisplay() {
+  const t = getTotals();
+  const circumference = 427;
+  const pct = Math.min(1, t.cal / targetCal);
+  const ring = document.getElementById('cal-ring');
+  if (ring) ring.style.strokeDashoffset = circumference - pct * circumference;
+  const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=Math.round(val); };
+  const setW = (id, val, max) => { const e=document.getElementById(id); if(e) e.style.width=Math.min(100,(val/max)*100)+'%'; };
+  setEl('cal-consumed', t.cal);
+  const calTDisp = document.getElementById('cal-target-display');
+  if (calTDisp) calTDisp.textContent = targetCal;
+  const rem = targetCal - t.cal;
+  const remEl = document.getElementById('cal-remaining-display');
+  if (remEl) { remEl.textContent = rem>0?`${Math.round(rem)} left`:`${Math.round(-rem)} over!`; remEl.style.color=rem>0?'var(--accent2)':'var(--red)'; }
+  setEl('nt-prot',t.p); setEl('nt-carb',t.c); setEl('nt-fat',t.f); setEl('nt-fiber',t.fi);
+  setW('pb-prot',t.p,targetProtein); setW('pb-carb',t.c,350); setW('pb-fat',t.f,90); setW('pb-fiber',t.fi,30);
+  const vitamins = [
+    {n:'Vitamin C',v:t.vitC,tg:90,u:'mg',c:'#ff8844'},
+    {n:'Vitamin D',v:t.vitD,tg:600,u:'IU',c:'#f0ff44'},
+    {n:'Calcium',v:t.ca,tg:1000,u:'mg',c:'#44ffcc'},
+    {n:'Iron',v:t.fe,tg:18,u:'mg',c:'#ff4466'},
+    {n:'Potassium',v:t.k,tg:4700,u:'mg',c:'#4d8fff'}
+  ];
+  const vd = document.getElementById('vit-display');
+  if (vd) vd.innerHTML = vitamins.map(v => {
+    const p = Math.min(100,(v.v/v.tg)*100);
+    const st = p>=80?{t:'✅ Good',c:'var(--green)'}:p>=40?{t:'⚠️ Low',c:'var(--accent)'}:{t:'❌ Very Low',c:'var(--red)'};
+    return `<div class="vitamin-row"><div class="vitamin-name">${v.n}</div><div class="vitamin-bar-wrap"><div class="vitamin-bar"><div class="vitamin-bar-fill" style="width:${p}%;background:${v.c}"></div></div></div><div class="vitamin-amount">${Math.round(v.v)}/${v.tg}${v.u}</div><div class="vitamin-status" style="color:${st.c}">${st.t}</div></div>`;
+  }).join('');
+}
+
+function renderFoodLog() {
+  const list = document.getElementById('food-log-list');
+  if (!list) return;
+  if (!foodLog.length) { list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Search and add foods above to track today</div>'; return; }
+  list.innerHTML = foodLog.map(f => `
+    <div class="food-log-item">
+      <div><div class="food-log-name">${f.n}${f.qty!==1?` ×${f.qty}`:''}</div><div class="food-log-amount">${f.s} × ${f.qty} = ${Math.round(f.cal*f.qty)} kcal</div></div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="food-log-macros">
+          <span class="macro-pill macro-p">P:${Math.round(f.p*f.qty)}g</span>
+          <span class="macro-pill macro-c">C:${Math.round(f.c*f.qty)}g</span>
+          <span class="macro-pill macro-f">F:${Math.round(f.f*f.qty)}g</span>
+        </div>
+        <button class="remove-food" onclick="removeFood(${f.uid})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// MYTHS
+// ============================================================
+
