@@ -41,18 +41,19 @@ async function initAuth() {
   });
 }
 
+function showMainApp() {
+  document.getElementById('screen-auth').classList.remove('active');
+  document.getElementById('main-header').style.display = 'flex';
+  // Only show mobile-nav via CSS media query — remove inline style override
+  document.getElementById('mobile-nav').style.removeProperty('display');
+  updateAuthDisplay();
+  showScreen('home');
+}
+
 function showAuthScreen() {
   document.getElementById('screen-auth').classList.add('active');
   document.getElementById('main-header').style.display = 'none';
   document.getElementById('mobile-nav').style.display = 'none';
-}
-
-function showMainApp() {
-  document.getElementById('screen-auth').classList.remove('active');
-  document.getElementById('main-header').style.display = 'flex';
-  document.getElementById('mobile-nav').style.display = 'block';
-  updateAuthDisplay();
-  showScreen('home');
 }
 
 function toggleAuthMode() {
