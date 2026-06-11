@@ -7,6 +7,9 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── INIT ─────────────────────────────────────────────────────
 async function initAuth() {
+  // Show a loading state
+  document.getElementById('screen-auth').classList.add('active');
+
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
@@ -17,15 +20,22 @@ async function initAuth() {
     showAuthScreen();
   }
 
-  // Listen for auth changes (e.g. tab focus, token refresh)
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      currentUser = session.user;
+  // Only listen for future auth changes (token refresh, sign out)
+  // Use INITIAL_SESSION guard to avoid double-loading on mobile
+  let initialised = !!session;
+  sb.auth.onAuthStateChange(async (event, newSession) => {
+    if (event === 'SIGNED_IN' && newSession && !initialised) {
+      initialised = true;
+      currentUser = newSession.user;
       isGuest = false;
       await loadUserData();
       showMainApp();
+    } else if (event === 'SIGNED_IN' && newSession && initialised) {
+      // Already loaded — just update display
+      updateAuthDisplay();
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
+      initialised = false;
       showAuthScreen();
     }
   });
@@ -147,12 +157,15 @@ async function logout() {
 
 function updateAuthDisplay() {
   const display = document.getElementById('auth-user-display');
-  if (currentUser) {
-    const badge = isGuest ? '👤' : '✅';
-    const label = isGuest ? ' (Guest)' : '';
-    const name = isGuest ? 'Guest' : currentUser.email;
-    display.textContent = `${badge} ${name}${label}`;
+  if (!display || !currentUser) return;
+  if (isGuest) {
+    display.textContent = '👤 Guest';
+    return;
   }
+  // Show profile name if filled, otherwise email
+  const profileName = document.getElementById('p-name')?.value;
+  const label = profileName ? profileName : currentUser.email;
+  display.textContent = `✅ ${label}`;
 }
 
 function togglePwdVisibility(inputId, btn) {
