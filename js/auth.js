@@ -1,7 +1,8 @@
 // ── SUPABASE CONFIG ──────────────────────────────────────────
 const SUPABASE_URL = 'https://tlzymwuoedjyzpkockfe.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g2v4_kC-KLAGLpB-layAZw_Ud_aNskR';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── STATE ────────────────────────────────────────────────────
 let currentUser = null;
