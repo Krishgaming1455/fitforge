@@ -1,14 +1,13 @@
 // ── SUPABASE CONFIG ──────────────────────────────────────────
 const SUPABASE_URL = 'https://tlzymwuoedjyzpkockfe.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g2v4_kC-KLAGLpB-layAZw_Ud_aNskR';
-const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // State is declared in data.js
 
 // ── INIT ─────────────────────────────────────────────────────
 async function initAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
     isGuest = false;
@@ -19,7 +18,7 @@ async function initAuth() {
   }
 
   // Listen for auth changes (e.g. tab focus, token refresh)
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
       currentUser = session.user;
       isGuest = false;
@@ -78,7 +77,7 @@ async function handleSignup() {
   btn.textContent = 'Creating account...';
   btn.disabled = true;
 
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await sb.auth.signUp({ email, password });
 
   btn.textContent = 'Create Account';
   btn.disabled = false;
@@ -106,7 +105,7 @@ async function handleLogin() {
   btn.textContent = 'Logging in...';
   btn.disabled = true;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await sb.auth.signInWithPassword({ email, password });
 
   btn.textContent = 'Login';
   btn.disabled = false;
@@ -134,7 +133,7 @@ async function logout() {
     return;
   }
   await saveUserData();
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   currentUser = null;
   foodLog = [];
   pplChecked = { push: {}, pull: {}, legs: {} };
@@ -187,7 +186,7 @@ async function saveUserData() {
   };
 
   const { error } = await supabase
-    .from('user_profiles')
+    sb.from('user_profiles')
     .upsert({ id: currentUser.id, data, updated_at: new Date().toISOString() });
 
   if (error) console.error('Save error:', error.message);
@@ -199,7 +198,7 @@ async function loadUserData() {
   if (!currentUser || isGuest) return;
 
   const { data: row, error } = await supabase
-    .from('user_profiles')
+    sb.from('user_profiles')
     .select('data')
     .eq('id', currentUser.id)
     .single();
