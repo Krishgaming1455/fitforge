@@ -342,38 +342,53 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <div style="background:linear-gradient(135deg,rgba(68,255,136,.06),transparent);padding:48px 20px 28px">
     <div class="container">
       <h1 style="font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:2px">GYM<br><span style="color:var(--accent2)">TRACKER</span></h1>
-      <p style="color:var(--muted);margin-top:8px">PPL Split — Track your workout progress</p>
+      <p style="color:var(--muted);margin-top:8px">PPL Split — Daily sync · Week A/B rotation</p>
+      <!-- TODAY BANNER -->
+      <div id="today-banner" style="margin-top:18px;padding:14px 18px;background:rgba(68,255,204,.08);border:1px solid rgba(68,255,204,.25);border-radius:12px;display:inline-flex;align-items:center;gap:12px">
+        <span style="font-size:22px" id="today-icon">💪</span>
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px">TODAY</div>
+          <div style="font-size:15px;font-weight:700;color:var(--accent2)" id="today-label">Loading...</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px" id="today-week-label"></div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="container section">
     <!-- PPL Tabs -->
     <div class="sub-tabs">
-      <button class="sub-tab ppl-tab active" onclick="switchPPL('push',this)">💪 PUSH</button>
-      <button class="sub-tab ppl-tab" onclick="switchPPL('pull',this)">🔥 PULL</button>
-      <button class="sub-tab ppl-tab" onclick="switchPPL('legs',this)">🦵 LEGS</button>
+      <button class="sub-tab ppl-tab active" onclick="switchPPL('push',this)" id="tab-push">💪 PUSH</button>
+      <button class="sub-tab ppl-tab" onclick="switchPPL('pull',this)" id="tab-pull">🔥 PULL</button>
+      <button class="sub-tab ppl-tab" onclick="switchPPL('legs',this)" id="tab-legs">🦵 LEGS</button>
     </div>
 
     <!-- PUSH -->
     <div class="ppl-panel active" id="ppl-push">
-      <div class="info-box">💡 <strong>Push Day Focus:</strong> Incline pressing is safer than flat — it reduces shoulder impingement risk. Neutral-grip DB press protects joints even more. Always do Face Pulls after heavy pressing to balance shoulder health.</div>
+      <div class="info-box">💡 <strong>Push Day:</strong> Incline pressing reduces shoulder impingement risk. Week A = dumbbell focus. Week B = barbell + cables. Always finish with Face Pulls on push day to balance shoulder health.</div>
+      <!-- Warmup -->
+      <div id="warmup-push"></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="push-progress" style="width:0%"></div></div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="push-progress-label">0 / 5 exercises completed</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="push-progress-label">0 / 8 exercises completed</p>
       <div id="push-exercises"></div>
     </div>
 
     <!-- PULL -->
     <div class="ppl-panel" id="ppl-pull" style="display:none">
-      <div class="info-box">💡 <strong>Pull Day Focus:</strong> Chest-Supported Rows completely protect your lower back (best back exercise). Face Pulls are mandatory — they reverse desk posture and prevent shoulder injuries. Don't skip them for strength.</div>
+      <div class="info-box">💡 <strong>Pull Day:</strong> Face Pulls are mandatory every session — they reverse desk posture. Week A = cable machine focus. Week B = barbell rows + pull-ups. Don't skip the rear delt work.</div>
+      <!-- Warmup -->
+      <div id="warmup-pull"></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="pull-progress" style="width:0%"></div></div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="pull-progress-label">0 / 5 exercises completed</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="pull-progress-label">0 / 8 exercises completed</p>
       <div id="pull-exercises"></div>
     </div>
 
     <!-- LEGS -->
     <div class="ppl-panel" id="ppl-legs" style="display:none">
-      <div class="info-box">💡 <strong>Legs Day Focus:</strong> Box Squats teach you to sit back safely, protecting knees. Romanian Deadlifts are a hip hinge — not a lower-back exercise if done correctly. High-foot leg press takes quads out and hammers glutes.</div>
+      <div class="info-box">💡 <strong>Legs Day:</strong> Box Squats protect knees. Romanian Deadlifts are a hip hinge — not a lower-back exercise. Week A = machine + dumbbell focus. Week B = barbell squat + rack work.</div>
+      <!-- Warmup -->
+      <div id="warmup-legs"></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="legs-progress" style="width:0%"></div></div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="legs-progress-label">0 / 5 exercises completed</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="legs-progress-label">0 / 8 exercises completed</p>
       <div id="legs-exercises"></div>
     </div>
 
@@ -543,38 +558,138 @@ const FOOD_DB = [
   {n:"Lassi",cal:70,p:3.5,c:8,f:2.5,fi:0,vitC:0,vitD:5,ca:120,fe:0.1,k:160,s:"200ml"}
 ];
 
-const PPL_DATA = {
+// ── WARMUP PROTOCOLS per day type ──────────────────────────────
+const WARMUP_DATA = {
   push: [
-    {name:"Incline Dumbbell Press",sets:"4",reps:"10–12",muscles:"Upper Chest · Front Shoulders · Triceps",note:"Set bench 30–45°. Controls shoulder impingement risk vs flat barbell. Lower slowly — 2s eccentric."},
-    {name:"Neutral-Grip Dumbbell Press (Flat)",sets:"3",reps:"10–12",muscles:"Chest (Primary) · Triceps",note:"Palms face each other throughout. Neutral grip dramatically reduces shoulder joint stress vs pronated grip. Ideal if you have any shoulder history."},
-    {name:"Seated Overhead Press (Dumbbell)",sets:"3",reps:"10–12",muscles:"Medial & Front Deltoid · Triceps",note:"Seated with back support — protects lower back. Start with arms at 90°, press overhead. Do NOT behind-the-neck."},
-    {name:"Lateral Raises",sets:"3",reps:"14–16",muscles:"Medial Deltoid (Width)",note:"Very light weight. Lead with elbows, not hands. Tilt pinky slightly up at top. Slow lowering phase = most growth."},
-    {name:"Overhead Tricep Extension",sets:"3",reps:"12–14",muscles:"Long Head Triceps (Fullness)",note:"One dumbbell, both hands. Lower behind head slowly. Keep elbows pointing forward — don't flare them."}
+    {name:"Arm Circles",duration:"30 sec each direction",icon:"🔄",note:"Big slow circles forward then backward. Lubricates shoulder joint before any pressing."},
+    {name:"Band Pull-Aparts",duration:"2 × 20 reps",icon:"🎗️",note:"Light band. Arms straight, pull band to chest. Activates rear delts and rotator cuff — prevents shoulder injury."},
+    {name:"Wall Slide",duration:"2 × 10 reps",icon:"🧱",note:"Back flat on wall, slide arms overhead like a snow angel. Teaches shoulder blade control before pressing."},
+    {name:"Light DB Press (50% weight)",duration:"1 × 15 reps",icon:"🏋️",note:"First working set at half your normal weight. Gets joints warm before real load."},
+    {name:"Chest Stretch (Doorframe)",duration:"30 sec each side",icon:"🚪",note:"Hold doorframe, lean through. Opens the pec minor — improves pressing depth and shoulder health."}
   ],
   pull: [
-    {name:"Lat Pulldown",sets:"4",reps:"10–12",muscles:"Latissimus Dorsi · Biceps · Rear Delts",note:"Grip slightly wider than shoulders. Lean back 10–15°. Drive elbows to pockets — think 'elbows down', not 'bar down'. Builds the V-taper."},
-    {name:"Chest-Supported Dumbbell Row",sets:"4",reps:"10–12",muscles:"Mid Back · Lower Traps · Rear Delts",note:"Lie prone on incline bench — chest fully supported. Lower back is COMPLETELY removed from the movement. Pull elbows back and up. Squeeze at top."},
-    {name:"Face Pulls (Cable — Rope)",sets:"3",reps:"15–20",muscles:"Rear Deltoid · External Rotators · Upper Traps",note:"MANDATORY every session. Cable at forehead height. Pull to face, hands split apart, elbows flare out. Reverses laptop rounded-shoulder posture. Use light weight — it's corrective."},
-    {name:"Bicep Curl (Dumbbell)",sets:"3",reps:"12",muscles:"Biceps Brachii · Brachialis",note:"Elbows FIXED at sides — this is the entire exercise. Supinate (rotate palm up) as you curl. Lower in 3 seconds. Squeeze at top."},
-    {name:"Hammer Curl",sets:"3",reps:"12",muscles:"Brachialis · Brachioradialis · Biceps",note:"Neutral grip throughout. Builds arm thickness (brachialis) more than regular curls. Also develops forearm strength. Alternate arms or together."}
+    {name:"Cat-Cow Stretch",duration:"10 slow reps",icon:"🐱",note:"On hands and knees. Arch up (cat), then drop belly down (cow). Warms up entire spine before pulling."},
+    {name:"Scapular Pull-Ups",duration:"2 × 10 reps",icon:"⬆️",note:"Hang from bar, retract and depress shoulder blades without bending elbows. Activates lats before any row or pulldown."},
+    {name:"Band Face Pulls",duration:"2 × 15 reps",icon:"🎯",note:"Light band at face height. Pull to ears. Warms up rear delts and rotator cuff — mandatory for back day."},
+    {name:"Dead Hang",duration:"3 × 20 sec",icon:"🙌",note:"Just hang from the bar. Decompresses spine, improves grip, stretches lats. Best warm-up for pull day."},
+    {name:"Thoracic Rotation Stretch",duration:"5 reps each side",icon:"🔃",note:"Seated, hands behind head. Rotate chest to each side. Opens up mid-back for rowing movements."}
   ],
   legs: [
-    {name:"Box Squat (Goblet or Bodyweight)",sets:"4",reps:"12",muscles:"Quads · Glutes · Hamstrings · Core",note:"Box/bench behind you — sit BACK onto it, not down. Teaches proper hip-hinge mechanics. Protects knees by preventing forward knee travel. Goblet (dumbbell at chest) is safer for back pain than barbell."},
-    {name:"Romanian Deadlift (Dumbbell)",sets:"3",reps:"10–12",muscles:"Hamstrings (Lengthened) · Glutes · Spinal Erectors",note:"Hip-hinge drill — NOT a lower-back exercise when done correctly. Soft bend in knees throughout. Push hips BACK, feel hamstring stretch. Barbell travels close to legs. Neutral spine is mandatory."},
-    {name:"Leg Press — High Foot Placement",sets:"4",reps:"12–15",muscles:"Glutes · Hamstrings (shifts load from quads)",note:"Feet high and wide on platform. This shifts the movement pattern toward glutes and hamstrings. Do NOT let lower back peel off seat. Stop at 90° knee angle."},
-    {name:"Hanging Knee Raises",sets:"3",reps:"12–15",muscles:"Hip Flexors · Rectus Abdominis · Obliques",note:"Hang from pull-up bar. Bring knees to chest under control. Lower slowly — don't swing. Builds core without loading spine (unlike crunches). Progresses to straight-leg raises over time."},
-    {name:"Calf Raise (Single-Leg on Step)",sets:"4",reps:"15–20",muscles:"Gastrocnemius · Soleus",note:"Stand on step edge for full range of motion. Single-leg gives deeper stretch and more overload. Hold at top 1 second. Calves need high reps and full ROM — they're resistant to growth otherwise."}
-  ]
+    {name:"Hip Circles",duration:"10 reps each direction",icon:"🔵",note:"Stand, one hand on wall. Big hip circles. Opens hip joint before any squat or deadlift."},
+    {name:"Bodyweight Squat",duration:"2 × 15 reps",icon:"🦵",note:"Slow controlled reps. Sit back, knees track over toes. Warms up entire lower body movement pattern."},
+    {name:"Hip Flexor Stretch (Lunge)",duration:"30 sec each side",icon:"🧘",note:"Kneeling lunge, push hips forward. Stretches hip flexors that shorten from sitting — improves squat depth."},
+    {name:"Glute Bridge",duration:"2 × 15 reps",icon:"🌉",note:"Lie on back, drive hips up. Activates glutes before loading. Weak glute activation = knees caving = injury."},
+    {name:"Leg Swing (Front-Back + Side)",duration:"10 reps each leg each direction",icon:"🏃",note:"Hold wall for balance. Swing leg forward/back then side-to-side. Dynamically opens hip for deep work."}
+  ],
+  rest: []
+};
+
+// ── EXPANDED PPL DATA — Week A & Week B ────────────────────────
+const PPL_DATA_WEEK = {
+  A: {
+    push: [
+      {name:"Incline Dumbbell Press",sets:"4",reps:"10–12",muscles:"Upper Chest · Front Shoulders · Triceps",equipment:"Dumbbell + Bench",note:"Set bench 30–45°. Lower slowly — 2s eccentric. Controls shoulder impingement vs flat barbell."},
+      {name:"Neutral-Grip Dumbbell Press (Flat)",sets:"3",reps:"10–12",muscles:"Chest · Triceps",equipment:"Dumbbell + Bench",note:"Palms face each other throughout. Reduces shoulder joint stress. Best if you have shoulder history."},
+      {name:"Seated Overhead Press (Dumbbell)",sets:"3",reps:"10–12",muscles:"Medial & Front Deltoid · Triceps",equipment:"Dumbbell + Bench",note:"Seated with back support. Start arms at 90°, press overhead. Never behind the neck."},
+      {name:"Lateral Raises",sets:"4",reps:"15–20",muscles:"Medial Deltoid (Width)",equipment:"Dumbbell",note:"Very light weight. Lead with elbows. Tilt pinky slightly up at top. Slow 3s lowering = most growth."},
+      {name:"Cable Chest Fly (Low-to-High)",sets:"3",reps:"14–16",muscles:"Upper Chest · Front Delt",equipment:"Cable Machine",note:"Cables set low. Pull upward and across. Maintains constant tension — dumbbells lose it at the top."},
+      {name:"Overhead Tricep Extension",sets:"3",reps:"12–14",muscles:"Long Head Triceps",equipment:"Dumbbell",note:"One dumbbell, both hands. Lower behind head slowly. Elbows point forward — don't flare."},
+      {name:"Tricep Pushdown (Cable — Bar)",sets:"3",reps:"12–15",muscles:"Lateral & Medial Tricep Head",equipment:"Cable Machine",note:"Elbows locked to sides. Press bar down fully — lock out. Full range of motion. Light to moderate weight."},
+      {name:"Pec Deck / Chest Fly Machine",sets:"3",reps:"12–15",muscles:"Chest (Isolation)",equipment:"Machine",note:"Set arms at chest height. Don't let weight stack fully rest between reps — keep tension. Feel the stretch at the open position."}
+    ],
+    pull: [
+      {name:"Lat Pulldown (Wide Grip)",sets:"4",reps:"10–12",muscles:"Latissimus Dorsi · Biceps",equipment:"Cable Machine",note:"Grip slightly wider than shoulders. Lean back 10°. Drive elbows to pockets. Think 'elbows down' not 'bar down'."},
+      {name:"Chest-Supported Dumbbell Row",sets:"4",reps:"10–12",muscles:"Mid Back · Lower Traps · Rear Delts",equipment:"Dumbbell + Incline Bench",note:"Chest fully on bench — lower back completely removed. Pull elbows back and up. Squeeze for 1 sec at top."},
+      {name:"Cable Seated Row (Close Grip)",sets:"3",reps:"10–12",muscles:"Mid Back · Biceps · Rear Delts",equipment:"Cable Machine",note:"Sit tall. Pull handle to lower sternum. Squeeze shoulder blades together. Don't round forward."},
+      {name:"Face Pulls (Cable — Rope)",sets:"3",reps:"15–20",muscles:"Rear Deltoid · External Rotators",equipment:"Cable Machine",note:"MANDATORY. Cable at forehead height. Pull to face — hands split apart, elbows out. Reverses rounded-shoulder posture."},
+      {name:"Straight-Arm Pulldown",sets:"3",reps:"12–15",muscles:"Lats (Long Head)",equipment:"Cable Machine",note:"Arms straight, slight bend at elbow. Pull bar from overhead to thighs. Keeps lats under tension — builds that V-taper sweep."},
+      {name:"Bicep Curl (Barbell or EZ Bar)",sets:"3",reps:"10–12",muscles:"Biceps Brachii",equipment:"Barbell / EZ Bar",note:"Elbows fixed at sides. Controlled lowering 3s. Full ROM — don't cut range to go heavier."},
+      {name:"Hammer Curl",sets:"3",reps:"12",muscles:"Brachialis · Brachioradialis",equipment:"Dumbbell",note:"Neutral grip throughout. Builds arm thickness more than regular curls. Alternate arms."},
+      {name:"Reverse Curl",sets:"2",reps:"12–15",muscles:"Brachioradialis · Forearm Extensors",equipment:"Barbell / Dumbbell",note:"Overhand grip (pronated). Curls the forearm — builds forearm thickness and grip. Often skipped but very effective."}
+    ],
+    legs: [
+      {name:"Box Squat (Goblet)",sets:"4",reps:"12",muscles:"Quads · Glutes · Hamstrings · Core",equipment:"Dumbbell + Box/Bench",note:"Dumbbell at chest. Box behind — sit BACK onto it. Teaches hip-hinge. Protects knees by preventing forward knee travel."},
+      {name:"Romanian Deadlift (Dumbbell)",sets:"4",reps:"10–12",muscles:"Hamstrings · Glutes · Spinal Erectors",equipment:"Dumbbell",note:"Hip hinge — push hips BACK, not down. Soft knee bend. Feel hamstring stretch. Neutral spine mandatory."},
+      {name:"Leg Press — High Foot Placement",sets:"4",reps:"12–15",muscles:"Glutes · Hamstrings",equipment:"Leg Press Machine",note:"Feet high and wide — shifts load to glutes/hamstrings away from quads. Don't let lower back peel off. Stop at 90° knee."},
+      {name:"Bulgarian Split Squat",sets:"3",reps:"10 each leg",muscles:"Quads · Glutes · Hip Flexors",equipment:"Dumbbell + Bench",note:"Rear foot on bench, front foot forward. Lower slowly. Front knee tracks toes. The hardest leg exercise — but incredible for single-leg strength and glute development."},
+      {name:"Leg Curl Machine",sets:"3",reps:"12–15",muscles:"Hamstrings (Short Head)",equipment:"Machine",note:"Full ROM — don't cut the range. Slow 3s lowering. Hamstrings are often undertrained — this targets the short head that RDL misses."},
+      {name:"Hanging Knee Raises",sets:"3",reps:"12–15",muscles:"Hip Flexors · Core · Obliques",equipment:"Pull-up Bar",note:"Hang from bar. Bring knees to chest. Lower slowly — no swinging. Progress to straight-leg raises over time."},
+      {name:"Calf Raise (Single-Leg on Step)",sets:"4",reps:"15–20",muscles:"Gastrocnemius · Soleus",equipment:"Step / Platform",note:"Full ROM — deep stretch at bottom, full contraction at top. Hold 1 sec. Calves need high reps — they're stubborn."},
+      {name:"Hip Abduction Machine",sets:"3",reps:"15–20",muscles:"Glute Medius · TFL",equipment:"Machine",note:"Push knees outward against resistance. Strengthens glute med — prevents knees from caving on squats and in daily life."}
+    ]
+  },
+  B: {
+    push: [
+      {name:"Flat Barbell Bench Press",sets:"4",reps:"8–10",muscles:"Chest · Front Shoulders · Triceps",equipment:"Barbell + Bench",note:"Grip 1.5× shoulder width. Lower to lower chest — not neck. Arch slightly. Drive feet into floor. Controlled 2s down."},
+      {name:"Cable Crossover (High-to-Low)",sets:"3",reps:"12–15",muscles:"Lower Chest · Front Delt",equipment:"Cable Machine",note:"Cables set high. Pull downward and across to hips. Targets lower chest that pressing misses. Keep slight elbow bend throughout."},
+      {name:"Machine Shoulder Press",sets:"3",reps:"10–12",muscles:"Front & Medial Deltoid · Triceps",equipment:"Machine",note:"Machine stabilises the path — lets you focus on the muscle. Good for beginners or when fatigued after heavy compound work."},
+      {name:"Dumbbell Front Raise",sets:"3",reps:"12–14",muscles:"Front Deltoid",equipment:"Dumbbell",note:"Alternate arms. Raise to shoulder height only — going higher shrugs the shoulder joint. Slow controlled lowering."},
+      {name:"Lateral Raises (Cable)",sets:"3",reps:"15–20",muscles:"Medial Deltoid",equipment:"Cable Machine",note:"Cable keeps tension at bottom unlike dumbbells. Cross-body: cable on opposite side. Single arm."},
+      {name:"Close-Grip Bench Press",sets:"3",reps:"10–12",muscles:"Triceps (All Heads) · Inner Chest",equipment:"Barbell + Bench",note:"Grip shoulder-width — not too close. Heavy tricep builder. Elbows stay close to body throughout."},
+      {name:"Dips (Chest-Focused)",sets:"3",reps:"10–15",muscles:"Lower Chest · Triceps · Front Delt",equipment:"Dip Bars",note:"Lean forward for chest focus. Lower until elbows reach 90°. Don't go deeper — shoulder stress. Bodyweight or add weight."},
+      {name:"Tricep Overhead Extension (Cable)",sets:"3",reps:"12–15",muscles:"Long Head Triceps",equipment:"Cable Machine",note:"Rope attachment, face away from cable. Extend overhead. Stretches long head of tricep — most growth in this position."}
+    ],
+    pull: [
+      {name:"Pull-Ups / Assisted Pull-Ups",sets:"4",reps:"6–10",muscles:"Lats · Biceps · Rear Delts",equipment:"Pull-up Bar / Assisted Machine",note:"Full ROM — start from dead hang, pull chin over bar. Use assisted machine if needed. Best lat builder there is."},
+      {name:"Barbell Bent-Over Row",sets:"4",reps:"8–10",muscles:"Mid Back · Lats · Biceps",equipment:"Barbell",note:"Hinge at hips, back at 45°. Pull to lower sternum. Squeeze shoulder blades. Heavy compound — treat it like a deadlift for the upper back."},
+      {name:"Single-Arm Dumbbell Row",sets:"3",reps:"10–12 each",muscles:"Lats · Mid Back · Biceps",equipment:"Dumbbell + Bench",note:"Knee on bench for support. Pull elbow back past torso. Full stretch at bottom — don't cut range. Great for identifying side imbalances."},
+      {name:"Reverse Fly (Dumbbell)",sets:"3",reps:"15–20",muscles:"Rear Deltoid · Lower Traps",equipment:"Dumbbell",note:"Bent forward at 90°. Light weight. Arms slightly bent. Raise to shoulder height — not higher. Squeeze rear delts at top."},
+      {name:"Face Pulls (Cable — Rope)",sets:"3",reps:"15–20",muscles:"Rear Deltoid · External Rotators",equipment:"Cable Machine",note:"MANDATORY. Cable at forehead height. Pull to face — hands split apart, elbows out. Reverses rounded-shoulder posture."},
+      {name:"Incline Dumbbell Curl",sets:"3",reps:"12",muscles:"Biceps (Full Stretch)",equipment:"Dumbbell + Incline Bench",note:"Seated on incline — arms hang straight down. This is the stretched position for biceps. Full ROM gives more growth."},
+      {name:"Concentration Curl",sets:"3",reps:"12 each",muscles:"Bicep Peak",equipment:"Dumbbell",note:"Elbow braced on inner thigh. Slow curl. Isolates the bicep completely. Great for building the peak."},
+      {name:"Shrugs (Dumbbell or Barbell)",sets:"3",reps:"12–15",muscles:"Upper Traps",equipment:"Dumbbell / Barbell",note:"Hold heavy. Shrug straight up — no rolling. Hold 1 sec at top. Builds trap thickness and neck support."}
+    ],
+    legs: [
+      {name:"Barbell Back Squat",sets:"4",reps:"8–10",muscles:"Quads · Glutes · Hamstrings · Core",equipment:"Barbell + Squat Rack",note:"Bar on upper traps. Feet shoulder-width, toes out 30°. Squat to parallel. Keep chest tall. The king of leg exercises."},
+      {name:"Stiff-Leg Deadlift (Barbell)",sets:"4",reps:"10",muscles:"Hamstrings · Glutes · Lower Back",equipment:"Barbell",note:"Legs nearly straight — slight bend. Hip hinge, bar slides down legs. Feel maximum hamstring stretch. Neutral spine always."},
+      {name:"Hack Squat Machine",sets:"4",reps:"10–12",muscles:"Quads (Primary) · Glutes",equipment:"Hack Squat Machine",note:"Feet low on platform for quad focus. Full ROM — deep as comfortable. Excellent quad builder when barbell squat is too technical."},
+      {name:"Walking Lunges (Dumbbell)",sets:"3",reps:"12 each leg",muscles:"Quads · Glutes · Balance",equipment:"Dumbbell",note:"Step forward, lower back knee toward floor. Front knee doesn't cave inward. Alternating legs across floor. Great for single-leg strength."},
+      {name:"Seated Leg Curl",sets:"3",reps:"12–15",muscles:"Hamstrings",equipment:"Machine",note:"Full ROM. Don't lift hips off seat. Slow controlled lowering. Complement to deadlifts which work hip-dominant hamstring."},
+      {name:"Leg Extension Machine",sets:"3",reps:"15",muscles:"Quads (Isolation)",equipment:"Machine",note:"Full extension at top. Slow 3s lowering. Don't use very heavy — knee joint stress. Light-to-moderate with full ROM is best."},
+      {name:"Standing Calf Raise (Machine)",sets:"4",reps:"15–20",muscles:"Gastrocnemius",equipment:"Machine",note:"Full ROM essential. Deep stretch at bottom, full contract at top. Hold 1 sec. Heavy is fine — calves can take load."},
+      {name:"Plank",sets:"3",reps:"30–45 sec",muscles:"Core · Transverse Abs · Glutes",equipment:"Bodyweight",note:"Elbows under shoulders. Body straight line. Don't let hips sag or pike up. Breathe normally. Core must be braced throughout."}
+    ]
+  }
+};
+
+// ── DAILY SYNC: Map day of week → PPL type ────────────────────
+// Mon/Thu = Push, Tue/Fri = Pull, Wed/Sat = Legs, Sun = Rest
+const DAY_TO_PPL = [null,'push','pull','legs','push','pull','legs']; // 0=Sun(rest),1=Mon,2=Tue...
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function getTodayPPL() {
+  const d = new Date().getDay(); // 0=Sun
+  return DAY_TO_PPL[d]; // null = rest day
+}
+
+function getCurrentWeek() {
+  // Alternate weeks A/B based on ISO week number
+  const d = new Date();
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  return weekNum % 2 === 0 ? 'B' : 'A';
+}
+
+function getPPLData(dayType) {
+  const week = getCurrentWeek();
+  return PPL_DATA_WEEK[week][dayType];
+}
+
+// Keep PPL_DATA as alias pointing to today's week for compatibility
+const PPL_DATA = {
+  get push() { return getPPLData('push'); },
+  get pull() { return getPPLData('pull'); },
+  get legs() { return getPPLData('legs'); }
 };
 
 const WEEKLY_SPLIT = [
-  {day:"Monday",focus:"Push — Chest · Shoulders · Triceps",color:"var(--accent3)",exs:[{n:"Incline Dumbbell Press",s:"4×10–12"},{n:"Neutral-Grip DB Press",s:"3×10–12"},{n:"Seated OHP",s:"3×10–12"},{n:"Lateral Raises",s:"3×14–16"},{n:"Overhead Tricep Extension",s:"3×12–14"}]},
-  {day:"Tuesday",focus:"Pull — Back · Biceps · Rear Delts",color:"var(--blue)",exs:[{n:"Lat Pulldown",s:"4×10–12"},{n:"Chest-Supported DB Row",s:"4×10–12"},{n:"Face Pulls",s:"3×15–20"},{n:"Bicep Curl",s:"3×12"},{n:"Hammer Curl",s:"3×12"}]},
-  {day:"Wednesday",focus:"Legs + Core",color:"var(--green)",exs:[{n:"Box Squat",s:"4×12"},{n:"Romanian Deadlift",s:"3×10–12"},{n:"Leg Press (High Feet)",s:"4×12–15"},{n:"Hanging Knee Raises",s:"3×12–15"},{n:"Calf Raise",s:"4×15–20"}]},
-  {day:"Thursday",focus:"Push (Repeat — try heavier)",color:"var(--accent3)",exs:[{n:"Incline DB Press",s:"4×10–12"},{n:"Neutral-Grip DB Press",s:"3×10–12"},{n:"Seated OHP",s:"3×10–12"},{n:"Lateral Raises",s:"3×14–16"},{n:"Overhead Tricep Extension",s:"3×12–14"}]},
-  {day:"Friday",focus:"Pull (Repeat)",color:"var(--blue)",exs:[{n:"Lat Pulldown",s:"4×10–12"},{n:"Chest-Supported DB Row",s:"4×10–12"},{n:"Face Pulls",s:"3×15–20"},{n:"Bicep Curl",s:"3×12"},{n:"Hammer Curl",s:"3×12"}]},
-  {day:"Saturday",focus:"Legs + Stamina",color:"var(--green)",exs:[{n:"Box Squat",s:"4×12"},{n:"Romanian Deadlift",s:"3×10–12"},{n:"Leg Press (High Feet)",s:"3×12"},{n:"Hanging Knee Raises",s:"3×15"},{n:"20 min Brisk Walk",s:"1×20min"}]},
-  {day:"Sunday",focus:"REST — Mandatory Recovery",color:"var(--purple)",exs:[{n:"Light stretching",s:"10 min"},{n:"Cat-Cow stretch",s:"5 min"},{n:"Walk (optional)",s:"20–30 min"},{n:"8+ hours sleep",s:"Required"}]}
+  {day:"Monday",focus:"Push — Chest · Shoulders · Triceps",color:"var(--accent3)",warmup:"5 min push warmup",exs:[{n:"🔥 Warmup (arm circles, band pull-aparts, wall slides)",s:"5–7 min"},{n:"Incline DB Press / Flat Barbell Press",s:"4×10–12"},{n:"DB or Cable Chest Press",s:"3×10–12"},{n:"Overhead Press (DB or Machine)",s:"3×10–12"},{n:"Lateral Raises",s:"4×15–20"},{n:"Cable Fly or Pec Deck",s:"3×12–15"},{n:"Tricep Extension",s:"3×12–14"},{n:"Tricep Pushdown",s:"3×12–15"}]},
+  {day:"Tuesday",focus:"Pull — Back · Biceps · Rear Delts",color:"var(--blue)",warmup:"5 min pull warmup",exs:[{n:"🔥 Warmup (dead hang, scapular pull-ups, band face pulls)",s:"5–7 min"},{n:"Lat Pulldown or Pull-Ups",s:"4×10–12"},{n:"Row (Chest-Supported or Barbell)",s:"4×10–12"},{n:"Cable Seated Row",s:"3×10–12"},{n:"Face Pulls — MANDATORY",s:"3×15–20"},{n:"Straight-Arm Pulldown",s:"3×12–15"},{n:"Bicep Curl (Barbell or DB)",s:"3×12"},{n:"Hammer Curl",s:"3×12"},{n:"Reverse Curl",s:"2×12–15"}]},
+  {day:"Wednesday",focus:"Legs — Quads · Glutes · Hamstrings",color:"var(--green)",warmup:"5 min legs warmup",exs:[{n:"🔥 Warmup (hip circles, bodyweight squats, glute bridges)",s:"5–7 min"},{n:"Box Squat (Goblet) or Barbell Squat",s:"4×10–12"},{n:"Romanian Deadlift",s:"4×10–12"},{n:"Leg Press (High Feet)",s:"4×12–15"},{n:"Bulgarian Split Squat or Walking Lunges",s:"3×10 each"},{n:"Leg Curl Machine",s:"3×12–15"},{n:"Calf Raise",s:"4×15–20"},{n:"Hip Abduction Machine",s:"3×15–20"},{n:"Hanging Knee Raises / Plank",s:"3×12–15"}]},
+  {day:"Thursday",focus:"Push — Week B variation (heavier)",color:"var(--accent3)",warmup:"5 min push warmup",exs:[{n:"🔥 Warmup (arm circles, band pull-aparts, chest stretch)",s:"5–7 min"},{n:"Flat Barbell Bench Press",s:"4×8–10"},{n:"Cable Crossover (High-to-Low)",s:"3×12–15"},{n:"Machine Shoulder Press",s:"3×10–12"},{n:"Front Raise + Lateral Raise",s:"3×12–14 each"},{n:"Dips (chest-focused)",s:"3×10–15"},{n:"Close-Grip Bench Press",s:"3×10–12"},{n:"Overhead Tricep Extension (Cable)",s:"3×12–15"}]},
+  {day:"Friday",focus:"Pull — Week B variation",color:"var(--blue)",warmup:"5 min pull warmup",exs:[{n:"🔥 Warmup (dead hang, thoracic rotation, band face pulls)",s:"5–7 min"},{n:"Pull-Ups / Assisted Pull-Ups",s:"4×6–10"},{n:"Barbell Bent-Over Row",s:"4×8–10"},{n:"Single-Arm DB Row",s:"3×10–12 each"},{n:"Reverse Fly (DB)",s:"3×15–20"},{n:"Face Pulls — MANDATORY",s:"3×15–20"},{n:"Incline Dumbbell Curl",s:"3×12"},{n:"Concentration Curl",s:"3×12 each"},{n:"Barbell Shrugs",s:"3×12–15"}]},
+  {day:"Saturday",focus:"Legs — Week B (Barbell + Machine)",color:"var(--green)",warmup:"5 min legs warmup",exs:[{n:"🔥 Warmup (hip flexor stretch, leg swings, glute bridge)",s:"5–7 min"},{n:"Barbell Back Squat",s:"4×8–10"},{n:"Stiff-Leg Deadlift",s:"4×10"},{n:"Hack Squat Machine",s:"4×10–12"},{n:"Walking Lunges (DB)",s:"3×12 each"},{n:"Seated Leg Curl",s:"3×12–15"},{n:"Leg Extension Machine",s:"3×15"},{n:"Standing Calf Raise (Machine)",s:"4×15–20"},{n:"Plank",s:"3×30–45 sec"}]},
+  {day:"Sunday",focus:"REST — Mandatory Recovery",color:"var(--purple)",warmup:"",exs:[{n:"Light stretching",s:"10 min"},{n:"Cat-Cow stretch",s:"5 min"},{n:"Walk (optional)",s:"20–30 min"},{n:"8+ hours sleep",s:"Required"},{n:"No gym — muscles grow during rest",s:"🌙"}]}
 ];
 
 const RECOVERY_DATA = {
@@ -1337,8 +1452,65 @@ function generateDietPlan() {
 // PPL WORKOUT TRACKER
 // ============================================================
 
+function renderTodayBanner() {
+  const todayPPL = getTodayPPL();
+  const dayName = DAY_NAMES[new Date().getDay()];
+  const week = getCurrentWeek();
+  const banner = document.getElementById('today-banner');
+  const label = document.getElementById('today-label');
+  const weekLabel = document.getElementById('today-week-label');
+  const icon = document.getElementById('today-icon');
+  if (!label) return;
+
+  if (!todayPPL) {
+    icon.textContent = '😴';
+    label.textContent = `${dayName} — Rest & Recovery Day`;
+    label.style.color = 'var(--purple)';
+    if (weekLabel) weekLabel.textContent = 'Light stretch or walk only. Muscles grow during rest.';
+    if (banner) banner.style.borderColor = 'rgba(170,68,255,.3)';
+  } else {
+    const typeLabels = {push:'Push Day — Chest · Shoulders · Triceps', pull:'Pull Day — Back · Biceps · Rear Delts', legs:'Legs Day — Quads · Glutes · Hamstrings'};
+    const typeIcons = {push:'💪', pull:'🔥', legs:'🦵'};
+    icon.textContent = typeIcons[todayPPL];
+    label.textContent = `${dayName} — ${typeLabels[todayPPL]}`;
+    if (weekLabel) weekLabel.textContent = `Week ${week} programme · ${PPL_DATA[todayPPL].length} exercises + warmup`;
+    // Auto-switch tab to today's type
+    const todayTab = document.getElementById(`tab-${todayPPL}`);
+    if (todayTab) switchPPL(todayPPL, todayTab);
+  }
+}
+
+function renderWarmup(day) {
+  const container = document.getElementById(`warmup-${day}`);
+  if (!container) return;
+  const warmups = WARMUP_DATA[day] || [];
+  container.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer" onclick="this.parentElement.querySelector('.warmup-body').style.display = this.parentElement.querySelector('.warmup-body').style.display==='none'?'block':'none'">
+        <span style="font-size:18px">🔥</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent3)">WARM-UP PROTOCOL <span style="font-size:10px;color:var(--muted);font-weight:400">(~5–7 min) — tap to expand</span></div>
+          <div style="font-size:11px;color:var(--muted)">Never skip — cold muscles tear, warm muscles grow</div>
+        </div>
+      </div>
+      <div class="warmup-body" style="display:none">
+        ${warmups.map(w => `
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(255,107,68,.06);border:1px solid rgba(255,107,68,.15);border-radius:10px;margin-bottom:8px">
+            <span style="font-size:20px;flex-shrink:0">${w.icon}</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;margin-bottom:2px">${w.name}</div>
+              <div style="font-size:11px;color:var(--accent3);font-weight:700;margin-bottom:4px">${w.duration}</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.4">${w.note}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
 function renderPPL() {
+  renderTodayBanner();
   ['push','pull','legs'].forEach(day => {
+    renderWarmup(day);
     const exs = PPL_DATA[day];
     const container = document.getElementById(`${day}-exercises`);
     if (!container) return;
@@ -1347,10 +1519,11 @@ function renderPPL() {
         <div class="workout-checkbox ${pplChecked[day][i] ? 'done' : ''}" onclick="toggleExercise('${day}',${i})"></div>
         <div class="workout-ex-info">
           <div class="workout-ex-name" style="${pplChecked[day][i] ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
-          <div class="workout-ex-meta">
-            <span class="chip chip-muscle" style="margin-right:5px;font-size:10px">🎯 ${ex.muscles}</span>
+          <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
+            <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${ex.muscles}</span>
+            <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4">${ex.note}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
         </div>
         <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
       </div>`).join('');
