@@ -194,6 +194,8 @@ async function saveUserData() {
     },
     foodLog,
     pplChecked,
+    targetCal,
+    targetProtein,
     lastUpdated: new Date().toISOString()
   };
 
@@ -223,12 +225,17 @@ async function loadUserData() {
   }
 
   const data = row.data;
+
+  // Restore state
   foodLog = data.foodLog || [];
   pplChecked = data.pplChecked || { push: {}, pull: {}, legs: {} };
+  if (data.targetCal) targetCal = data.targetCal;
+  if (data.targetProtein) targetProtein = data.targetProtein;
 
-  if (data.profile) {
-    const p = data.profile;
-    setTimeout(() => {
+  // Restore profile fields + trigger UI after DOM ready
+  setTimeout(() => {
+    if (data.profile) {
+      const p = data.profile;
       const nameEl = document.getElementById('p-name');
       const ageEl = document.getElementById('p-age');
       const weightEl = document.getElementById('p-weight');
@@ -248,16 +255,29 @@ async function loadUserData() {
         });
       }
       if (p.weight && p.height) calcBMI();
-    }, 100);
-  }
+      syncProfileToDiet();
+    }
 
-  console.log('Loaded from Supabase ✅');
+    // BUG FIX: trigger all UI updates after data is restored
+    if (typeof renderFoodLog === 'function') renderFoodLog();
+    if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
+    if (typeof renderPPL === 'function') renderPPL();
+    if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
+    updateAuthDisplay();
+
+    console.log('Loaded from Supabase ✅');
+  }, 150);
 }
 
 // ── AUTO SAVE ────────────────────────────────────────────────
-function autoSave() {
-  if (currentUser && !isGuest) saveUserData();
+async function autoSave() {
+  if (currentUser && !isGuest) await saveUserData();
 }
+
+// Save on tab hide / phone lock (mobile-safe alternative to beforeunload)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && currentUser && !isGuest) saveUserData();
+});
 
 window.addEventListener('beforeunload', () => {
   if (currentUser && !isGuest) saveUserData();

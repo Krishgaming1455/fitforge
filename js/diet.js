@@ -58,29 +58,28 @@ function generateDietPlan() {
     proteinFactor = 1.9;
     proteinTarget = Math.round(weight * proteinFactor);
     fatTarget = Math.round(weight * 1.0);
-    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
     logicNote = `For muscle gain at ${weight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong>. Carbs are high to fuel training.`;
   } else if (goal === 'loss') {
     calTarget = tdee - 400;
     proteinFactor = weight > 80 ? 1.3 : (weight > 60 ? 1.4 : 1.5);
     proteinTarget = Math.round(weight * proteinFactor);
     fatTarget = Math.round(weight * 0.7);
-    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
-    carbTarget = Math.max(carbTarget, 80);
+    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 80);
     logicNote = `For fat loss at ${weight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(weight*1.3)}–${Math.round(weight*1.5)}g). Carbs reduced, fat moderate.`;
   } else if (goal === 'strength') {
     calTarget = tdee + 200;
     proteinFactor = 2.0;
     proteinTarget = Math.round(weight * proteinFactor);
     fatTarget = Math.round(weight * 0.9);
-    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
     logicNote = `For strength at ${weight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
   } else {
     calTarget = tdee;
     proteinFactor = 1.6;
     proteinTarget = Math.round(weight * proteinFactor);
     fatTarget = Math.round(weight * 0.8);
-    carbTarget = Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4);
+    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
     logicNote = `Maintenance at ${weight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
   }
 
