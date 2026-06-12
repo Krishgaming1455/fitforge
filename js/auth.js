@@ -321,3 +321,10 @@ window.addEventListener('beforeunload', () => {
 });
 
 setInterval(autoSave, 30000);
+
+// Init on DOM ready — auth.js loads last so all functions exist
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+  initAuth();
+}

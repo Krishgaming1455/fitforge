@@ -236,7 +236,14 @@ function renderMyths() {
 // INIT
 // ============================================================
 
-window.addEventListener('DOMContentLoaded', initAuth);
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.food-search-wrap')) {
+      const s = document.getElementById('food-suggestions');
+      if (s) s.style.display = 'none';
+    }
+  });
+});
 document.addEventListener('click', e => {
   if (!e.target.closest('.food-search-wrap')) {
     const s = document.getElementById('food-suggestions'); if(s) s.style.display='none';
