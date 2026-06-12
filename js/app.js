@@ -58,19 +58,21 @@ function calcBMI() {
   const w = parseFloat(document.getElementById('p-weight').value);
   const h = parseFloat(document.getElementById('p-height').value);
   if (!w || !h) return;
-  const bmi = (w / ((h/100)**2)).toFixed(1);
+  const age = parseFloat(document.getElementById('p-age').value) || 25;
+  // Read goal + activity from diet section to stay consistent
+  const goal = document.getElementById('diet-goal')?.value || 'maintenance';
+  const activity = document.getElementById('diet-activity')?.value || 'moderate';
+
+  // Use shared engine — same numbers everywhere
+  const calc = getCalcValues(w, h, age, goal, activity);
+  const { bmi, tdee, calTarget, proteinTarget } = calc;
+  targetCal = calTarget;
+  targetProtein = proteinTarget;
+
   const status = bmi < 18.5 ? {l:'Underweight',c:'var(--blue)'} :
     bmi < 25 ? {l:'Normal Weight',c:'var(--green)'} :
     bmi < 30 ? {l:'Overweight',c:'var(--accent)'} : {l:'Obese',c:'var(--red)'};
   const pct = Math.min(100, Math.max(0, ((bmi - 10) / 30) * 100));
-  const age = parseFloat(document.getElementById('p-age').value) || 25;
-  const bmr = Math.round(10*w + 6.25*h - 5*age + 5);
-  const tdee = Math.round(bmr * 1.55);
-  const calTarget = Math.round(tdee + 400);
-  targetCal = calTarget;
-  // M1 FIX: match protein rate to BMI category (same as recommendation text)
-  const proteinRate = bmi < 18.5 ? 1.9 : bmi < 25 ? 1.6 : bmi < 30 ? 1.4 : 1.3;
-  targetProtein = Math.round(w * proteinRate);
 
   // Generate smart recommendations based on BMI
   let recommendation = '';
@@ -207,7 +209,7 @@ async function generateAIAdvice() {
       <h4>📊 Quick Analysis for ${name}</h4>
       <p>At <strong>${safeWeight}kg</strong>, here's your personalised plan:</p>
       <h4>🥩 Daily Protein Target</h4>
-      <p><strong>${Math.round(safeWeight * 1.8)}g protein/day</strong> — eggs, dal, paneer, chicken breast, Greek yoghurt.</p>
+      <p><strong>${targetProtein || Math.round(safeWeight * 1.8)}g protein/day</strong> — eggs, dal, paneer, chicken breast, Greek yoghurt.</p>
       <h4>💪 Training Priority</h4>
       <p>3–4 sessions/week. Progressive overload every 2 weeks (+2.5kg). Sleep 7–9hrs — muscles grow during rest, not in the gym.</p>
       <h4>⚡ Quick Wins</h4>

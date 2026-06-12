@@ -58,41 +58,24 @@ function generateDietPlan() {
   }
 
   const age = parseFloat(document.getElementById('p-age').value) || 25;
-  const bmr = 10 * safeWeight + 6.25 * height - 5 * age + 5;
-  // BUG FIX: fallback to moderate if activity value unexpected
-  const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity] || 1.55;
-  const tdee = Math.round(bmr * actMult);
 
-  let calTarget, proteinFactor, proteinTarget, carbTarget, fatTarget, logicNote;
+  // Use shared engine — same numbers as profile screen
+  const calc = getCalcValues(safeWeight, height, age, goal, activity);
+  const { bmi: calcBmi, tdee, calTarget, proteinTarget, proteinFactor, fatTarget, carbTarget } = calc;
 
+  // Update global targets so food tracker ring matches
+  targetCal = calTarget;
+  targetProtein = proteinTarget;
+
+  let logicNote = '';
   if (goal === 'gain') {
-    calTarget = tdee + 400;
-    proteinFactor = 1.9;
-    proteinTarget = Math.round(safeWeight * proteinFactor);
-    fatTarget = Math.round(safeWeight * 1.0);
-    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `For muscle gain at ${safeWeight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong>. Carbs are high to fuel training.`;
+    logicNote = `For muscle gain at ${safeWeight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong>. Carbs fuel training.`;
   } else if (goal === 'loss') {
-    calTarget = tdee - 400;
-    proteinFactor = safeWeight > 80 ? 1.3 : (safeWeight > 60 ? 1.4 : 1.5);
-    proteinTarget = Math.round(safeWeight * proteinFactor);
-    fatTarget = Math.round(safeWeight * 0.7);
-    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 80);
-    logicNote = `For fat loss at ${safeWeight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(safeWeight*1.3)}–${Math.round(safeWeight*1.5)}g). Carbs reduced, fat moderate.`;
+    logicNote = `For fat loss at ${safeWeight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong>. Carbs reduced, fat moderate.`;
   } else if (goal === 'strength') {
-    calTarget = tdee + 200;
-    proteinFactor = 2.0;
-    proteinTarget = Math.round(safeWeight * proteinFactor);
-    fatTarget = Math.round(safeWeight * 0.9);
-    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `For strength at ${safeWeight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
+    logicNote = `For strength at ${safeWeight}kg: +200 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
   } else {
-    calTarget = tdee;
-    proteinFactor = 1.6;
-    proteinTarget = Math.round(safeWeight * proteinFactor);
-    fatTarget = Math.round(safeWeight * 0.8);
-    carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `Maintenance at ${safeWeight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
+    logicNote = `Maintenance at ${safeWeight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
   }
 
   const isHighWeight = safeWeight > 75;
@@ -176,8 +159,7 @@ function generateDietPlan() {
   let totalCal=0, totalP=0, totalC=0, totalF=0;
   meals.forEach(m => m.foods.forEach(f => { totalCal+=f.cal||0; totalP+=f.p||0; totalC+=f.c||0; totalF+=f.f||0; }));
 
-  targetCal = calTarget;
-  targetProtein = proteinTarget;
+  // targetCal and targetProtein already set by getCalcValues above
   document.getElementById('nt-prot-t').textContent = proteinTarget;
   document.getElementById('cal-target-display').textContent = calTarget;
 

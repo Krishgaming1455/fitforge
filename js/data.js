@@ -202,3 +202,32 @@ let pplChecked = {push:{}, pull:{}, legs:{}};
 // ============================================================
 // AUTHENTICATION & DATA PERSISTENCE
 // ============================================================
+
+// ── SHARED CALCULATION ENGINE ─────────────────────────────────
+// Single source of truth used by both profile (app.js) and diet plan (diet.js)
+function getCalcValues(weight, height, age, goal, activity) {
+  const w = parseFloat(weight) || 70;
+  const h = parseFloat(height) || 175;
+  const a = parseFloat(age) || 25;
+  const bmi = parseFloat((w / ((h/100)**2)).toFixed(1));
+
+  const bmr = Math.round(10*w + 6.25*h - 5*a + 5);
+  const actMult = {light:1.375, moderate:1.55, active:1.725}[activity] || 1.55;
+  const tdee = Math.round(bmr * actMult);
+
+  // Protein rate based on GOAL (not BMI) — consistent everywhere
+  const proteinRates = { gain:1.9, loss: w > 80 ? 1.3 : w > 60 ? 1.4 : 1.5, strength:2.0, maintenance:1.6 };
+  const proteinFactor = proteinRates[goal] || 1.6;
+  const proteinTarget = Math.round(w * proteinFactor);
+
+  // Calorie target based on goal
+  const calAdjust = { gain:400, loss:-400, strength:200, maintenance:0 };
+  const calTarget = tdee + (calAdjust[goal] || 0);
+
+  // Fat and carbs
+  const fatRates = { gain:1.0, loss:0.7, strength:0.9, maintenance:0.8 };
+  const fatTarget = Math.round(w * (fatRates[goal] || 0.8));
+  const carbTarget = Math.max(Math.round((calTarget - proteinTarget*4 - fatTarget*9) / 4), 50);
+
+  return { bmi, bmr, tdee, calTarget, proteinTarget, proteinFactor, fatTarget, carbTarget, actMult };
+}
