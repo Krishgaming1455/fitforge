@@ -239,3 +239,71 @@ Supabase project: tlzymwuoedjyzpkockfe.supabase.co
 2. BUG 5 (visibilitychange — 1 line)
 3. BUG 6 (carbTarget — 1 line in diet.js)
 4. Then start Feature: Home Screen Dashboard
+
+---
+
+## 🔬 DEEP AUDIT BUGS (Session 5)
+
+### ❌ BUG: actMult is undefined if activity dropdown has unexpected value
+- `actMult = {light:1.375, moderate:1.55, active:1.725}[activity]`
+- If activity value doesn't match exactly → actMult = undefined → tdee = NaN → whole diet plan breaks
+- Fix: add fallback `|| 1.55` → `actMult = {...}[activity] || 1.55;`
+
+### ❌ BUG: generateDietPlan no weight validation
+- If user clicks Generate Diet with empty weight field → weight = NaN → all calculations produce NaN
+- Fix: add `if (!weight || weight < 20 || weight > 300) { showError...; return; }` at top of generateDietPlan
+
+### ❌ BUG: 2x saveUserData called without await in visibilitychange + beforeunload
+- `if (document.hidden) saveUserData()` — not awaited, may not complete before tab closes
+- Fix: can't truly await on visibilitychange but add synchronous localStorage backup as fallback
+
+### ❌ BUG: Enter key doesn't submit login/signup forms
+- Users expect pressing Enter on password field to login
+- Affects: #auth-login-password, #auth-login-email, #auth-signup-password, #auth-signup-confirm
+- Fix: add `onkeydown="if(event.key==='Enter') handleLogin()"` to login fields
+- Fix: add `onkeydown="if(event.key==='Enter') handleSignup()"` to signup fields
+
+### ❌ BUG: Enter key on food search doesn't trigger search
+- #food-search-input has no enter key handler
+- Fix: add `onkeydown="if(event.key==='Enter') searchFood()"` to food search input
+
+### ⚠️ BUG: renderRecovery crashes if RECOVERY_DATA key missing
+- `RECOVERY_DATA[currentRecoveryArea][currentRecoveryType]` - no fallback
+- If area/type combo doesn't exist → TypeError: cannot read properties of undefined
+- Fix: add null check `const entry = RECOVERY_DATA[currentRecoveryArea]?.[currentRecoveryType]; if (!entry) return;`
+
+### ⚠️ BUG: foodLog never resets daily
+- User's food from yesterday shows today
+- foodLog saved to Supabase without date → loads same log every day
+- Fix: save foodLog as `{ date: today, items: foodLog }` — on load check if date matches today, if not reset to []
+
+### ⚠️ BUG: XSS risk — user weight injected into innerHTML
+- `innerHTML = ...At ${weight}kg...` and `${logicNote}` rendered as HTML
+- If weight input contains `<script>` or HTML tags → injected into DOM
+- Fix: sanitize weight input to number only before using in innerHTML: `weight = parseFloat(weight) || 0`
+
+### ⚠️ BUG: workout date reset uses localStorage but data uses Supabase
+- `fitforge_last_workout_date` stored in localStorage
+- On different device/browser → reset prompt never fires (localStorage is device-local)
+- Fix: save lastWorkoutDate inside Supabase data object alongside pplChecked
+
+### ⚠️ BUG: Profile name change doesn't update mobile/desktop auth display
+- updateAuthDisplay() reads p-name at call time
+- If user types new name in profile and saves, header still shows old name until refresh
+- Fix: call updateAuthDisplay() at end of calcBMI() or whenever p-name changes (add oninput to p-name field)
+
+### ℹ️ INFO: food DB has extra micronutrient fields (fi, vitC, vitD, ca, fe, k) not shown in UI
+- Fields exist in data but diet screen only shows cal/protein/carbs/fat
+- Opportunity: add micronutrient display in diet section (already in TODO features)
+
+---
+
+## 📋 UPDATED FIX ORDER NEXT SESSION
+1. actMult fallback (1 line, diet.js)
+2. weight validation in generateDietPlan (5 lines, diet.js)
+3. Enter key handlers on all inputs (index.html)
+4. renderRecovery null check (2 lines, recovery.js)
+5. foodLog daily reset with date key (auth.js + diet.js)
+6. workout date → move to Supabase (auth.js + gym.js)
+7. updateAuthDisplay on p-name change (index.html)
+8. Then features: Home Screen Dashboard
