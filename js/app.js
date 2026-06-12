@@ -68,7 +68,9 @@ function calcBMI() {
   const tdee = Math.round(bmr * 1.55);
   const calTarget = Math.round(tdee + 400);
   targetCal = calTarget;
-  targetProtein = Math.round(w * 1.8);
+  // M1 FIX: match protein rate to BMI category (same as recommendation text)
+  const proteinRate = bmi < 18.5 ? 1.9 : bmi < 25 ? 1.6 : bmi < 30 ? 1.4 : 1.3;
+  targetProtein = Math.round(w * proteinRate);
 
   // Generate smart recommendations based on BMI
   let recommendation = '';
