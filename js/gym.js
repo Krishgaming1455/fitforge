@@ -19,7 +19,8 @@ function renderTodayBanner() {
   const label = document.getElementById('today-label');
   const weekLabel = document.getElementById('today-week-label');
   const icon = document.getElementById('today-icon');
-  if (!label) return;
+  // Null check ALL elements before use
+  if (!label || !icon) return;
 
   if (!todayPPL) {
     icon.textContent = '😴';
@@ -36,6 +37,11 @@ function renderTodayBanner() {
     // Auto-switch tab to today's type
     const todayTab = document.getElementById(`tab-${todayPPL}`);
     if (todayTab) switchPPL(todayPPL, todayTab);
+    // Auto-open warmup on today's day
+    setTimeout(() => {
+      const warmupBody = document.querySelector(`#ppl-${todayPPL} .warmup-body`);
+      if (warmupBody) warmupBody.style.display = 'block';
+    }, 200);
   }
 }
 

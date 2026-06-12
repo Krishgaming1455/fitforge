@@ -11,6 +11,16 @@
 
 <!-- AUTH SCREEN -->
 <div id="screen-auth" class="screen active">
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,15,.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent)">FIT<span style="color:var(--accent2)">FORGE</span></div>
+  <div style="display:flex;gap:7px">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.15s"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.3s"></div>
+  </div>
+  <div style="font-size:12px;color:var(--muted)" id="loading-text">Loading your data…</div>
+</div>
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
     <div class="card" style="max-width:400px;width:100%;padding:40px">
       <div style="text-align:center;margin-bottom:30px">
@@ -134,8 +144,8 @@
     <div class="card" style="margin-bottom:28px">
       <h3 style="font-size:15px;margin-bottom:16px">👤 Personal Details</h3>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="p-name" placeholder="Your name" onchange="autoSave()"></div>
-        <div class="form-group"><label class="form-label">Age</label><input class="form-input" id="p-age" type="number" placeholder="25" min="13" max="80" onchange="autoSave()"></div>
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="p-name" placeholder="Your name" onchange="updateAuthDisplay();autoSave()"></div>
+        <div class="form-group"><label class="form-label">Age</label><input class="form-input" id="p-age" type="number" placeholder="25" min="13" max="80" onchange="syncProfileToDiet();autoSave()"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Weight (kg)</label><input class="form-input" id="p-weight" type="number" placeholder="70" min="30" max="200" onchange="calcBMI(); autoSave()"></div>

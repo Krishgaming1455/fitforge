@@ -7,16 +7,19 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── INIT ─────────────────────────────────────────────────────
 async function initAuth() {
-  // Show a loading state
-  document.getElementById('screen-auth').classList.add('active');
+  // M6 FIX: show loading overlay while checking session
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = 'flex';
 
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
     isGuest = false;
     await loadUserData();
+    if (overlay) overlay.style.display = 'none';
     showMainApp();
   } else {
+    if (overlay) overlay.style.display = 'none';
     showAuthScreen();
   }
 
@@ -130,6 +133,8 @@ async function handleLogin() {
 
 // ── GUEST ────────────────────────────────────────────────────
 function loginAsGuest() {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = 'none';
   currentUser = { email: 'Guest', id: 'guest_' + Date.now() };
   isGuest = true;
   pplChecked = { push: {}, pull: {}, legs: {} };
