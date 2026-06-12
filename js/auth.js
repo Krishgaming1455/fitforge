@@ -7,25 +7,30 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── INIT ─────────────────────────────────────────────────────
 async function initAuth() {
-  // M6 FIX: show loading overlay while checking session
   const overlay = document.getElementById('loading-overlay');
-  if (overlay) overlay.style.display = 'flex';
+  const hideOverlay = () => { if (overlay) overlay.style.display = 'none'; };
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    isGuest = false;
-    await loadUserData();
-    if (overlay) overlay.style.display = 'none';
-    showMainApp();
-  } else {
-    if (overlay) overlay.style.display = 'none';
+  try {
+    if (overlay) overlay.style.display = 'flex';
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      isGuest = false;
+      await loadUserData();
+      hideOverlay();
+      showMainApp();
+    } else {
+      hideOverlay();
+      showAuthScreen();
+    }
+  } catch(err) {
+    console.error('initAuth error:', err);
+    hideOverlay();
     showAuthScreen();
   }
 
-  // Only listen for future auth changes (token refresh, sign out)
-  // Use INITIAL_SESSION guard to avoid double-loading on mobile
-  let initialised = !!session;
+  let initialised = true;
   sb.auth.onAuthStateChange(async (event, newSession) => {
     if (event === 'SIGNED_IN' && newSession && !initialised) {
       initialised = true;
@@ -34,7 +39,6 @@ async function initAuth() {
       await loadUserData();
       showMainApp();
     } else if (event === 'SIGNED_IN' && newSession && initialised) {
-      // Already loaded — just update display
       updateAuthDisplay();
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;

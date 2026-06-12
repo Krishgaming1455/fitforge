@@ -10,17 +10,18 @@
 <body>
 
 <!-- AUTH SCREEN -->
-<div id="screen-auth" class="screen active">
-<!-- Loading overlay -->
-<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,15,.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+<!-- Loading overlay — outside all screens -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent)">FIT<span style="color:var(--accent2)">FORGE</span></div>
   <div style="display:flex;gap:7px">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite"></div>
     <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.15s"></div>
     <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.3s"></div>
   </div>
-  <div style="font-size:12px;color:var(--muted)" id="loading-text">Loading your data…</div>
+  <div style="font-size:12px;color:var(--muted)">Loading your data…</div>
 </div>
+
+<div id="screen-auth" class="screen active">
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
     <div class="card" style="max-width:400px;width:100%;padding:40px">
       <div style="text-align:center;margin-bottom:30px">
