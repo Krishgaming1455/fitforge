@@ -197,3 +197,45 @@ Supabase project: tlzymwuoedjyzpkockfe.supabase.co
 - If user changes profile weight and stays on profile, diet isn't updated
 - Fix: call syncProfileToDiet() in calcBMI() too
 
+
+---
+
+## 🔬 CONFIRMED BUGS FROM STATIC ANALYSIS (Fix These First Next Session)
+
+### ❌ BUG 1: renderFoodLog not called after loadUserData (CRITICAL)
+- Food logged previously won't appear after login/refresh
+- Fix: add `renderFoodLog(); updateNutritionDisplay();` at end of loadUserData() in auth.js
+
+### ❌ BUG 2: renderPPL not called after loadUserData (CRITICAL)
+- Gym checkboxes won't show as checked after login/refresh even if saved to Supabase
+- Fix: add `renderPPL();` at end of loadUserData() in auth.js
+
+### ❌ BUG 3: targetCal and targetProtein not saved to Supabase (CRITICAL)
+- Calorie target resets to 2800 on every refresh
+- Food log ring/progress shows wrong target
+- Fix: include targetCal and targetProtein in saveUserData() data object, restore in loadUserData()
+
+### ❌ BUG 4: updateNutritionDisplay not called after loadUserData
+- Calorie ring stays at 0 even if food was logged previously
+- Fix: call updateNutritionDisplay() after restoring foodLog in loadUserData()
+
+### ❌ BUG 5: visibilitychange not handled — mobile data loss
+- window.beforeunload doesn't fire reliably on iOS/Android
+- If user switches tabs or locks phone, data may not save
+- Fix: add `document.addEventListener('visibilitychange', () => { if (document.hidden) autoSave(); });` in auth.js
+
+### ⚠️ BUG 6: carbTarget can go negative for gain/strength goals
+- Math.max(carbTarget, 80) only applied for fat loss goal
+- For extreme gain targets with high protein/fat, carbs = negative number
+- Fix: add Math.max(carbTarget, 50) for all goals in diet.js
+
+### ⚠️ BUG 7: double body tag in index.html (ALREADY FIXED but verify)
+- Was fixed earlier — confirm it's clean
+
+---
+
+## 📋 FIX ORDER FOR NEXT SESSION
+1. BUG 1 + 2 + 3 + 4 (all in loadUserData in auth.js — fix together in one go)
+2. BUG 5 (visibilitychange — 1 line)
+3. BUG 6 (carbTarget — 1 line in diet.js)
+4. Then start Feature: Home Screen Dashboard
