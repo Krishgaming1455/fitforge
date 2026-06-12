@@ -173,21 +173,44 @@ async function generateAIAdvice() {
   const height = document.getElementById('p-height').value || '175';
   const area = document.getElementById('ai-advice-area');
   if (!area) { calcBMI(); setTimeout(generateAIAdvice, 200); return; }
+
   area.innerHTML = `<div class="ai-response"><div style="display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.14s"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.28s"></div> Generating your plan…</div></div>`;
+
+  // N6 FIX: AbortController with 10s timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: controller.signal,
       headers: {"Content-Type": "application/json", "x-api-key": ""},
       body: JSON.stringify({
-        model: "claude-opus", max_tokens: 1000,
+        model: "claude-haiku-4-5-20251001", max_tokens: 1000,
         messages: [{role:"user",content:`You are a professional gym trainer. Provide advice for: Name: ${name}, Age: ${age}, Weight: ${weight}kg, Height: ${height}cm. Provide structure with <h4> tags. Keep it under 300 words.`}]
       })
     });
+    clearTimeout(timeout);
     const data = await res.json();
-    const txt = data.content?.map(c => c.text||'').join('') || 'Analysis unavailable.';
+    // F7 FIX: check for API errors
+    if (data.error || !data.content) throw new Error(data.error?.message || 'No response');
+    const txt = data.content?.map(c => c.text||'').join('') || '';
+    if (!txt) throw new Error('Empty response');
     area.innerHTML = `<div style="font-size:11px;color:var(--accent2);font-weight:700;letter-spacing:.8px;margin-bottom:8px">🤖 AI ANALYSIS FOR ${name.toUpperCase()}</div><div class="ai-response">${txt}</div>`;
   } catch(e) {
-    area.innerHTML = `<div class="ai-response"><h4>Quick Analysis</h4><p>At ${weight}kg your immediate priority is caloric management. With training 3-4x/week, protein target: ${Math.round(Number(weight)*1.8)}g/day from eggs, dal, milk, and chicken. Focus on consistent progression in the gym and protein timing post-workout.</p></div>`;
+    clearTimeout(timeout);
+    // F7 FIX: always show useful fallback
+    const safeWeight = parseFloat(weight) || 60;
+    area.innerHTML = `<div class="ai-response">
+      <h4>📊 Quick Analysis for ${name}</h4>
+      <p>At <strong>${safeWeight}kg</strong>, here's your personalised plan:</p>
+      <h4>🥩 Daily Protein Target</h4>
+      <p><strong>${Math.round(safeWeight * 1.8)}g protein/day</strong> — eggs, dal, paneer, chicken breast, Greek yoghurt.</p>
+      <h4>💪 Training Priority</h4>
+      <p>3–4 sessions/week. Progressive overload every 2 weeks (+2.5kg). Sleep 7–9hrs — muscles grow during rest, not in the gym.</p>
+      <h4>⚡ Quick Wins</h4>
+      <p>Eat within 45 min post-workout. Drink 3L water daily. Creatine monohydrate 5g/day is the most proven supplement.</p>
+    </div>`;
   }
 }
 

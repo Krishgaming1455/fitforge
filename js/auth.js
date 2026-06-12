@@ -96,9 +96,12 @@ async function handleSignup() {
   if (error) return showError(errorEl, '❌ ' + error.message);
 
   if (data.user && !data.session) {
-    // Email confirmation required
-    showError(errorEl, '✅ Check your email to confirm your account!');
+    errorEl.style.display = 'block';
     errorEl.style.color = 'var(--green)';
+    errorEl.style.background = 'rgba(68,255,136,.08)';
+    errorEl.style.borderColor = 'rgba(68,255,136,.3)';
+    errorEl.textContent = '✅ Check your email to confirm your account!';
+    return;
   }
 }
 
@@ -132,6 +135,13 @@ function loginAsGuest() {
   pplChecked = { push: {}, pull: {}, legs: {} };
   foodLog = [];
   showMainApp();
+  // C3 FIX: re-render UI for guest since loadUserData is skipped
+  setTimeout(() => {
+    if (typeof renderFoodLog === 'function') renderFoodLog();
+    if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
+    if (typeof renderPPL === 'function') renderPPL();
+    if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
+  }, 150);
 }
 
 // ── LOGOUT ───────────────────────────────────────────────────
@@ -182,6 +192,8 @@ function showError(element, message) {
 // ── SAVE TO SUPABASE ─────────────────────────────────────────
 async function saveUserData() {
   if (!currentUser || isGuest) return;
+  const saveBtn = document.getElementById('save-profile-btn');
+  if (saveBtn) { saveBtn.textContent = 'Saving…'; saveBtn.disabled = true; }
 
   const data = {
     profile: {
@@ -193,9 +205,11 @@ async function saveUserData() {
       injuryTags: [...document.querySelectorAll('[onclick*="toggleTag"]')].filter(t => t.classList.contains('selected')).map(t => t.textContent.trim()),
     },
     foodLog,
+    foodLogDate: new Date().toDateString(),
     pplChecked,
     targetCal,
     targetProtein,
+    lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
 
@@ -205,6 +219,7 @@ async function saveUserData() {
 
   if (error) console.error('Save error:', error.message);
   else console.log('Saved to Supabase ✅');
+  if (saveBtn) { saveBtn.textContent = 'Save Profile'; saveBtn.disabled = false; }
 }
 
 // ── LOAD FROM SUPABASE ───────────────────────────────────────
@@ -225,9 +240,22 @@ async function loadUserData() {
   }
 
   const data = row.data;
+  const today = new Date().toDateString();
 
-  // Restore state
-  foodLog = data.foodLog || [];
+  // BUG FIX: foodLog daily reset — check if saved date matches today
+  if (data.foodLogDate === today) {
+    foodLog = data.foodLog || [];
+  } else {
+    foodLog = []; // new day — reset food log
+  }
+
+  // BUG FIX: workout date from Supabase (cross-device)
+  const lastWorkoutDate = data.lastWorkoutDate || null;
+  if (lastWorkoutDate && lastWorkoutDate !== today) {
+    // new day on any device — prompt reset handled in gym.js via flag
+    window._showWorkoutResetPrompt = true;
+  }
+
   pplChecked = data.pplChecked || { push: {}, pull: {}, legs: {} };
   if (data.targetCal) targetCal = data.targetCal;
   if (data.targetProtein) targetProtein = data.targetProtein;

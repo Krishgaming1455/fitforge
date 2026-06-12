@@ -307,3 +307,33 @@ Supabase project: tlzymwuoedjyzpkockfe.supabase.co
 6. workout date → move to Supabase (auth.js + gym.js)
 7. updateAuthDisplay on p-name change (index.html)
 8. Then features: Home Screen Dashboard
+
+---
+
+## ✅ FIXED THIS SESSION (From Other AI Audit)
+- C1: Auth race condition — initialised guard ✅
+- C2: Script load order fixed — auth.js now loads last ✅
+- C3: Guest mode now re-renders UI ✅
+- C4: Workout date moved to Supabase, removed localStorage ✅
+- M3: actMult fallback || 1.55 ✅
+- M4: Food IDs now use index not name ✅
+- M7/N1: Weight validation in generateDietPlan ✅
+- N3: Reset prompt only if exercises were checked ✅
+- N4: Success message styled correctly (green) ✅
+- N5: Food search debounced 200ms ✅
+- N6: AI fetch has AbortController 10s timeout ✅
+- N7: Recovery has null check ✅
+- F1: Food log resets daily via foodLogDate ✅
+- F6: Guest warning banner exists ✅
+- F7: AI always shows useful fallback content ✅
+
+## ⬜ STILL REMAINING
+- M1: calcBMI recommendation HTML duplicates protein logic (cosmetic)
+- M5: syncProfileToDiet not called on height/age change (minor)
+- M6: Loading indicator only on save button (login has spinner text already)
+- N2: Exercise name as key — fragile if names change (acceptable tradeoff)
+- N8: Mobile logout overlap — needs visual testing
+- F2: Workout history not built yet
+- F3: Progressive overload not built yet
+- F4: Home dashboard not built yet
+- F5: Water tracker not built yet

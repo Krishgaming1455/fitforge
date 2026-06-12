@@ -1,13 +1,14 @@
 function checkDailyWorkoutReset() {
-  const today = new Date().toDateString();
-  const lastDate = localStorage.getItem('fitforge_last_workout_date');
-  if (lastDate && lastDate !== today) {
-    if (confirm('New day! Reset yesterday\'s workout checkboxes?\n[OK] = Reset  [Cancel] = Keep')) {
+  // C4 FIX: use window._showWorkoutResetPrompt set by loadUserData (cross-device via Supabase)
+  if (window._showWorkoutResetPrompt) {
+    window._showWorkoutResetPrompt = false;
+    // N3 FIX: only prompt if user actually checked something
+    const hasChecked = Object.values(pplChecked).some(day => Object.values(day).some(v => v));
+    if (hasChecked && confirm('New day! Reset yesterday\'s workout checkboxes?\n[OK] = Reset  [Cancel] = Keep')) {
       pplChecked = { push: {}, pull: {}, legs: {} };
       autoSave();
     }
   }
-  localStorage.setItem('fitforge_last_workout_date', today);
 }
 
 function renderTodayBanner() {

@@ -1,9 +1,20 @@
 function generateDietPlan() {
-  const weight = parseFloat(document.getElementById('diet-weight').value) || 70;
+  const rawWeight = document.getElementById('diet-weight').value;
+  const weight = parseFloat(rawWeight);
   const height = parseFloat(document.getElementById('p-height').value) || 175;
   const goal = document.getElementById('diet-goal').value;
   const activity = document.getElementById('diet-activity').value;
   const dietType = document.getElementById('diet-type').value;
+  const resultsEl = document.getElementById('diet-results');
+
+  // BUG FIX: weight validation
+  if (!weight || weight < 20 || weight > 300) {
+    if (resultsEl) resultsEl.innerHTML = `<div class="info-box" style="border-color:rgba(255,68,102,.3);color:#ff4466">⚠️ Please enter a valid weight (20–300 kg) before generating your plan.</div>`;
+    return;
+  }
+
+  // BUG FIX: sanitize weight to prevent XSS
+  const safeWeight = parseFloat(weight.toFixed(1));
 
   // Calculate BMI for smart warnings
   const bmi = (weight / ((height/100)**2)).toFixed(1);
@@ -47,8 +58,9 @@ function generateDietPlan() {
   }
 
   const age = parseFloat(document.getElementById('p-age').value) || 25;
-  const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-  const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity];
+  const bmr = 10 * safeWeight + 6.25 * height - 5 * age + 5;
+  // BUG FIX: fallback to moderate if activity value unexpected
+  const actMult = {light: 1.375, moderate: 1.55, active: 1.725}[activity] || 1.55;
   const tdee = Math.round(bmr * actMult);
 
   let calTarget, proteinFactor, proteinTarget, carbTarget, fatTarget, logicNote;
@@ -56,34 +68,34 @@ function generateDietPlan() {
   if (goal === 'gain') {
     calTarget = tdee + 400;
     proteinFactor = 1.9;
-    proteinTarget = Math.round(weight * proteinFactor);
-    fatTarget = Math.round(weight * 1.0);
+    proteinTarget = Math.round(safeWeight * proteinFactor);
+    fatTarget = Math.round(safeWeight * 1.0);
     carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `For muscle gain at ${weight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong>. Carbs are high to fuel training.`;
+    logicNote = `For muscle gain at ${safeWeight}kg: TDEE ${tdee} kcal + 400 kcal surplus = <strong>${calTarget} kcal/day</strong>. Protein set at 1.9g/kg = <strong>${proteinTarget}g</strong>. Carbs are high to fuel training.`;
   } else if (goal === 'loss') {
     calTarget = tdee - 400;
-    proteinFactor = weight > 80 ? 1.3 : (weight > 60 ? 1.4 : 1.5);
-    proteinTarget = Math.round(weight * proteinFactor);
-    fatTarget = Math.round(weight * 0.7);
+    proteinFactor = safeWeight > 80 ? 1.3 : (safeWeight > 60 ? 1.4 : 1.5);
+    proteinTarget = Math.round(safeWeight * proteinFactor);
+    fatTarget = Math.round(safeWeight * 0.7);
     carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 80);
-    logicNote = `For fat loss at ${weight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(weight*1.3)}–${Math.round(weight*1.5)}g). Carbs reduced, fat moderate.`;
+    logicNote = `For fat loss at ${safeWeight}kg: TDEE ${tdee} kcal − 400 kcal deficit = <strong>${calTarget} kcal/day</strong>. Protein at ${proteinFactor}g/kg = <strong>${proteinTarget}g</strong> (muscle-preserving, realistic range — ${Math.round(safeWeight*1.3)}–${Math.round(safeWeight*1.5)}g). Carbs reduced, fat moderate.`;
   } else if (goal === 'strength') {
     calTarget = tdee + 200;
     proteinFactor = 2.0;
-    proteinTarget = Math.round(weight * proteinFactor);
-    fatTarget = Math.round(weight * 0.9);
+    proteinTarget = Math.round(safeWeight * proteinFactor);
+    fatTarget = Math.round(safeWeight * 0.9);
     carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `For strength at ${weight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
+    logicNote = `For strength at ${safeWeight}kg: slight surplus of +200 kcal = <strong>${calTarget} kcal/day</strong>. Protein at 2g/kg = <strong>${proteinTarget}g</strong>. Moderate carbs for performance.`;
   } else {
     calTarget = tdee;
     proteinFactor = 1.6;
-    proteinTarget = Math.round(weight * proteinFactor);
-    fatTarget = Math.round(weight * 0.8);
+    proteinTarget = Math.round(safeWeight * proteinFactor);
+    fatTarget = Math.round(safeWeight * 0.8);
     carbTarget = Math.max(Math.round((calTarget - proteinTarget * 4 - fatTarget * 9) / 4), 50);
-    logicNote = `Maintenance at ${weight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
+    logicNote = `Maintenance at ${safeWeight}kg: eating at TDEE = <strong>${calTarget} kcal/day</strong>. Protein at 1.6g/kg = <strong>${proteinTarget}g</strong>. Balanced macros.`;
   }
 
-  const isHighWeight = weight > 75;
+  const isHighWeight = safeWeight > 75;
   const isLoss = goal === 'loss';
   const isGain = goal === 'gain';
   const hasNonVeg = dietType === 'nonveg' || dietType === 'fullnonveg';
@@ -94,9 +106,9 @@ function generateDietPlan() {
   const dalG = isLoss ? Math.round(120 + weight * 0.3) : (isGain ? Math.round(140 + weight * 0.5) : 130);
   const soyaG = isLoss && weight > 70 ? 80 : (isLoss ? 60 : 0);
   const riceG = isLoss ? Math.round(70 + weight * 0.2) : (isGain ? Math.round(120 + weight * 0.6) : 100);
-  const rotiCount = isLoss ? (weight > 80 ? 3 : 2) : (isGain ? (weight > 80 ? 6 : weight > 65 ? 5 : 4) : 3);
+  const rotiCount = isLoss ? (safeWeight > 80 ? 3 : 2) : (isGain ? (safeWeight > 80 ? 6 : weight > 65 ? 5 : 4) : 3);
   const oatsG = isGain ? Math.round(50 + weight * 0.4) : (isLoss ? 0 : 50);
-  const bananaCount = isGain ? (weight > 80 ? 3 : weight > 65 ? 2 : 2) : (isLoss ? 1 : 1);
+  const bananaCount = isGain ? (safeWeight > 80 ? 3 : weight > 65 ? 2 : 2) : (isLoss ? 1 : 1);
   const milkMl = isGain ? Math.round(250 + weight * 1.5) : (isLoss ? 250 : 350);
   const paneerG = !hasNonVeg ? (isLoss ? 80 : 120) : 0;
 
@@ -206,26 +218,57 @@ function searchFood() {
   const results = FOOD_DB.filter(f => f.n.toLowerCase().includes(q)).slice(0,7);
   if (!results.length) { sugg.style.display='none'; return; }
   sugg.style.display = 'block';
-  sugg.innerHTML = results.map(f => `
+  // M4 FIX: use index not name as ID to avoid special character issues
+  sugg.innerHTML = results.map((f, idx) => `
     <div class="food-suggestion-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
         <div class="food-item-cal">${f.cal}kcal</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="number" min="0.5" max="20" step="0.5" value="1" id="qty-${f.n.replace(/\s+/g,'_')}"
+        <input type="number" min="0.5" max="20" step="0.5" value="1" id="food-qty-${idx}"
           style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
           onclick="event.stopPropagation()" />
         <span style="font-size:11px;color:var(--muted)">servings</span>
-        <button onclick="addFood('${f.n}')" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
+        <button onclick="addFood('${f.n}', ${idx})" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
       </div>
     </div>`).join('');
 }
 
-function addFood(name) {
+// N5 FIX: debounce food search
+let _foodSearchTimer = null;
+function searchFood() {
+  clearTimeout(_foodSearchTimer);
+  _foodSearchTimer = setTimeout(_doSearchFood, 200);
+}
+function _doSearchFood() {
+  const q = document.getElementById('food-search-input')?.value?.trim().toLowerCase();
+  const sugg = document.getElementById('food-suggestions');
+  if (!sugg) return;
+  if (!q || q.length < 1) { sugg.style.display = 'none'; return; }
+  const results = FOOD_DB.filter(f => f.n.toLowerCase().includes(q) || f.s.toLowerCase().includes(q)).slice(0, 8);
+  if (!results.length) { sugg.style.display = 'none'; return; }
+  sugg.style.display = 'block';
+  sugg.innerHTML = results.map((f, idx) => `
+    <div class="food-suggestion-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
+        <div class="food-item-cal">${f.cal}kcal</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" min="0.5" max="20" step="0.5" value="1" id="food-qty-${idx}"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
+          onclick="event.stopPropagation()" />
+        <span style="font-size:11px;color:var(--muted)">servings</span>
+        <button onclick="addFood('${f.n}', ${idx})" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
+      </div>
+    </div>`).join('');
+}
+
+function addFood(name, idx) {
   const food = FOOD_DB.find(f => f.n === name);
   if (!food) return;
-  const qtyEl = document.getElementById('qty-' + name.replace(/\s+/g,'_'));
+  const qtyEl = document.getElementById(`food-qty-${idx}`);
   const q = qtyEl ? parseFloat(qtyEl.value) : 1;
   if (!q || isNaN(q) || q <= 0) return;
   foodLog.push({...food, qty:q, uid:Date.now()});
