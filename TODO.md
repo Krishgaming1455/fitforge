@@ -174,3 +174,86 @@ Stack: HTML + vanilla JS modules + Supabase
 Files: index.html, css/styles.css, js/data.js, js/auth.js, js/app.js, js/diet.js, js/gym.js, js/recovery.js
 
 ⚠️ NETLIFY CREDITS: Batch all fixes into ONE push per session!
+
+---
+
+## 🔍 REPLIT REACT VERSION ANALYSIS (Session 8)
+
+### What Replit did differently (valuable findings):
+
+#### ✅ Already have in our version:
+- showScreen with mobile nav active state ✅
+- window.scrollTo on screen change ✅
+- updateNutritionDisplay on diet tab ✅
+- visibilitychange + beforeunload save ✅
+- foodLogDate daily reset ✅
+- lastWorkoutDate cross-device ✅
+
+#### ⬜ Things Replit improved we should port:
+
+### ⬜ Profile saved as object not DOM reads
+- Replit saves profile as `{ name, age, weight, height, goalTag, injuryTags[] }`
+- Ours reads DOM elements at save time — fragile if DOM not ready
+- Fix: maintain profile state object in data.js, update it on input change, save object directly
+- File: js/auth.js saveUserData(), js/app.js profile inputs
+
+### ⬜ goalTag is single string not array
+- Replit uses single goalTag string (only one goal can be selected)
+- Ours tries to save multiple goal tags but selectTag() deselects others anyway
+- Fix: store as single string, simplify save/load logic
+
+### ⬜ HomeScreen feature grid with cards
+- Replit has 6 feature cards on home screen (PPL Tracker, Diet Planner, BMI, Recovery, Myths, Food Tracker)
+- Each card has icon, title, description, clicks to navigate
+- Our home screen just shows hero text — empty
+- Fix: BUILD HOME DASHBOARD (already in TODO features #1)
+- Add: welcome back message with user name
+- Add: today's workout card  
+- Add: feature grid cards
+- Add: PPL system explanation section
+
+### ⬜ React version has cleaner auth (no race conditions)
+- Uses useRef for currentUser so saveUserData always has latest value
+- Our vanilla JS version can have stale closure issues in setInterval
+- Fix: store currentUser reference separately for interval callbacks
+
+### ⬜ DietScreen has micronutrient display
+- Replit's DietScreen.tsx shows fi (fibre), vitC, vitD, ca, fe, k per food
+- Our food log only shows cal/protein/carbs/fat
+- FOOD_DB already has these fields! Just need to display them
+- Fix: add expandable micronutrient row in renderFoodLog()
+
+### ⬜ ProfileScreen saves profile to Supabase on every field change
+- Replit calls saveUserData() on every profile input change
+- Ours only saves on calcBMI (weight/height) or page unload
+- Fix: add autoSave() to all profile input onchange handlers
+
+---
+
+## 🏠 HOME SCREEN DASHBOARD — IMPLEMENTATION PLAN
+
+Based on Replit's HomeScreen.tsx, here's exactly what to build:
+
+### Section 1: Hero
+- FITFORGE title (already there)
+- Welcome back card: "👋 Welcome back, [name]"
+- Two CTA buttons: "💪 Today's Workout" → gym, "🥗 Diet Planner" → diet
+- Today's workout card (push/pull/legs or rest day)
+
+### Section 2: Feature Grid (6 cards)
+- 💪 PPL TRACKER → gym
+- 🥗 DIET PLANNER → diet  
+- ⚖️ BMI & PROFILE → profile
+- 🩹 RECOVERY DESK → recovery
+- 🧠 MYTH BUSTERS → myths
+- 🍎 FOOD TRACKER → diet
+
+### Section 3: PPL System Overview
+- 3 cards: Push (Mon/Thu), Pull (Tue/Fri), Legs (Wed/Sat)
+- Sunday rest note
+
+### Section 4 (our addition, not in Replit): Quick Stats
+- Calories today vs target
+- Protein today vs target
+- Water intake (when built)
+

@@ -300,6 +300,7 @@ async function loadUserData() {
     if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
     if (typeof renderPPL === 'function') renderPPL();
     if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
+    if (typeof renderHome === 'function') renderHome();
     updateAuthDisplay();
 
     console.log('Loaded from Supabase ✅');

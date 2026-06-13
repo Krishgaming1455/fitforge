@@ -1,4 +1,54 @@
-function syncProfileToDiet() {
+function renderHome() {
+  // Welcome card
+  const welcome = document.getElementById('home-welcome');
+  const profileName = document.getElementById('p-name')?.value;
+  const displayName = isGuest ? 'Guest' : (profileName || currentUser?.email || '');
+  if (welcome && displayName) {
+    welcome.style.display = 'inline-block';
+    welcome.innerHTML = `👋 Welcome back, <strong style="color:var(--accent)">${displayName}</strong>`;
+  }
+
+  // Today's workout card
+  const todayCard = document.getElementById('home-today-card');
+  if (todayCard) {
+    const todayPPL = getTodayPPL();
+    const dayName = DAY_NAMES[new Date().getDay()];
+    const typeLabels = {push:'Push Day 💪 — Chest · Shoulders · Triceps', pull:'Pull Day 🔥 — Back · Biceps · Rear Delts', legs:'Legs Day 🦵 — Quads · Glutes · Hamstrings'};
+    const typeColors = {push:'rgba(255,107,68,.08)', pull:'rgba(68,136,255,.08)', legs:'rgba(68,255,136,.08)'};
+    const typeBorder = {push:'rgba(255,107,68,.25)', pull:'rgba(68,136,255,.25)', legs:'rgba(68,255,136,.25)'};
+    const typeText = {push:'var(--accent3)', pull:'var(--blue)', legs:'var(--green)'};
+    if (todayPPL) {
+      todayCard.innerHTML = `<div style="display:inline-block;background:${typeColors[todayPPL]};border:1px solid ${typeBorder[todayPPL]};border-radius:13px;padding:14px 24px;cursor:pointer" onclick="showScreen('gym')">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">TODAY — ${dayName}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:${typeText[todayPPL]}">${typeLabels[todayPPL]}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Tap to open workout →</div>
+      </div>`;
+    } else {
+      todayCard.innerHTML = `<div style="display:inline-block;background:rgba(170,68,255,.06);border:1px solid rgba(170,68,255,.2);border-radius:13px;padding:14px 24px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">TODAY — ${dayName}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--purple)">😴 Rest & Recovery Day</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Muscles grow during rest — enjoy it</div>
+      </div>`;
+    }
+  }
+
+  // Quick stats from food log
+  const totals = typeof getTotals === 'function' ? getTotals() : {cal:0, p:0};
+  const calEl = document.getElementById('home-cal-today');
+  const protEl = document.getElementById('home-prot-today');
+  const calTargetEl = document.getElementById('home-cal-target');
+  const protTargetEl = document.getElementById('home-prot-target');
+  const calBar = document.getElementById('home-cal-bar');
+  const protBar = document.getElementById('home-prot-bar');
+  if (calEl) calEl.textContent = totals.cal || 0;
+  if (protEl) protEl.innerHTML = `${totals.p || 0}<span style="font-size:14px">g</span>`;
+  if (calTargetEl) calTargetEl.textContent = `/ ${targetCal} kcal target`;
+  if (protTargetEl) protTargetEl.textContent = `/ ${targetProtein}g target`;
+  if (calBar) calBar.style.width = Math.min(100, Math.round(((totals.cal||0)/targetCal)*100)) + '%';
+  if (protBar) protBar.style.width = Math.min(100, Math.round(((totals.p||0)/targetProtein)*100)) + '%';
+}
+
+
   const profileWeight = document.getElementById('p-weight')?.value;
   const dietWeight = document.getElementById('diet-weight');
   
@@ -29,6 +79,7 @@ function showScreen(name) {
   document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ntNames[i] === name));
   document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
   window.scrollTo({top:0,behavior:'smooth'});
+  if (name === 'home') renderHome();
   if (name === 'gym') { checkDailyWorkoutReset(); renderPPL(); renderWeeklySplit(); }
   if (name === 'myths') renderMyths();
   if (name === 'recovery') renderRecovery();
