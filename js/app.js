@@ -1,4 +1,5 @@
 function renderHome() {
+  try {
   // Welcome card
   const welcome = document.getElementById('home-welcome');
   const profileName = document.getElementById('p-name')?.value;
@@ -32,7 +33,7 @@ function renderHome() {
     }
   }
 
-  // Quick stats from food log
+  // Quick stats
   const totals = typeof getTotals === 'function' ? getTotals() : {cal:0, p:0};
   const calEl = document.getElementById('home-cal-today');
   const protEl = document.getElementById('home-prot-today');
@@ -46,6 +47,7 @@ function renderHome() {
   if (protTargetEl) protTargetEl.textContent = `/ ${targetProtein}g target`;
   if (calBar) calBar.style.width = Math.min(100, Math.round(((totals.cal||0)/targetCal)*100)) + '%';
   if (protBar) protBar.style.width = Math.min(100, Math.round(((totals.p||0)/targetProtein)*100)) + '%';
+  } catch(e) { console.error('renderHome error:', e); }
 }
 
 function syncProfileToDiet() {
