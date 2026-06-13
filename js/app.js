@@ -48,18 +48,12 @@ function renderHome() {
   if (protBar) protBar.style.width = Math.min(100, Math.round(((totals.p||0)/targetProtein)*100)) + '%';
 }
 
-
+function syncProfileToDiet() {
   const profileWeight = document.getElementById('p-weight')?.value;
   const dietWeight = document.getElementById('diet-weight');
-  
-  // Always sync weight from profile to diet if profile has a value
   if (profileWeight && dietWeight) {
     dietWeight.value = profileWeight;
   }
-  
-  // Also sync goal if profile has a selected goal. The profile buttons include
-  // an emoji prefix (e.g. "💪 Gain Muscle & Weight"), so match on keywords
-  // rather than the exact label.
   const goalText = document.querySelector('#goal-tags .tag.selected')?.textContent.toLowerCase();
   const dietGoal = document.getElementById('diet-goal');
   if (goalText && dietGoal) {
@@ -70,7 +64,6 @@ function renderHome() {
     if (mapped) dietGoal.value = mapped;
   }
 }
-
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
