@@ -83,7 +83,7 @@ function calcBMI() {
         Your BMI (${bmi}) is below the normal range. Recommendations:
         <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
           <li>✅ Focus on <strong>MUSCLE GAIN</strong> — eat in caloric surplus (+400 kcal/day)</li>
-          <li>✅ Increase protein intake: <strong>${Math.round(w*1.9)}g/day</strong> (1.9g/kg)</li>
+          <li>✅ Increase protein intake: <strong>${targetProtein}g/day</strong> (1.9g/kg)</li>
           <li>✅ Eat 4-5 meals daily with calorie-dense foods: oats, rice, bananas, nuts, whole milk</li>
           <li>✅ Strength training 4-5x/week to build muscle mass</li>
           <li>✅ Protein post-workout within 1 hour: eggs, chicken, dal</li>
@@ -100,7 +100,7 @@ function calcBMI() {
         <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
           <li>✅ Goal: <strong>BODY COMPOSITION</strong> — build lean muscle while staying lean</li>
           <li>✅ Eat at TDEE (${tdee} kcal) for maintenance, or slight surplus (+200 kcal) for lean gains</li>
-          <li>✅ Moderate protein: <strong>${Math.round(w*1.6)}g/day</strong> (1.6g/kg) for lean muscle building</li>
+          <li>✅ Moderate protein: <strong>${targetProtein}g/day</strong> (1.6g/kg) for lean muscle building</li>
           <li>✅ Balanced macros: 30-35% protein, 40% carbs, 25-30% fats</li>
           <li>✅ Strength training 4x/week + 1-2 cardio sessions (perfect for muscle-building phase)</li>
           <li>✅ Focus on compound lifts: squats, deadlifts, bench press, rows</li>
@@ -116,7 +116,7 @@ function calcBMI() {
         Your BMI (${bmi}) is in the overweight range. Recommendations:
         <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
           <li>✅ Primary goal: <strong>FAT LOSS</strong> — eat in caloric deficit (-400 kcal/day)</li>
-          <li>✅ Increase protein to preserve muscle: <strong>${Math.round(w*1.4)}g/day</strong> (1.4g/kg)</li>
+          <li>✅ Increase protein to preserve muscle: <strong>${targetProtein}g/day</strong> (1.4g/kg)</li>
           <li>✅ Reduce refined carbs; focus on: chicken, fish, eggs, dal, soya chunks, roti</li>
           <li>✅ Cardio 2-3x/week: 20-30 min brisk walk or cycling (low impact)</li>
           <li>✅ Resistance training 3-4x/week to prevent muscle loss during deficit</li>
@@ -133,7 +133,7 @@ function calcBMI() {
         Your BMI (${bmi}) indicates obesity. Immediate recommendations:
         <ul style="margin-top:8px;margin-left:18px;font-size:12px;line-height:1.6">
           <li>✅ <strong>URGENT: Caloric deficit of 500 kcal/day</strong> (target: ${Math.round(tdee - 500)} kcal)</li>
-          <li>✅ High protein is critical: <strong>${Math.round(w*1.3)}g/day</strong> (1.3g/kg) to preserve muscle</li>
+          <li>✅ High protein is critical: <strong>${targetProtein}g/day</strong> (1.3g/kg) to preserve muscle</li>
           <li>✅ Medical check-up recommended before starting intense exercise</li>
           <li>✅ Start with LOW-IMPACT cardio: brisk walking 30-45 min daily, swimming, cycling</li>
           <li>✅ Resistance training 2-3x/week (lighter weights, focus on form)</li>

@@ -16,8 +16,8 @@ function generateDietPlan() {
   // BUG FIX: sanitize weight to prevent XSS
   const safeWeight = parseFloat(weight.toFixed(1));
 
-  // Calculate BMI for smart warnings
-  const bmi = (weight / ((height/100)**2)).toFixed(1);
+  // Calculate BMI for smart warnings — use safeWeight
+  const bmi = (safeWeight / ((height/100)**2)).toFixed(1);
   const isUnderweight = bmi < 18.5;
   const isNormal = bmi >= 18.5 && bmi < 25;
   const isOverweight = bmi >= 25 && bmi < 30;
@@ -61,7 +61,7 @@ function generateDietPlan() {
 
   // Use shared engine — same numbers as profile screen
   const calc = getCalcValues(safeWeight, height, age, goal, activity);
-  const { bmi: calcBmi, tdee, calTarget, proteinTarget, proteinFactor, fatTarget, carbTarget } = calc;
+  const { tdee, calTarget, proteinTarget, proteinFactor, fatTarget, carbTarget } = calc;
 
   // Update global targets so food tracker ring matches
   targetCal = calTarget;
@@ -193,30 +193,6 @@ function generateDietPlan() {
 // PPL WORKOUT TRACKER
 // ============================================================
 
-function searchFood() {
-  const q = document.getElementById('food-search-input').value.toLowerCase();
-  const sugg = document.getElementById('food-suggestions');
-  if (!q) { sugg.style.display='none'; return; }
-  const results = FOOD_DB.filter(f => f.n.toLowerCase().includes(q)).slice(0,7);
-  if (!results.length) { sugg.style.display='none'; return; }
-  sugg.style.display = 'block';
-  // M4 FIX: use index not name as ID to avoid special character issues
-  sugg.innerHTML = results.map((f, idx) => `
-    <div class="food-suggestion-item" style="flex-direction:column;align-items:stretch;gap:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div class="food-item-name">${f.n}</div><div class="food-item-sub">${f.s} · P:${f.p}g · C:${f.c}g · F:${f.f}g</div></div>
-        <div class="food-item-cal">${f.cal}kcal</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="number" min="0.5" max="20" step="0.5" value="1" id="food-qty-${idx}"
-          style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
-          onclick="event.stopPropagation()" />
-        <span style="font-size:11px;color:var(--muted)">servings</span>
-        <button onclick="addFood('${f.n}', ${idx})" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
-      </div>
-    </div>`).join('');
-}
-
 // N5 FIX: debounce food search
 let _foodSearchTimer = null;
 function searchFood() {
@@ -242,7 +218,7 @@ function _doSearchFood() {
           style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif"
           onclick="event.stopPropagation()" />
         <span style="font-size:11px;color:var(--muted)">servings</span>
-        <button onclick="addFood('${f.n}', ${idx})" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
+        <button data-fname="${f.n.replace(/"/g,'&quot;')}" data-idx="${idx}" onclick="addFood(this.dataset.fname, parseInt(this.dataset.idx))" style="flex:1;background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add</button>
       </div>
     </div>`).join('');
 }
