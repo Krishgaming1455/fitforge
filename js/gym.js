@@ -73,6 +73,7 @@ function renderWarmup(day) {
 }
 
 function renderPPL() {
+  try {
   renderTodayBanner();
   ['push','pull','legs'].forEach(day => {
     renderWarmup(day);
@@ -81,9 +82,9 @@ function renderPPL() {
     if (!container) return;
     container.innerHTML = exs.map((ex, i) => {
       const key = ex.name;
-      const done = pplChecked[day][key] || false;
+      const done = (pplChecked[day] && pplChecked[day][key]) || false;
       const safeId = 'ol-btn-' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const prev = overloadLog[ex.name];
+      const prev = (overloadLog && overloadLog[ex.name]) || null;
       return `
       <div class="workout-exercise-item" id="${day}-ex-${i}">
         <div class="workout-checkbox ${done ? 'done' : ''}" onclick="toggleExercise('${day}','${key}')"></div>
@@ -102,6 +103,13 @@ function renderPPL() {
     }).join('');
     updatePPLProgress(day);
   });
+  } catch(e) {
+    console.error('renderPPL CRASHED:', e);
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);color:#ff4466;padding:12px;border-radius:8px;margin:10px;font-size:12px;font-family:monospace';
+    errDiv.textContent = '⚠️ Gym render error: ' + e.message;
+    document.querySelector('.ppl-panel.active')?.prepend(errDiv);
+  }
 }
 
 function toggleExercise(day, key) {
