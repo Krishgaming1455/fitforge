@@ -158,6 +158,19 @@
           <div id="home-prot-bar" style="height:4px;background:var(--accent2);border-radius:2px;width:0%;transition:width .4s"></div>
         </div>
       </div>
+      <div class="home-stat-card">
+        <div class="home-stat-label">Water Today</div>
+        <div class="home-stat-value" id="home-water-today" style="color:#4af">0<span style="font-size:14px">L</span></div>
+        <div class="home-stat-sub" id="home-water-target">/ 2L goal</div>
+        <div style="margin-top:8px;height:4px;background:var(--bg3);border-radius:2px">
+          <div id="home-water-bar" style="height:4px;background:#4af;border-radius:2px;width:0%;transition:width .4s"></div>
+        </div>
+      </div>
+      <div class="home-stat-card">
+        <div class="home-stat-label">Workout Streak</div>
+        <div class="home-stat-value" id="home-streak" style="color:var(--accent3)">0<span style="font-size:14px">🔥</span></div>
+        <div class="home-stat-sub">days in a row</div>
+      </div>
     </div>
 
     <!-- Feature Grid -->
@@ -297,9 +310,11 @@
       <div class="info-box">💡 <strong>Push Day:</strong> Incline pressing reduces shoulder impingement risk. Week A = dumbbell focus. Week B = barbell + cables. Always finish with Face Pulls on push day to balance shoulder health.</div>
       <!-- Warmup -->
       <div id="warmup-push"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px"><span style="font-size:11px;color:var(--muted);align-self:center">⏱ Rest:</span><button class="timer-btn-sm" onclick="startTimer(60)">60s</button><button class="timer-btn-sm" onclick="startTimer(90)">90s</button><button class="timer-btn-sm" onclick="startTimer(120)">120s</button></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="push-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="push-progress-label">0 / 8 exercises completed</p>
       <div id="push-exercises"></div>
+      <button class="finish-workout-btn" id="finish-btn-push" onclick="finishWorkout('push')">✅ FINISH WORKOUT</button>
     </div>
 
     <!-- PULL -->
@@ -307,9 +322,11 @@
       <div class="info-box">💡 <strong>Pull Day:</strong> Face Pulls are mandatory every session — they reverse desk posture. Week A = cable machine focus. Week B = barbell rows + pull-ups. Don't skip the rear delt work.</div>
       <!-- Warmup -->
       <div id="warmup-pull"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px"><span style="font-size:11px;color:var(--muted);align-self:center">⏱ Rest:</span><button class="timer-btn-sm" onclick="startTimer(60)">60s</button><button class="timer-btn-sm" onclick="startTimer(90)">90s</button><button class="timer-btn-sm" onclick="startTimer(120)">120s</button></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="pull-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="pull-progress-label">0 / 8 exercises completed</p>
       <div id="pull-exercises"></div>
+      <button class="finish-workout-btn" id="finish-btn-pull" onclick="finishWorkout('pull')">✅ FINISH WORKOUT</button>
     </div>
 
     <!-- LEGS -->
@@ -317,9 +334,18 @@
       <div class="info-box">💡 <strong>Legs Day:</strong> Box Squats protect knees. Romanian Deadlifts are a hip hinge — not a lower-back exercise. Week A = machine + dumbbell focus. Week B = barbell squat + rack work.</div>
       <!-- Warmup -->
       <div id="warmup-legs"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px"><span style="font-size:11px;color:var(--muted);align-self:center">⏱ Rest:</span><button class="timer-btn-sm" onclick="startTimer(60)">60s</button><button class="timer-btn-sm" onclick="startTimer(90)">90s</button><button class="timer-btn-sm" onclick="startTimer(120)">120s</button></div>
       <div class="workout-progress"><div class="workout-progress-fill" id="legs-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="legs-progress-label">0 / 8 exercises completed</p>
       <div id="legs-exercises"></div>
+      <button class="finish-workout-btn" id="finish-btn-legs" onclick="finishWorkout('legs')">✅ FINISH WORKOUT</button>
+    </div>
+
+    <!-- WORKOUT HISTORY -->
+    <div style="margin-top:44px">
+      <p class="section-title" style="margin-bottom:6px">WORKOUT <span>HISTORY</span></p>
+      <p class="section-sub" style="margin-bottom:20px">Your last 7 sessions</p>
+      <div id="workout-history-list"></div>
     </div>
 
     <!-- WEEKLY SPLIT ACCORDION -->
@@ -331,6 +357,13 @@
   </div>
 </div>
 
+<!-- WORKOUT TIMER PILL -->
+<div class="timer-pill" id="timer-pill">
+  <button class="timer-btn-sm" onclick="stopTimer()">✕</button>
+  <div class="timer-display" id="timer-display">0:00</div>
+  <span style="font-size:11px;color:var(--muted)">Rest Timer</span>
+</div>
+
 <!-- ===== DIET PLAN ===== -->
 <div id="screen-diet" class="screen">
   <div style="background:linear-gradient(135deg,rgba(240,255,68,.06),transparent);padding:48px 20px 28px">
@@ -340,6 +373,12 @@
     </div>
   </div>
   <div class="container section">
+    <!-- Water Tracker -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="font-size:15px;margin-bottom:8px">💧 Water Intake</h3>
+      <div id="water-tracker"></div>
+    </div>
+
     <!-- Controls -->
     <div class="card" style="margin-bottom:24px">
       <h3 style="font-size:15px;margin-bottom:16px">⚙️ Generate Your Personalised Diet</h3>

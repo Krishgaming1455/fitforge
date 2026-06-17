@@ -143,6 +143,9 @@ function loginAsGuest() {
   isGuest = true;
   pplChecked = { push: {}, pull: {}, legs: {} };
   foodLog = [];
+  waterGlasses = 0;
+  workoutHistory = [];
+  overloadLog = {};
   showMainApp();
   // C3 FIX: re-render UI for guest since loadUserData is skipped
   setTimeout(() => {
@@ -150,6 +153,9 @@ function loginAsGuest() {
     if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
     if (typeof renderPPL === 'function') renderPPL();
     if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
+    if (typeof renderWaterTracker === 'function') renderWaterTracker();
+    if (typeof renderWorkoutHistory === 'function') renderWorkoutHistory();
+    if (typeof renderHome === 'function') renderHome();
   }, 150);
 }
 
@@ -215,9 +221,13 @@ async function saveUserData() {
     },
     foodLog,
     foodLogDate: new Date().toDateString(),
+    waterGlasses,
+    waterDate: new Date().toDateString(),
     pplChecked,
     targetCal,
     targetProtein,
+    workoutHistory,
+    overloadLog,
     lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
@@ -268,6 +278,11 @@ async function loadUserData() {
   pplChecked = data.pplChecked || { push: {}, pull: {}, legs: {} };
   if (data.targetCal) targetCal = data.targetCal;
   if (data.targetProtein) targetProtein = data.targetProtein;
+  workoutHistory = data.workoutHistory || [];
+  overloadLog = data.overloadLog || {};
+
+  // Water: reset if new day
+  waterGlasses = (data.waterDate === today) ? (data.waterGlasses || 0) : 0;
 
   // Restore profile fields + trigger UI after DOM ready
   setTimeout(() => {
@@ -300,6 +315,8 @@ async function loadUserData() {
     if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
     if (typeof renderPPL === 'function') renderPPL();
     if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
+    if (typeof renderWaterTracker === 'function') renderWaterTracker();
+    if (typeof renderWorkoutHistory === 'function') renderWorkoutHistory();
     if (typeof renderHome === 'function') renderHome();
     updateAuthDisplay();
 

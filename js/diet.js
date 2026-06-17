@@ -310,3 +310,47 @@ function renderFoodLog() {
 // MYTHS
 // ============================================================
 
+
+// ============================================================
+// WATER TRACKER
+// ============================================================
+function renderWaterTracker() {
+  const el = document.getElementById('water-tracker');
+  if (!el) return;
+  const total = (waterGlasses * 250 / 1000).toFixed(1);
+  const goal = 8;
+  const pct = Math.round((waterGlasses / goal) * 100);
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:#4af">${total}<span style="font-size:14px;font-weight:400;color:var(--muted)"> L</span></div>
+        <div style="font-size:11px;color:var(--muted)">of 2L daily goal · ${pct}%</div>
+      </div>
+      <button onclick="resetWater()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">Reset</button>
+    </div>
+    <div class="water-glasses">
+      ${Array.from({length: goal}, (_, i) => `
+        <div class="water-glass ${i < waterGlasses ? 'filled' : ''}" onclick="toggleWaterGlass(${i})" title="${(i+1)*250}ml">
+          💧
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:10px;height:4px;background:var(--bg3);border-radius:2px">
+      <div style="height:4px;background:#4af;border-radius:2px;width:${pct}%;transition:width .4s"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">${waterGlasses >= goal ? '✅ Daily goal reached!' : `${goal - waterGlasses} more glass${goal - waterGlasses !== 1 ? 'es' : ''} to reach goal`}</div>`;
+}
+
+function toggleWaterGlass(idx) {
+  // Click filled glass = unfill from that point, click empty = fill to that point
+  waterGlasses = idx < waterGlasses ? idx : idx + 1;
+  renderWaterTracker();
+  renderHome();
+  autoSave();
+}
+
+function resetWater() {
+  waterGlasses = 0;
+  renderWaterTracker();
+  renderHome();
+  autoSave();
+}

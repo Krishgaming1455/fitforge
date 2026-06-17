@@ -196,10 +196,43 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .home-feature-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--accent)}
 .home-feature-desc{font-size:12px;color:var(--muted);line-height:1.5}
 .home-ppl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-.home-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.home-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
 .home-stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
 .home-stat-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
 .home-stat-value{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px}
 .home-stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
 .home-today-card{padding:16px 20px;border-radius:13px;margin-bottom:24px;display:flex;align-items:center;gap:14px}
-@media(max-width:680px){.home-ppl-grid{grid-template-columns:1fr}.home-stat-row{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.home-ppl-grid{grid-template-columns:1fr}.home-stat-row{grid-template-columns:1fr 1fr}.home-stat-card{padding:12px}}
+
+/* ── WATER TRACKER ───────────────────────────────────────── */
+.water-glasses{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.water-glass{width:44px;height:56px;border:2px solid var(--border);border-radius:4px 4px 8px 8px;background:var(--bg3);cursor:pointer;transition:all .18s;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:18px;position:relative;overflow:hidden}
+.water-glass.filled{border-color:#4af;background:rgba(68,170,255,.15)}
+.water-glass.filled::before{content:'';position:absolute;bottom:0;left:0;right:0;height:70%;background:rgba(68,170,255,.3);border-radius:0 0 6px 6px}
+.water-glass:hover{border-color:var(--accent2);transform:translateY(-2px)}
+
+/* ── WORKOUT HISTORY ─────────────────────────────────────── */
+.history-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.history-icon{font-size:22px;flex-shrink:0}
+.history-info{flex:1}
+.history-date{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.history-type{font-size:14px;font-weight:700;margin-top:2px}
+.history-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.finish-workout-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;margin-top:20px;transition:opacity .18s}
+.finish-workout-btn:hover{opacity:.85}
+.finish-workout-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── PROGRESSIVE OVERLOAD ────────────────────────────────── */
+.overload-log-btn{background:rgba(68,255,204,.08);border:1px solid rgba(68,255,204,.2);color:var(--accent2);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
+.overload-log-btn:hover{background:rgba(68,255,204,.18)}
+.overload-inline{margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.overload-input{width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif}
+.overload-prev{font-size:10px;color:var(--accent2);margin-top:4px;font-weight:600}
+.overload-pr{color:var(--accent);font-weight:800}
+
+/* ── WORKOUT TIMER ───────────────────────────────────────── */
+.timer-pill{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--accent);border-radius:50px;padding:10px 24px;display:flex;align-items:center;gap:14px;z-index:500;box-shadow:0 4px 24px rgba(240,255,68,.15);display:none}
+.timer-display{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--accent);min-width:60px;text-align:center}
+.timer-btn-sm{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700}
+.timer-btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+@media(max-width:680px){.timer-pill{bottom:130px}}

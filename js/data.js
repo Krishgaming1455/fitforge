@@ -231,3 +231,10 @@ function getCalcValues(weight, height, age, goal, activity) {
 
   return { bmi, bmr, tdee, calTarget, proteinTarget, proteinFactor, fatTarget, carbTarget, actMult };
 }
+
+// ── WATER + HISTORY + OVERLOAD STATE ─────────────────────
+let waterGlasses = 0; // glasses drunk today (each = 250ml)
+let workoutHistory = []; // array of { date, dayType, week, completed, total }
+let overloadLog = {}; // { exerciseName: { date, weight, reps } }
+let timerInterval = null;
+let timerSeconds = 0;

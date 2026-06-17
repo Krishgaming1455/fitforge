@@ -47,6 +47,15 @@ function renderHome() {
   if (protTargetEl) protTargetEl.textContent = `/ ${targetProtein}g target`;
   if (calBar) calBar.style.width = Math.min(100, Math.round(((totals.cal||0)/targetCal)*100)) + '%';
   if (protBar) protBar.style.width = Math.min(100, Math.round(((totals.p||0)/targetProtein)*100)) + '%';
+
+  // Water + streak
+  const waterEl = document.getElementById('home-water-today');
+  const waterBar = document.getElementById('home-water-bar');
+  const streakEl = document.getElementById('home-streak');
+  const waterL = ((waterGlasses||0) * 250 / 1000).toFixed(1);
+  if (waterEl) waterEl.innerHTML = `${waterL}<span style="font-size:14px">L</span>`;
+  if (waterBar) waterBar.style.width = Math.min(100, Math.round(((waterGlasses||0)/8)*100)) + '%';
+  if (streakEl && typeof getStreak === 'function') streakEl.innerHTML = `${getStreak()}<span style="font-size:14px">🔥</span>`;
   } catch(e) { console.error('renderHome error:', e); }
 }
 
@@ -75,12 +84,13 @@ function showScreen(name) {
   document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
   window.scrollTo({top:0,behavior:'smooth'});
   if (name === 'home') renderHome();
-  if (name === 'gym') { checkDailyWorkoutReset(); renderPPL(); renderWeeklySplit(); }
+  if (name === 'gym') { checkDailyWorkoutReset(); renderPPL(); renderWeeklySplit(); renderWorkoutHistory(); }
   if (name === 'myths') renderMyths();
   if (name === 'recovery') renderRecovery();
   if (name === 'diet') {
     syncProfileToDiet();
     updateNutritionDisplay();
+    renderWaterTracker();
   }
 }
 
