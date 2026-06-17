@@ -238,3 +238,53 @@ let workoutHistory = []; // array of { date, dayType, week, completed, total }
 let overloadLog = {}; // { exerciseName: { date, weight, reps } }
 let timerInterval = null;
 let timerSeconds = 0;
+
+// ── EXPERIENCE LEVEL ADJUSTMENTS ───────────────────────────
+// Beginner swaps: harder exercise name → easier replacement {name, sets, reps, note}
+const BEGINNER_SWAPS = {
+  "Flat Barbell Bench Press": {name:"Flat Dumbbell Press", sets:"3", reps:"10-12", note:"Dumbbells let each arm work independently and are much safer to learn pressing mechanics with than a barbell. No spotter needed."},
+  "Barbell Back Squat": {name:"Goblet Squat", sets:"3", reps:"12", note:"Hold a dumbbell at chest height. Teaches proper squat depth and posture without the technical demand of a barbell on your back."},
+  "Barbell Bent-Over Row": {name:"Chest-Supported Dumbbell Row", sets:"3", reps:"10-12", note:"Removes lower back strain completely — perfect for learning the rowing motion safely while still new to lifting."},
+  "Pull-Ups / Assisted Pull-Ups": {name:"Lat Pulldown", sets:"3", reps:"10-12", note:"Machine-guided so you can build back strength before attempting bodyweight pull-ups."},
+  "Stiff-Leg Deadlift (Barbell)": {name:"Romanian Deadlift (Dumbbell)", sets:"3", reps:"10-12", note:"Dumbbells are far more forgiving for learning the hip-hinge pattern than a loaded barbell."},
+  "Hack Squat Machine": {name:"Leg Press (High Feet)", sets:"3", reps:"12-15", note:"Simpler machine, less technical setup, still builds great leg strength."},
+  "Close-Grip Bench Press": {name:"Tricep Pushdown (Cable — Bar)", sets:"3", reps:"12-15", note:"Isolated tricep work is safer to learn than a heavy pressing variation."},
+  "Dips (Chest-Focused)": {name:"Cable Chest Fly (Low-to-High)", sets:"3", reps:"12-15", note:"Builds chest without the joint stress of bodyweight dips for a newer lifter."}
+};
+
+// Advanced bonus exercises added to END of each day (intensity techniques)
+const ADVANCED_BONUS = {
+  push: {name:"Drop Set Finisher — Lateral Raises", sets:"1", reps:"to failure, then -50% weight to failure again", muscles:"Medial Deltoid", equipment:"Dumbbell", note:"Do a normal set to failure, immediately drop the weight by half, continue to failure again. Brutal but highly effective for shoulder width."},
+  pull: {name:"Rest-Pause Set — Lat Pulldown", sets:"1", reps:"failure, rest 15s, repeat x3", muscles:"Latissimus Dorsi", equipment:"Cable Machine", note:"Go to failure, rest only 15 seconds, squeeze out a few more reps. Repeat 3 times total. Adds serious volume in a short time."},
+  legs: {name:"Finisher — Walking Lunges (High Rep)", sets:"1", reps:"3 x 20 each leg, minimal rest", muscles:"Quads · Glutes", equipment:"Bodyweight or light DB", note:"High rep burnout finisher to flood the legs with blood and maximise the session's growth stimulus."}
+};
+
+// Posture correction add-ons (desk job) — shown if user selects Desk Job/Posture tag
+const POSTURE_ADDON = {
+  push: [
+    {name:"Wall Slides", sets:"2", reps:"12", muscles:"Mid/Lower Traps · Posture", equipment:"Bodyweight", note:"Back flat against wall, slide arms up like a snow angel. Directly counters the forward-shoulder roll from desk sitting."},
+    {name:"Doorway Chest Stretch", sets:"2", reps:"30 sec each side", muscles:"Pec Minor · Posture", equipment:"Bodyweight", note:"Opens up tight chest muscles that pull shoulders forward from hours at a desk."}
+  ],
+  pull: [
+    {name:"Chin Tucks", sets:"2", reps:"12", muscles:"Deep Neck Flexors · Posture", equipment:"Bodyweight", note:"Tuck chin straight back (like making a double chin). Directly fixes forward-head posture from looking at screens."},
+    {name:"Band Pull-Aparts", sets:"2", reps:"20", muscles:"Rear Delts · Upper Back · Posture", equipment:"Resistance Band", note:"Strengthens the muscles between your shoulder blades that desk sitting weakens."}
+  ],
+  legs: [
+    {name:"Glute Bridges", sets:"2", reps:"15", muscles:"Glutes · Hip Flexors · Posture", equipment:"Bodyweight", note:"Counters anterior pelvic tilt (lower back curve) caused by prolonged sitting. Strengthens glutes that go dormant when seated all day."},
+    {name:"Standing Hip Flexor Stretch", sets:"2", reps:"30 sec each side", muscles:"Hip Flexors · Posture", equipment:"Bodyweight", note:"Hip flexors shorten from sitting, pulling your pelvis forward. This stretch directly reverses that."}
+  ]
+};
+
+// Athletic conditioning add-ons (football/sports) — shown if Athletic Performance goal selected
+const ATHLETIC_ADDON = {
+  push: [
+    {name:"Plyo Push-Ups", sets:"3", reps:"6-8", muscles:"Chest · Triceps · Explosive Power", equipment:"Bodyweight", note:"Push explosively so hands leave the ground. Builds upper body power transferable to contact sports and throwing."}
+  ],
+  pull: [
+    {name:"Band Resisted Arm Drives", sets:"3", reps:"15 sec each side", muscles:"Lats · Running Mechanics", equipment:"Resistance Band", note:"Anchor band behind you, drive arms like sprinting. Reinforces proper sprint arm mechanics for speed."}
+  ],
+  legs: [
+    {name:"Sprint Intervals", sets:"6", reps:"20m sprint, walk back recovery", muscles:"Speed · Power · Conditioning", equipment:"Open Space/Field", note:"Maximum effort sprints with full recovery between. This is what actually builds match speed — squats build the strength, sprints convert it to speed."},
+    {name:"Lateral Bounds", sets:"3", reps:"8 each side", muscles:"Glutes · Lateral Power · Agility", equipment:"Bodyweight", note:"Jump side to side, land soft and stick the landing. Builds the lateral power needed for cutting and changing direction on the pitch."}
+  ]
+};

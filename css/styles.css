@@ -236,3 +236,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .timer-btn-sm{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700}
 .timer-btn-sm:hover{border-color:var(--accent);color:var(--accent)}
 @media(max-width:680px){.timer-pill{bottom:130px}}
+
+/* ── COMMUNITY CHAT ───────────────────────────────────────── */
+.community-panel{display:flex;flex-direction:column}
+#board-messages, #dm-thread-messages{scrollbar-width:thin}

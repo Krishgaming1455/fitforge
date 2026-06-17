@@ -257,3 +257,245 @@ Based on Replit's HomeScreen.tsx, here's exactly what to build:
 - Protein today vs target
 - Water intake (when built)
 
+
+---
+
+## 🔬 SESSION 9 — Gym Screen Blank Bug Investigation
+
+### Confirmed NOT the bug (tested in isolation):
+- PPL_DATA getter works correctly (returns 8 exercises per day) ✅
+- getCurrentWeek() returns 'A' correctly ✅
+- getTodayPPL() returns correct day type ✅
+- Exercise names have no apostrophes/quotes that would break onclick ✅
+- toggleExercise, autoSave guard for guest mode ✅
+- overloadLog/pplChecked initialized for guest mode ✅
+
+### Debug version deployed (commit 2e928f2):
+- Added try/catch to renderPPL with visible on-screen error display
+- If a real JS error exists, it will now show as red box on the gym screen
+- NEED: screenshot of the error message once user tests
+
+### Hypothesis if still blank with no error shown:
+- CDN/browser caching old JS file specifically (js/gym.js) even after HTML updated
+- Cloudflare Workers cache headers might be too aggressive for /js/*.js files
+- Fix to try: add cache-busting query string to script tags, e.g. js/gym.js?v=2
+- Or: check Cloudflare cache settings / purge cache manually
+
+### Next session action items:
+1. Get screenshot of red error box (if shown) — tells us exact crash
+2. If NO error box shown but still blank — it's a caching issue, add ?v= cache busting to all script tags in index.html
+3. Consider adding a visible console.log('gym.js loaded') at top of gym.js to verify file is even loading
+
+---
+
+## 🆕 SESSION 10 — MAJOR FEATURE: Custom Plans + Skill Level + Posture/Football
+
+### Context: User feedback
+- Wants skill level (Beginner/Intermediate/Advanced) AND age-based plans
+- Posture correction (desk job) + football speed/stamina should BLEND into existing PPL days, not separate sections
+- Build order: 1) Skill level toggle FIRST, then posture/football blended in
+
+### ⚠️ IMPORTANT HEALTH NOTE (for context, not a feature):
+- User reports sharp strength drop after 3 sets (5kg dumbbell becomes too heavy)
+- Likely cause: training fasted/light meal at 56kg bodyweight — low glycogen, not muscle issue
+- Recommended: eat carbs+protein 1-1.5hr before training, stay hydrated
+- ACTION ITEM: Add a "pre-workout nutrition tip" banner/reminder somewhere in gym screen (low priority, simple add)
+
+---
+
+## 📐 FEATURE SPEC: Skill Level System
+
+### Data structure changes needed (js/data.js):
+- Add `experienceLevel` to profile: 'beginner' | 'intermediate' | 'advanced'
+- Add `ageGroup` to profile: 'teen' (13-17) | 'adult' (18-40) | 'mature' (40+)
+- PPL_DATA_WEEK exercises need a per-exercise difficulty variant OR separate exercise pools per level
+
+### Beginner adjustments (vs current Intermediate-level data):
+- Fewer exercises per day (5-6 instead of 8) — avoid overwhelm/injury from doing too much too soon
+- Lower starting sets (3 instead of 4) on compound lifts
+- Replace some free-weight compounds with machine/assisted versions (e.g. Assisted Pull-up instead of Pull-up, Goblet Squat instead of Barbell Squat)
+- Add extra form-cue notes (more detailed than intermediate notes)
+- Longer rest time suggestions (90-120s vs 60-90s)
+
+### Advanced adjustments:
+- Add intensity techniques: drop sets, rest-pause, supersets (pair 2 exercises back to back)
+- Slightly higher volume (9-10 exercises possible)
+- Add optional "finisher" exercise per day
+
+### Age group adjustments:
+- Teen (13-17): emphasize form/technique over heavy weight, avoid max-effort lifts, more bodyweight/moderate-rep work, growth-plate-safe exercise notes
+- Adult (18-40): current default programming (no change)
+- Mature (40+): more warm-up time, lower-impact exercise swaps (e.g. Leg Press instead of high-impact jumps), joint-friendly notes, slightly higher rep/lower weight emphasis
+
+### UI changes needed:
+- Add to Profile screen: "Experience Level" tag group (Beginner/Intermediate/Advanced) — similar style to existing Goal tags
+- Add to Profile screen: "Age Group" auto-detected from age field, or manual override tag
+- Save experienceLevel + ageGroup to Supabase profile object
+- gym.js renderPPL() needs to filter/select exercise variant based on experienceLevel
+
+### Implementation approach (simplest path):
+- Rather than full duplicate exercise databases per level, use a MULTIPLIER + SWAP approach:
+  - Beginner: take Week A/B data, slice to first 5-6 exercises, reduce sets by -1, swap specific "hard" exercises for "easy" ones via a SWAP_MAP lookup
+  - Advanced: take Week A/B data, add 1-2 extra exercises from a BONUS_EXERCISES pool, add "+ Drop Set" note to last exercise
+  - This avoids tripling the entire PPL_DATA_WEEK object
+
+---
+
+## 📐 FEATURE SPEC: Posture Correction (Blended)
+
+### Goal: desk-job posture fix blended into existing Push/Pull/Legs days
+### Approach: Add 2-3 "posture exercises" as bonus mini-section at END of each day's exercise list (not separate tab)
+
+- Push day posture add-on: Wall Slides, Doorway Chest Stretch (counters forward shoulder roll from desk work)
+- Pull day posture add-on: Face Pulls (already have!), Band Pull-Aparts, Chin Tucks (counters neck forward-head posture)
+- Legs day posture add-on: Hip Flexor Stretch (already have warmup version), Glute Bridges (counters anterior pelvic tilt from sitting)
+- Show as a collapsible "🪑 Desk Posture Fix (2 min)" section similar to warmup section, auto-shown if user has 'Posture' or desk-job tag selected in profile
+
+### Profile addition needed:
+- Add new injury/lifestyle tag option: "💻 Desk Job / Posture" alongside existing Back Pain, Knee Issues etc.
+
+---
+
+## 📐 FEATURE SPEC: Football Speed & Stamina (Blended)
+
+### Goal: blend speed/agility/stamina work into existing PPL days for football athletes
+### Approach: Add a "⚡ Athletic Conditioning" bonus block at end of each day (similar pattern to posture)
+
+- Push day addition: Plyo Push-ups (explosive upper power) — optional/advanced only
+- Pull day addition: Band Resisted Sprints in place, or just stamina note
+- Legs day addition (most relevant for football): 
+  - Sprint intervals (e.g. "6 x 20m sprints, walk back recovery")
+  - Lateral bounds / agility ladder note
+  - Box jumps (explosive power for sprint speed)
+- Add a dedicated "Match Day Stamina" cardio note: suggest 2x/week extra conditioning (shuttle runs, interval running) outside the PPL split
+
+### Profile addition needed:
+- Add new goal tag: "⚽ Athletic Performance (Football/Sports)" — may already exist as "Get Stronger" or "Improve Athletic Performance", verify and reuse if present
+
+---
+
+## 🔢 BUILD ORDER (per user's answer)
+1. Beginner/Intermediate/Advanced exercise difficulty toggle (BUILD FIRST)
+2. Age group adjustments
+3. Posture correction blended add-on
+4. Football speed/stamina blended add-on
+5. Pre-workout nutrition tip banner (small, can slot in anytime)
+
+
+---
+
+## ✅ SESSION 10 COMPLETE — Built & Verified Locally (NOT PUSHED)
+
+- Experience Level tag group added to Profile (Beginner/Intermediate/Advanced)
+- Desk Job/Posture injury tag added
+- BEGINNER_SWAPS: 8 harder exercises auto-swapped for easier ones + trimmed to 6 exercises/day
+- ADVANCED_BONUS: drop set/rest-pause/finisher exercise added per day for advanced users
+- POSTURE_ADDON: 2 posture-fixing exercises blended into each PPL day if Desk Job tag selected
+- ATHLETIC_ADDON: speed/agility/sprint work blended into each PPL day if Athletic Performance goal selected
+- getAdjustedExercises(day) — central function combining all the above logic
+- updatePPLProgress and finishWorkout updated to use dynamic exercise count (not fixed 8)
+- Pre-workout nutrition tip banner added to gym screen
+- All verified working via Node VM testing (beginner push = 6 exercises confirmed correct)
+
+### Still TODO from this feature set:
+- Age group (Teen/Adult/Mature) adjustments — NOT YET BUILT (deferred, skill level was priority)
+- Save experienceLevel explicitly to profile save data (currently re-read from DOM each render — works but verify it persists across reload)
+
+### NEXT: push this batch when ready, then test on phone:
+1. Select Beginner on profile → check Push tab shows 6 exercises with swapped names
+2. Select Advanced → check Push tab shows 9th bonus exercise (Drop Set Finisher)
+3. Select Desk Job/Posture tag → check Push/Pull/Legs each show +2 posture exercises at end
+4. Select Athletic Performance goal → check Push/Pull/Legs show sprint/agility additions
+
+---
+
+## 🆕 SESSION 11 — MAJOR FEATURE: Community Chat (Public Board + DMs)
+
+### Decision: Both public board AND private DMs, with report button (no profanity filter for v1)
+
+### ⚠️ SAFETY NOTES (important, keep in mind for implementation):
+- Public chat = real risk of spam/harassment/inappropriate content with zero moderation
+- MUST include: report button (user requested), block user capability, and basic rate-limiting to prevent spam flooding
+- Should NOT store/display real email as the public display name — use profile name only, fallback to "Anonymous Lifter" if not set
+- Should add a "be respectful" community guideline note shown once or pinned at top
+- No editing/deleting others' messages — only own messages can be deleted by the sender
+- Consider: should reports go anywhere? Since there's no backend admin panel, reports should at minimum be stored in Supabase for the developer (Krish) to review manually for now
+
+### Database changes needed (Supabase):
+
+```sql
+-- Public community board messages
+create table community_messages (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users on delete cascade,
+  display_name text,
+  message text,
+  created_at timestamp default now()
+);
+alter table community_messages enable row level security;
+create policy "Anyone can read community messages" on community_messages for select using (true);
+create policy "Users can insert own messages" on community_messages for insert with check (auth.uid() = user_id);
+create policy "Users can delete own messages" on community_messages for delete using (auth.uid() = user_id);
+
+-- Private DMs
+create table direct_messages (
+  id uuid default gen_random_uuid() primary key,
+  sender_id uuid references auth.users on delete cascade,
+  recipient_id uuid references auth.users on delete cascade,
+  message text,
+  read boolean default false,
+  created_at timestamp default now()
+);
+alter table direct_messages enable row level security;
+create policy "Users see own sent/received DMs" on direct_messages for select using (auth.uid() = sender_id or auth.uid() = recipient_id);
+create policy "Users can send DMs" on direct_messages for insert with check (auth.uid() = sender_id);
+
+-- Reports
+create table message_reports (
+  id uuid default gen_random_uuid() primary key,
+  reporter_id uuid references auth.users on delete cascade,
+  reported_message_id uuid,
+  reported_message_text text,
+  reason text,
+  created_at timestamp default now()
+);
+alter table message_reports enable row level security;
+create policy "Users can insert reports" on message_reports for insert with check (auth.uid() = reporter_id);
+
+-- Blocks
+create table user_blocks (
+  blocker_id uuid references auth.users on delete cascade,
+  blocked_id uuid references auth.users on delete cascade,
+  created_at timestamp default now(),
+  primary key (blocker_id, blocked_id)
+);
+alter table user_blocks enable row level security;
+create policy "Users manage own blocks" on user_blocks for all using (auth.uid() = blocker_id);
+```
+
+### Realtime setup needed:
+- Enable Supabase Realtime replication on `community_messages` and `direct_messages` tables (toggle in Supabase dashboard → Database → Replication)
+
+### UI changes needed:
+- New nav item: "💬 Community" (6th tab — may need to fit into mobile nav scroll or replace an icon)
+- Community screen: 
+  - Public board feed (auto-scroll, newest at bottom, like simple group chat)
+  - Message input + send button
+  - Report icon per message (opens small reason picker: Spam / Harassment / Inappropriate / Other)
+  - Block user option (tap username → Block)
+  - DM tab/section: list of conversations, tap to open thread
+- Rate limiting: client-side cooldown (e.g. 1 message every 3 seconds) to deter spam flooding — note this is NOT robust security, just a basic deterrent
+
+### Build order:
+1. Supabase tables + RLS policies (user needs to run SQL)
+2. Enable Realtime replication (user needs to toggle in dashboard)
+3. Community public board UI + send/receive
+4. Report button + report storage
+5. Block user feature
+6. Private DMs (separate, more complex — conversation list + threads)
+
+### Omega-3 supplement note (from user, unrelated to chat):
+- People in some community/forum suggested user take Omega-3
+- This is supplement/health advice — NOT something to build into the app as a recommendation engine
+- If user wants general info: Omega-3 (fish oil) is commonly used for joint/heart health and reducing inflammation; reasonable doses are typically 1-3g/day combined EPA+DHA, but should not be presented as personalized medical advice
+- ACTION: if user asks again, give balanced factual info and suggest consulting a doctor before starting any supplement, especially given user is a minor/young athlete (Class 12 student per memory)

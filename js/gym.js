@@ -72,12 +72,58 @@ function renderWarmup(day) {
     </div>`;
 }
 
+function getExperienceLevel() {
+  const tag = document.querySelector('#experience-tags .tag.selected');
+  if (!tag) return 'intermediate';
+  const txt = tag.textContent.toLowerCase();
+  if (txt.includes('beginner')) return 'beginner';
+  if (txt.includes('advanced')) return 'advanced';
+  return 'intermediate';
+}
+
+function hasDeskJobTag() {
+  return [...document.querySelectorAll('#injury-tags .tag.selected')].some(t => t.textContent.includes('Desk Job'));
+}
+
+function hasAthleticGoal() {
+  const tag = document.querySelector('#goal-tags .tag.selected');
+  return tag && tag.textContent.includes('Athletic Performance');
+}
+
+function getAdjustedExercises(day) {
+  let exs = [...PPL_DATA[day]]; // copy
+  const level = getExperienceLevel();
+
+  if (level === 'beginner') {
+    // Swap harder exercises for easier ones, trim to 6
+    exs = exs.map(ex => {
+      const swap = BEGINNER_SWAPS[ex.name];
+      return swap ? { ...ex, ...swap } : ex;
+    }).slice(0, 6);
+  } else if (level === 'advanced') {
+    // Add bonus finisher exercise
+    exs = [...exs, ADVANCED_BONUS[day]];
+  }
+
+  // Posture add-on
+  if (hasDeskJobTag() && POSTURE_ADDON[day]) {
+    exs = [...exs, ...POSTURE_ADDON[day]];
+  }
+
+  // Athletic add-on
+  if (hasAthleticGoal() && ATHLETIC_ADDON[day]) {
+    exs = [...exs, ...ATHLETIC_ADDON[day]];
+  }
+
+  return exs;
+}
+
 function renderPPL() {
   try {
   renderTodayBanner();
   ['push','pull','legs'].forEach(day => {
     renderWarmup(day);
-    const exs = PPL_DATA[day];
+    const exs = getAdjustedExercises(day);
     const container = document.getElementById(`${day}-exercises`);
     if (!container) return;
     container.innerHTML = exs.map((ex, i) => {
@@ -92,7 +138,7 @@ function renderPPL() {
           <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
           <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
             <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${ex.muscles}</span>
-            <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>
+            ${ex.equipment ? `<span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>` : ''}
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
           ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
@@ -101,7 +147,7 @@ function renderPPL() {
         <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
       </div>`;
     }).join('');
-    updatePPLProgress(day);
+    updatePPLProgress(day, exs.length);
   });
   } catch(e) {
     console.error('renderPPL CRASHED:', e);
@@ -118,10 +164,10 @@ function toggleExercise(day, key) {
   autoSave();
 }
 
-function updatePPLProgress(day) {
-  const total = PPL_DATA[day].length;
-  const done = Object.values(pplChecked[day]).filter(Boolean).length;
-  const pct = Math.round((done/total)*100);
+function updatePPLProgress(day, totalOverride) {
+  const total = totalOverride || PPL_DATA[day].length;
+  const done = Object.values(pplChecked[day] || {}).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
   const bar = document.getElementById(`${day}-progress`);
   const label = document.getElementById(`${day}-progress-label`);
   if (bar) bar.style.width = pct + '%';
@@ -265,7 +311,7 @@ function showPRCelebration(exName, weight) {
 // WORKOUT HISTORY
 // ============================================================
 function finishWorkout(dayType) {
-  const exs = PPL_DATA[dayType];
+  const exs = getAdjustedExercises(dayType);
   const completed = Object.values(pplChecked[dayType] || {}).filter(Boolean).length;
   const total = exs.length;
   if (completed === 0) {

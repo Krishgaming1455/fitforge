@@ -92,6 +92,10 @@ function showScreen(name) {
     updateNutritionDisplay();
     renderWaterTracker();
   }
+  if (name === 'community') {
+    if (typeof loadBoardMessages === 'function') loadBoardMessages();
+    if (typeof subscribeToBoardRealtime === 'function') subscribeToBoardRealtime();
+  }
 }
 
 // ============================================================
