@@ -13,7 +13,10 @@ async function initAuth() {
   try {
     if (overlay) overlay.style.display = 'flex';
 
-    const { data: { session } } = await sb.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 10000));
+    const sessionPromise = sb.auth.getSession();
+    const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+
     if (session) {
       currentUser = session.user;
       isGuest = false;
@@ -28,6 +31,19 @@ async function initAuth() {
     console.error('initAuth error:', err);
     hideOverlay();
     showAuthScreen();
+    if (err.message === 'TIMEOUT') {
+      // Show a gentle banner on the auth screen so it doesn't feel silently broken
+      setTimeout(() => {
+        const authCard = document.querySelector('#screen-auth .card');
+        if (authCard && !document.getElementById('outage-banner')) {
+          const banner = document.createElement('div');
+          banner.id = 'outage-banner';
+          banner.style.cssText = 'background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.3);color:#ffaa00;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:16px;text-align:center';
+          banner.textContent = '⚠️ Connection to server timed out. Supabase may be experiencing an outage — please try again shortly.';
+          authCard.prepend(banner);
+        }
+      }, 100);
+    }
   }
 
   let initialised = true;
@@ -95,20 +111,39 @@ async function handleSignup() {
   btn.textContent = 'Creating account...';
   btn.disabled = true;
 
-  const { data, error } = await sb.auth.signUp({ email, password });
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 12000));
+    const signupPromise = sb.auth.signUp({ email, password });
+    const { data, error } = await Promise.race([signupPromise, timeoutPromise]);
 
-  btn.textContent = 'Create Account';
-  btn.disabled = false;
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
 
-  if (error) return showError(errorEl, '❌ ' + error.message);
+    if (error) {
+      const msg = error.message?.toLowerCase() || '';
+      if (msg.includes('fetch') || msg.includes('network')) {
+        return showError(errorEl, '⚠️ Can\'t reach the server right now. Supabase may be having issues — try again in a few minutes.');
+      }
+      return showError(errorEl, '❌ ' + error.message);
+    }
 
-  if (data.user && !data.session) {
-    errorEl.style.display = 'block';
-    errorEl.style.color = 'var(--green)';
-    errorEl.style.background = 'rgba(68,255,136,.08)';
-    errorEl.style.borderColor = 'rgba(68,255,136,.3)';
-    errorEl.textContent = '✅ Check your email to confirm your account!';
-    return;
+    if (data.user && !data.session) {
+      errorEl.style.display = 'block';
+      errorEl.style.color = 'var(--green)';
+      errorEl.style.background = 'rgba(68,255,136,.08)';
+      errorEl.style.borderColor = 'rgba(68,255,136,.3)';
+      errorEl.textContent = '✅ Check your email to confirm your account!';
+      return;
+    }
+  } catch (e) {
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
+    if (e.message === 'TIMEOUT') {
+      showError(errorEl, '⚠️ Signup is taking too long — the server may be down. Please try again shortly.');
+    } else {
+      showError(errorEl, '⚠️ Something went wrong: ' + (e.message || 'unknown error') + '. Try again in a bit.');
+    }
+    console.error('handleSignup error:', e);
   }
 }
 
@@ -126,13 +161,34 @@ async function handleLogin() {
   btn.textContent = 'Logging in...';
   btn.disabled = true;
 
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  try {
+    // Timeout guard — if Supabase hangs (e.g. during an outage), don't leave button stuck forever
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 12000));
+    const loginPromise = sb.auth.signInWithPassword({ email, password });
+    const { error } = await Promise.race([loginPromise, timeoutPromise]);
 
-  btn.textContent = 'Login';
-  btn.disabled = false;
+    btn.textContent = 'Login';
+    btn.disabled = false;
 
-  if (error) return showError(errorEl, '❌ ' + error.message);
-  // onAuthStateChange handles the rest
+    if (error) {
+      // Distinguish network/server issues from wrong credentials
+      const msg = error.message?.toLowerCase() || '';
+      if (msg.includes('fetch') || msg.includes('network')) {
+        return showError(errorEl, '⚠️ Can\'t reach the server right now. Supabase may be having issues — try again in a few minutes.');
+      }
+      return showError(errorEl, '❌ ' + error.message);
+    }
+    // onAuthStateChange handles the rest
+  } catch (e) {
+    btn.textContent = 'Login';
+    btn.disabled = false;
+    if (e.message === 'TIMEOUT') {
+      showError(errorEl, '⚠️ Login is taking too long — the server may be down. Please try again shortly.');
+    } else {
+      showError(errorEl, '⚠️ Something went wrong: ' + (e.message || 'unknown error') + '. Try again in a bit.');
+    }
+    console.error('handleLogin error:', e);
+  }
 }
 
 // ── GUEST ────────────────────────────────────────────────────

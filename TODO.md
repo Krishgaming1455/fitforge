@@ -499,3 +499,38 @@ create policy "Users manage own blocks" on user_blocks for all using (auth.uid()
 - This is supplement/health advice — NOT something to build into the app as a recommendation engine
 - If user wants general info: Omega-3 (fish oil) is commonly used for joint/heart health and reducing inflammation; reasonable doses are typically 1-3g/day combined EPA+DHA, but should not be presented as personalized medical advice
 - ACTION: if user asks again, give balanced factual info and suggest consulting a doctor before starting any supplement, especially given user is a minor/young athlete (Class 12 student per memory)
+
+---
+
+## 🆕 SESSION 12 — Login Reliability Investigation (IN PROGRESS)
+
+### User feedback: 
+- "every time I update the website, login gets problematic"
+- Already has account, correct email/password, still can't login
+- Confirmed: NOT an email-confirmation-link issue
+- Decision: fix root cause, do NOT add phone/OTP login (adds complexity + cost, Supabase phone auth isn't free)
+
+### Hypothesis (needs user confirmation of exact symptom):
+- Possible: handleLogin() error not displaying clearly, or error swallowed
+- Possible: sb.auth.signInWithPassword silently failing due to Supabase project pause/sleep (free tier projects can pause after inactivity)
+- Possible: initAuth() loading overlay getting stuck again after a code update reintroduces a bug similar to session 8/9's blank screen crash
+- Possible: every fresh deploy clears some cached auth state unexpectedly
+
+### NEXT STEP: 
+- Get exact symptom from user (error message? blank? stuck loading? "invalid credentials" even though correct?)
+- Check Supabase dashboard → Authentication → Users to confirm account actually exists and is confirmed
+- Check Supabase project status (free tier projects pause after 1 week inactivity — this could be a real cause!)
+
+### IMPORTANT KNOWN SUPABASE FREE TIER GOTCHA:
+- Free Supabase projects auto-pause after 7 days of no API activity
+- If paused, login/signup would fail until manually unpaused in dashboard
+- This could explain "works sometimes, fails other times" pattern if user doesn't use app daily
+- ACTION: check Supabase dashboard for a "Project Paused" banner — if so, click resume
+
+
+### ✅ SESSION 12 FIX DEPLOYED: Login/Signup resilience during Supabase outages
+- handleLogin: added 12s timeout + try/catch, distinguishes network errors from wrong credentials
+- handleSignup: same timeout + try/catch treatment
+- initAuth: added 10s timeout on getSession(), shows orange "server timeout" banner on auth screen instead of stuck loading forever
+- Root cause confirmed: Supabase had an active service-wide outage ("We are investigating a technical issue" banner seen in dashboard) — NOT our code's fault, but our code now degrades gracefully instead of hanging silently
+- Goal: next time Supabase has issues, user sees a clear message instead of a stuck "Logging in..." button forever
