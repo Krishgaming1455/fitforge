@@ -12,28 +12,11 @@ function openInviteModal() {
 
   if (linkInput) linkInput.value = shareUrl;
   modal.style.display = 'flex';
-  generateQRWithRetry(shareUrl, qrContainer, 0);
-}
 
-function generateQRWithRetry(url, container, attempt) {
-  if (typeof QRCode !== 'undefined') {
-    container.innerHTML = '';
-    QRCode.toCanvas(document.createElement('canvas'), url, { width: 200, margin: 1 }, (err, canvas) => {
-      if (!err) container.appendChild(canvas);
-      else container.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR generation failed — try again</div>';
-    });
-    return;
-  }
-  if (attempt >= 10) {
-    // Give up after ~3s, show fallback with retry button
-    container.innerHTML = `<div style="color:#000;font-size:12px;padding:20px">
-      Couldn't load QR generator.<br>
-      <button onclick="generateQRWithRetry('${url.replace(/'/g,"\\'")}', this.parentElement, 0)" style="margin-top:10px;background:#222;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer">Retry</button>
-    </div>`;
-    return;
-  }
-  container.innerHTML = '<div style="color:#888;font-size:12px;padding:20px">Loading QR generator...</div>';
-  setTimeout(() => generateQRWithRetry(url, container, attempt + 1), 300);
+  // Use a simple QR image API — just an <img> tag, no JS library/script loading needed
+  const cacheBust = Date.now(); // fresh QR each time, per user request
+  const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}&t=${cacheBust}`;
+  qrContainer.innerHTML = `<img src="${qrImgUrl}" alt="QR Code" width="200" height="200" style="display:block" onerror="this.parentElement.innerHTML='<div style=&quot;color:#000;font-size:12px;padding:30px&quot;>QR image failed to load — use the link below instead</div>'">`;
 }
 
 function closeInviteModal() {
