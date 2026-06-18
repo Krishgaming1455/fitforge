@@ -1,3 +1,49 @@
+function openInviteModal() {
+  const modal = document.getElementById('invite-modal');
+  const qrContainer = document.getElementById('invite-qr-container');
+  const linkInput = document.getElementById('invite-link-input');
+  if (!modal) return;
+
+  // Dynamically use current site URL — survives hosting changes
+  const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '');
+  const profileName = document.getElementById('p-name')?.value;
+  const refParam = profileName ? `?ref=${encodeURIComponent(profileName.replace(/\s+/g,'_'))}` : '';
+  const shareUrl = baseUrl + refParam;
+
+  if (linkInput) linkInput.value = shareUrl;
+
+  // Generate fresh QR each time modal opens
+  qrContainer.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(document.createElement('canvas'), shareUrl, { width: 200, margin: 1 }, (err, canvas) => {
+      if (!err) qrContainer.appendChild(canvas);
+      else qrContainer.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR generation failed</div>';
+    });
+  } else {
+    qrContainer.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR library loading...</div>';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeInviteModal() {
+  const modal = document.getElementById('invite-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function copyInviteLink() {
+  const input = document.getElementById('invite-link-input');
+  const btn = document.getElementById('invite-copy-btn');
+  if (!input) return;
+  input.select();
+  navigator.clipboard?.writeText(input.value).then(() => {
+    if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => btn.textContent = 'Copy', 1500); }
+  }).catch(() => {
+    document.execCommand('copy');
+    if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => btn.textContent = 'Copy', 1500); }
+  });
+}
+
 function renderHome() {
   try {
   // Welcome card

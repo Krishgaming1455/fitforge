@@ -135,6 +135,7 @@
       <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:32px">
         <button class="btn-primary" onclick="showScreen('gym')">💪 Today's Workout</button>
         <button class="btn-secondary" onclick="showScreen('diet')">🥗 Diet Planner</button>
+        <button class="btn-secondary" onclick="openInviteModal()">📤 Invite Friends</button>
       </div>
       <!-- Today's workout card — updated by JS -->
       <div id="home-today-card"></div>
@@ -555,6 +556,22 @@
   </div>
 </div>
 
+<!-- INVITE / SHARE MODAL -->
+<div id="invite-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;position:relative">
+    <button onclick="closeInviteModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1.5px;margin-bottom:6px">📤 INVITE FRIENDS</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:18px">Share FitForge with your training partners</p>
+    <div id="invite-qr-container" style="background:#fff;border-radius:14px;padding:16px;display:inline-block;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input id="invite-link-input" class="form-input" readonly style="flex:1;font-size:12px">
+      <button onclick="copyInviteLink()" id="invite-copy-btn" style="background:var(--accent);color:#000;border:none;padding:0 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Copy</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted)">Scan the QR or share the link — works on any device</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>

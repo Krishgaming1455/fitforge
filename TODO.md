@@ -534,3 +534,24 @@ create policy "Users manage own blocks" on user_blocks for all using (auth.uid()
 - initAuth: added 10s timeout on getSession(), shows orange "server timeout" banner on auth screen instead of stuck loading forever
 - Root cause confirmed: Supabase had an active service-wide outage ("We are investigating a technical issue" banner seen in dashboard) — NOT our code's fault, but our code now degrades gracefully instead of hanging silently
 - Goal: next time Supabase has issues, user sees a clear message instead of a stuck "Logging in..." button forever
+
+---
+
+## 🆕 SESSION 13 — Share Profile / Invite QR Code
+
+### Decision:
+- QR generated dynamically using current page's actual URL (window.location.origin) — so it survives hosting changes (Netlify → Cloudflare → wherever)
+- Shows on Home screen
+- Also includes user's display name/ID so it doubles as a "share my profile" feature
+
+### Approach:
+- Use a QR code generation library via CDN (e.g. qrcode.js) — lightweight, no backend needed
+- Button on Home screen: "📤 Invite Friends" → opens modal with QR code + copyable link
+- QR encodes: current site URL (+ optional ?ref=username for light referral tracking, stored as just a URL param, not a real tracking system)
+
+### ✅ SESSION 13 BUILT (NOT YET PUSHED):
+- "📤 Invite Friends" button on Home screen hero
+- Opens modal with dynamically generated QR code (uses window.location.origin — survives hosting changes)
+- QR includes optional ?ref=username param if profile name is set
+- Copyable link input with one-tap copy button
+- Fresh QR generated every time modal opens (per user request)
