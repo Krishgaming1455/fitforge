@@ -23,14 +23,17 @@ async function initAuth() {
       await loadUserData();
       hideOverlay();
       showMainApp();
+      window._authInitialised = true;
     } else {
       hideOverlay();
       showAuthScreen();
+      window._authInitialised = false;
     }
   } catch(err) {
     console.error('initAuth error:', err);
     hideOverlay();
     showAuthScreen();
+    window._authInitialised = false;
     if (err.message === 'TIMEOUT') {
       // Show a gentle banner on the auth screen so it doesn't feel silently broken
       setTimeout(() => {
@@ -46,19 +49,21 @@ async function initAuth() {
     }
   }
 
-  let initialised = true;
+  // BUG FIX: was hardcoded to true, which meant email-confirmation redirects
+  // (SIGNED_IN event firing after clicking the email link) never triggered
+  // the actual login flow — user landed back on the login screen silently.
   sb.auth.onAuthStateChange(async (event, newSession) => {
-    if (event === 'SIGNED_IN' && newSession && !initialised) {
-      initialised = true;
+    if (event === 'SIGNED_IN' && newSession && !window._authInitialised) {
+      window._authInitialised = true;
       currentUser = newSession.user;
       isGuest = false;
       await loadUserData();
       showMainApp();
-    } else if (event === 'SIGNED_IN' && newSession && initialised) {
+    } else if (event === 'SIGNED_IN' && newSession && window._authInitialised) {
       updateAuthDisplay();
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
-      initialised = false;
+      window._authInitialised = false;
       showAuthScreen();
     }
   });
