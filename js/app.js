@@ -11,19 +11,29 @@ function openInviteModal() {
   const shareUrl = baseUrl + refParam;
 
   if (linkInput) linkInput.value = shareUrl;
-
-  // Generate fresh QR each time modal opens
-  qrContainer.innerHTML = '';
-  if (typeof QRCode !== 'undefined') {
-    QRCode.toCanvas(document.createElement('canvas'), shareUrl, { width: 200, margin: 1 }, (err, canvas) => {
-      if (!err) qrContainer.appendChild(canvas);
-      else qrContainer.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR generation failed</div>';
-    });
-  } else {
-    qrContainer.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR library loading...</div>';
-  }
-
   modal.style.display = 'flex';
+  generateQRWithRetry(shareUrl, qrContainer, 0);
+}
+
+function generateQRWithRetry(url, container, attempt) {
+  if (typeof QRCode !== 'undefined') {
+    container.innerHTML = '';
+    QRCode.toCanvas(document.createElement('canvas'), url, { width: 200, margin: 1 }, (err, canvas) => {
+      if (!err) container.appendChild(canvas);
+      else container.innerHTML = '<div style="color:#000;font-size:12px;padding:20px">QR generation failed — try again</div>';
+    });
+    return;
+  }
+  if (attempt >= 10) {
+    // Give up after ~3s, show fallback with retry button
+    container.innerHTML = `<div style="color:#000;font-size:12px;padding:20px">
+      Couldn't load QR generator.<br>
+      <button onclick="generateQRWithRetry('${url.replace(/'/g,"\\'")}', this.parentElement, 0)" style="margin-top:10px;background:#222;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer">Retry</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = '<div style="color:#888;font-size:12px;padding:20px">Loading QR generator...</div>';
+  setTimeout(() => generateQRWithRetry(url, container, attempt + 1), 300);
 }
 
 function closeInviteModal() {
