@@ -117,8 +117,8 @@ function syncProfileToDiet() {
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  const ntNames = ['home','profile','gym','diet','recovery','myths'];
-  const mnNames = ['home','profile','gym','diet','recovery'];
+  const ntNames = ['home','profile','gym','diet','recovery','myths','community'];
+  const mnNames = ['home','profile','gym','diet','recovery','community'];
   document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ntNames[i] === name));
   document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
   window.scrollTo({top:0,behavior:'smooth'});
@@ -134,6 +134,8 @@ function showScreen(name) {
   if (name === 'community') {
     if (typeof loadBoardMessages === 'function') loadBoardMessages();
     if (typeof subscribeToBoardRealtime === 'function') subscribeToBoardRealtime();
+  } else {
+    if (typeof stopBoardPolling === 'function') stopBoardPolling();
   }
 }
 

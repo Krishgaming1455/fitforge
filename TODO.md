@@ -32,12 +32,12 @@ all synced to Supabase, code split makes future edits much easier.
 ### Bigger features (from gym app research, none started):
 - Muscle heatmap (SVG body diagram showing trained muscles)
 - 1RM calculator (Epley formula)
-- Plate calculator (which plates to load per side)
+
 - Exercise history graph (line chart of weight over last 10 sessions)
 - Macro donut chart on diet screen
 - Meal copy ("copy yesterday's breakfast")
 - Micronutrient display (data already exists in FOOD_DB, just needs UI)
-- Rest Day content (Sunday currently shows nothing special — could add stretching routine)
+
 - Age group adjustments (Teen/Adult/Mature) — skill level was built, age group was deferred
 
 ### Smaller polish items:
@@ -62,3 +62,21 @@ Repo: https://github.com/Krishgaming1455/fitforge.git
 Live: (currently being redeployed — Netlify ran out of credits, check current host)
 Supabase: tlzymwuoedjyzpkockfe.supabase.co
 Stack: HTML + vanilla JS modules + Supabase
+
+### ✅ SESSION 14 BUILT (NOT YET PUSHED):
+- Plate Calculator — enter target weight + barbell weight, shows exactly which plates to load per side with color-coded plates, handles odd numbers and shows "closest achievable" warning if exact weight isn't possible with standard plates
+- Rest Day Content — on Sunday (or any rest day), gym screen now shows 7 stretches with hold times + 4 recovery tips instead of empty PPL tabs; PPL tabs auto-hide on rest days and reappear on training days
+- Both tested with real math scenarios (60kg, 100kg, 47.5kg, 82.5kg) — all correct
+
+### ✅ SESSION 15 BUILT (NOT YET PUSHED):
+- REMOVED: Plate Calculator entirely (user feedback: not useful, wasted space) — removed from HTML, gym.js, and data.js
+- ADDED: Tap username in public chat → small popup menu (View Profile / Message / Block)
+  - View Profile shows a card with display name, message count, first-seen date (no public profiles table yet, so this uses chat history as the data source)
+  - Message → switches to DM tab and opens thread with that user directly
+  - Block → existing blockUser() function, hides their messages going forward
+  - Menu auto-positions on screen and closes on outside tap
+
+### ✅ SESSION 15 (continued) — Chat delay fix:
+- Added 4-second polling fallback for public board — guarantees new messages show up even if Supabase Realtime isn't properly configured, without needing manual refresh
+- Polling only runs while Community screen is actively open, stops automatically when navigating away (no wasted requests)
+- BONUS FIX: nav active-state arrays were missing 'community' and 'myths' — desktop/mobile nav highlighting was broken for those tabs, now fixed

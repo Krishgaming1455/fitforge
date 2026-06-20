@@ -56,7 +56,7 @@ function renderBoardMessages() {
     return `
     <div style="background:${isMine ? 'rgba(240,255,68,.08)' : 'var(--bg3)'};border:1px solid ${isMine ? 'rgba(240,255,68,.2)' : 'var(--border)'};border-radius:10px;padding:10px 12px;${isMine ? 'align-self:flex-end;max-width:85%' : 'max-width:85%'}">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:3px">
-        <span style="font-size:12px;font-weight:700;color:${isMine ? 'var(--accent)' : 'var(--accent2)'}">${escapeHtml(m.display_name || 'Anonymous Lifter')}</span>
+        <span onclick="${!isMine ? `openUserMenu('${m.user_id}','${escapeHtml(m.display_name||'Anonymous Lifter').replace(/'/g,"\\'")}',this)` : ''}" style="font-size:12px;font-weight:700;color:${isMine ? 'var(--accent)' : 'var(--accent2)'};${!isMine ? 'cursor:pointer;text-decoration:underline dotted' : ''}">${escapeHtml(m.display_name || 'Anonymous Lifter')}</span>
         <div style="display:flex;gap:6px;align-items:center">
           <span style="font-size:10px;color:var(--muted)">${time}</span>
           ${!isMine ? `<button onclick="reportMessage('${m.id}','${escapeHtml(m.message).replace(/'/g,"\\'")}')" title="Report" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0">🚩</button>` : `<button onclick="deleteBoardMessage('${m.id}')" title="Delete" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0">✕</button>`}
@@ -127,7 +127,88 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ── REALTIME SUBSCRIPTION ───────────────────────────────────
+// ── USER MENU (tap username in chat) ─────────────────────────
+function openUserMenu(userId, displayName, anchorEl) {
+  closeUserMenu(); // close any existing menu first
+  const menu = document.createElement('div');
+  menu.id = 'user-action-menu';
+  menu.style.cssText = `position:fixed;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:6px;z-index:9500;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:160px`;
+  menu.innerHTML = `
+    <div style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--accent2);border-bottom:1px solid var(--border);margin-bottom:4px">${escapeHtml(displayName)}</div>
+    <button onclick="viewUserProfile('${userId}','${displayName.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">👤 View Profile</button>
+    <button onclick="startDMFromMenu('${userId}','${displayName.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">✉️ Message</button>
+    <button onclick="blockUser('${userId}')" style="width:100%;text-align:left;background:none;border:none;color:#ff4466;padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">🚫 Block User</button>
+  `;
+  document.body.appendChild(menu);
+
+  // Position near the clicked username, keep on-screen
+  const rect = anchorEl.getBoundingClientRect();
+  const menuWidth = 170;
+  let left = rect.left;
+  if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 10;
+  menu.style.left = left + 'px';
+  menu.style.top = (rect.bottom + 6) + 'px';
+
+  // Close when tapping outside
+  setTimeout(() => document.addEventListener('click', closeUserMenuOnOutsideClick), 10);
+}
+
+function closeUserMenuOnOutsideClick(e) {
+  const menu = document.getElementById('user-action-menu');
+  if (menu && !menu.contains(e.target)) closeUserMenu();
+}
+
+function closeUserMenu() {
+  const menu = document.getElementById('user-action-menu');
+  if (menu) menu.remove();
+  document.removeEventListener('click', closeUserMenuOnOutsideClick);
+}
+
+function viewUserProfile(userId, displayName) {
+  closeUserMenu();
+  // We don't have a public profiles table — show what's available from chat history
+  const userMsgCount = boardMessages.filter(m => m.user_id === userId).length;
+  const firstMsg = boardMessages.find(m => m.user_id === userId);
+  const joinedDate = firstMsg ? new Date(firstMsg.created_at).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) : 'Unknown';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9600;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="card" style="max-width:320px;width:100%;text-align:center;position:relative">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px">💪</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:4px">${escapeHtml(displayName)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:18px">FitForge Community Member</div>
+      <div style="display:flex;justify-content:center;gap:24px;margin-bottom:18px">
+        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent)">${userMsgCount}</div><div style="font-size:10px;color:var(--muted)">MESSAGES</div></div>
+        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent2)">${joinedDate}</div><div style="font-size:10px;color:var(--muted)">FIRST SEEN</div></div>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="this.closest('div[style*=fixed]').remove(); startDMFromMenu('${userId}','${displayName.replace(/'/g,"\\'")}')">✉️ Send Message</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function startDMFromMenu(userId, displayName) {
+  closeUserMenu();
+  // Switch to DM tab and open thread with this user
+  const dmTabBtn = document.querySelector('.community-tab:nth-child(2)');
+  if (dmTabBtn) switchCommunityTab('dms', dmTabBtn);
+  setTimeout(() => {
+    document.getElementById('dm-conversation-list').style.display = 'none';
+    document.getElementById('dm-thread-view').style.display = 'block';
+    currentDMThread = userId;
+    const headerEl = document.getElementById('dm-thread-header');
+    if (headerEl) headerEl.textContent = displayName;
+    const threadEl = document.getElementById('dm-thread-messages');
+    if (threadEl) threadEl.innerHTML = '';
+    openDMThread(userId);
+  }, 150);
+}
+
+// ── REALTIME SUBSCRIPTION (+ polling fallback) ──────────────
+let boardPollInterval = null;
+
 function subscribeToBoardRealtime() {
   if (boardRealtimeChannel || isGuest || !currentUser) return;
   try {
@@ -138,6 +219,21 @@ function subscribeToBoardRealtime() {
       })
       .subscribe();
   } catch (e) { console.error('Realtime subscribe error:', e); }
+
+  // Polling fallback — guarantees new messages show up even if realtime
+  // isn't properly configured on the Supabase project. Only runs while
+  // the community screen is the active screen.
+  if (boardPollInterval) clearInterval(boardPollInterval);
+  boardPollInterval = setInterval(() => {
+    const screen = document.getElementById('screen-community');
+    if (screen && screen.classList.contains('active') && !isGuest) {
+      loadBoardMessages();
+    }
+  }, 4000); // check every 4 seconds — fast enough to feel responsive, not spammy
+}
+
+function stopBoardPolling() {
+  if (boardPollInterval) { clearInterval(boardPollInterval); boardPollInterval = null; }
 }
 
 // ── TAB SWITCHING ────────────────────────────────────────────

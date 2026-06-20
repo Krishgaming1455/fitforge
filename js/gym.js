@@ -28,7 +28,17 @@ function renderTodayBanner() {
     label.style.color = 'var(--purple)';
     if (weekLabel) weekLabel.textContent = 'Light stretch or walk only. Muscles grow during rest.';
     if (banner) banner.style.borderColor = 'rgba(170,68,255,.3)';
+    renderRestDayContent();
+    const restContent = document.getElementById('rest-day-content');
+    const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
+    if (restContent) restContent.style.display = 'block';
+    if (pplTabsWrap) pplTabsWrap.style.display = 'none';
+    document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = 'none');
   } else {
+    const restContent = document.getElementById('rest-day-content');
+    const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
+    if (restContent) restContent.style.display = 'none';
+    if (pplTabsWrap) pplTabsWrap.style.display = 'flex';
     const typeLabels = {push:'Push Day — Chest · Shoulders · Triceps', pull:'Pull Day — Back · Biceps · Rear Delts', legs:'Legs Day — Quads · Glutes · Hamstrings'};
     const typeIcons = {push:'💪', pull:'🔥', legs:'🦵'};
     icon.textContent = typeIcons[todayPPL];
@@ -42,6 +52,32 @@ function renderTodayBanner() {
       const warmupBody = document.querySelector(`#ppl-${todayPPL} .warmup-body`);
       if (warmupBody) warmupBody.style.display = 'block';
     }, 200);
+  }
+}
+
+function renderRestDayContent() {
+  const stretchEl = document.getElementById('rest-day-stretches');
+  const tipsEl = document.getElementById('rest-day-tips');
+  if (stretchEl) {
+    stretchEl.innerHTML = REST_DAY_STRETCHES.map(s => `
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(170,68,255,.05);border:1px solid rgba(170,68,255,.15);border-radius:10px">
+        <span style="font-size:20px;flex-shrink:0">${s.icon}</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <span style="font-size:13px;font-weight:700">${s.name}</span>
+            <span style="font-size:11px;color:var(--purple);font-weight:700;white-space:nowrap">${s.duration}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4">${s.note}</div>
+        </div>
+      </div>`).join('');
+  }
+  if (tipsEl) {
+    tipsEl.innerHTML = REST_DAY_TIPS.map(t => `
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:20px;margin-bottom:6px">${t.icon}</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${t.title}</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.4">${t.note}</div>
+      </div>`).join('');
   }
 }
 

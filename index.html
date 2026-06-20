@@ -313,8 +313,19 @@
     <span style="font-size:11.5px;color:#ffaa00">🍌 <strong>Pre-workout tip:</strong> Eat carbs + a little protein 60-90 min before training. Training fasted often causes sudden strength drops mid-session.</span>
   </div>
   <div class="container section">
+    <!-- REST DAY CONTENT — only shown on rest days -->
+    <div id="rest-day-content" style="display:none;margin-bottom:32px">
+      <div style="background:linear-gradient(135deg,rgba(170,68,255,.08),transparent);border:1px solid rgba(170,68,255,.2);border-radius:14px;padding:24px">
+        <p class="section-title" style="margin-bottom:6px">RECOVERY <span>ROUTINE</span></p>
+        <p class="section-sub" style="margin-bottom:18px">😴 8-10 min of stretching to speed up recovery for tomorrow</p>
+        <div id="rest-day-stretches" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px"></div>
+        <p class="section-title" style="margin-bottom:14px;font-size:18px">RECOVERY <span>TIPS</span></p>
+        <div id="rest-day-tips" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+      </div>
+    </div>
+
     <!-- PPL Tabs -->
-    <div class="sub-tabs">
+    <div class="sub-tabs" id="ppl-tabs-wrap">
       <button class="sub-tab ppl-tab active" onclick="switchPPL('push',this)" id="tab-push">💪 PUSH</button>
       <button class="sub-tab ppl-tab" onclick="switchPPL('pull',this)" id="tab-pull">🔥 PULL</button>
       <button class="sub-tab ppl-tab" onclick="switchPPL('legs',this)" id="tab-legs">🦵 LEGS</button>

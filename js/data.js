@@ -288,3 +288,23 @@ const ATHLETIC_ADDON = {
     {name:"Lateral Bounds", sets:"3", reps:"8 each side", muscles:"Glutes · Lateral Power · Agility", equipment:"Bodyweight", note:"Jump side to side, land soft and stick the landing. Builds the lateral power needed for cutting and changing direction on the pitch."}
   ]
 };
+
+// ── REST DAY CONTENT ────────────────────────────────────────
+const REST_DAY_STRETCHES = [
+  {name:"Cat-Cow Stretch", duration:"60 sec", icon:"🐱", note:"On hands and knees, alternate arching and rounding your spine. Mobilizes the entire spine and relieves tension from training."},
+  {name:"Child's Pose", duration:"60 sec", icon:"🧘", note:"Kneel, sit back on heels, reach arms forward on the floor. Decompresses the lower back and stretches lats."},
+  {name:"Pigeon Stretch", duration:"45 sec each side", icon:"🦵", note:"Deep hip opener — releases tightness from squats and lunges. One of the best stretches for runners and lifters alike."},
+  {name:"Thread the Needle", duration:"45 sec each side", icon:"🔄", note:"On all fours, thread one arm under your body and rotate. Opens up the thoracic spine and shoulders."},
+  {name:"Standing Forward Fold", duration:"60 sec", icon:"🙇", note:"Let your upper body hang loose, knees soft. Releases the entire posterior chain — hamstrings, calves, lower back."},
+  {name:"Couch Stretch", duration:"45 sec each side", icon:"🛋️", note:"Rear foot up against a wall/couch, front leg lunged forward. Deep hip flexor stretch — critical if you sit at a desk all day."},
+  {name:"Foam Rolling — Quads & Lats", duration:"2 min each area", icon:"🪵", note:"Roll slowly over tight spots, pause 20-30 sec on tender points. Speeds up recovery by improving blood flow to sore muscles."}
+];
+
+const REST_DAY_TIPS = [
+  {icon:"😴", title:"Sleep 7-9 Hours", note:"This is when actual muscle repair and growth happens — more important than any supplement."},
+  {icon:"💧", title:"Stay Hydrated", note:"Aim for 3+ litres of water. Dehydration slows recovery and makes you feel more sore than you actually are."},
+  {icon:"🚶", title:"Light Walk (Optional)", note:"A 20-30 min easy walk increases blood flow without adding training stress — great for active recovery."},
+  {icon:"🍗", title:"Don't Under-eat", note:"Rest days still need fuel for repair — eat close to your normal calories and protein target, don't skip meals just because you're not training."}
+];
+
+
