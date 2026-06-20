@@ -80,3 +80,9 @@ Stack: HTML + vanilla JS modules + Supabase
 - Added 4-second polling fallback for public board — guarantees new messages show up even if Supabase Realtime isn't properly configured, without needing manual refresh
 - Polling only runs while Community screen is actively open, stops automatically when navigating away (no wasted requests)
 - BONUS FIX: nav active-state arrays were missing 'community' and 'myths' — desktop/mobile nav highlighting was broken for those tabs, now fixed
+
+### ✅ SESSION 16 — DM speed fix:
+- Added 3-second polling for open DM thread — fixes slow message delivery in private chats, same pattern as public board fix
+- Polling preserves scroll position (only auto-scrolls to bottom if user was already at the bottom — won't yank you down if you're reading older messages)
+- Polling stops automatically when closing the thread or navigating away from Community screen entirely
+- Fixed sendDM to refresh without creating duplicate polling intervals (was calling openDMThread again, which re-created the interval each send)

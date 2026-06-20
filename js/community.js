@@ -295,11 +295,24 @@ async function loadDMConversations() {
   }
 }
 
+let dmPollInterval = null;
+
 async function openDMThread(otherUserId) {
   currentDMThread = otherUserId;
   document.getElementById('dm-conversation-list').style.display = 'none';
   document.getElementById('dm-thread-view').style.display = 'block';
 
+  await refreshDMThread(otherUserId);
+
+  // Poll for new DM replies every 3 seconds while this thread is open
+  if (dmPollInterval) clearInterval(dmPollInterval);
+  dmPollInterval = setInterval(() => {
+    if (currentDMThread === otherUserId) refreshDMThread(otherUserId);
+    else clearInterval(dmPollInterval);
+  }, 3000);
+}
+
+async function refreshDMThread(otherUserId) {
   const { data } = await sb
     .from('direct_messages')
     .select('*')
@@ -308,20 +321,28 @@ async function openDMThread(otherUserId) {
 
   const msgs = data || [];
   const headerEl = document.getElementById('dm-thread-header');
-  if (headerEl) headerEl.textContent = msgs[0]?.display_name || 'Conversation';
+  if (headerEl && !headerEl.textContent) headerEl.textContent = msgs[0]?.display_name || 'Conversation';
 
   const threadEl = document.getElementById('dm-thread-messages');
+  if (!threadEl) return;
+  const wasAtBottom = threadEl.scrollHeight - threadEl.scrollTop <= threadEl.clientHeight + 50;
   threadEl.innerHTML = msgs.map(m => {
     const isMine = m.sender_id === currentUser.id;
     return `<div style="background:${isMine?'rgba(240,255,68,.08)':'var(--bg3)'};border:1px solid ${isMine?'rgba(240,255,68,.2)':'var(--border)'};border-radius:10px;padding:8px 12px;max-width:80%;${isMine?'align-self:flex-end':''}">${escapeHtml(m.message)}</div>`;
   }).join('');
-  threadEl.scrollTop = threadEl.scrollHeight;
+  if (wasAtBottom) threadEl.scrollTop = threadEl.scrollHeight;
 }
 
 function closeDMThread() {
   currentDMThread = null;
+  if (dmPollInterval) { clearInterval(dmPollInterval); dmPollInterval = null; }
   document.getElementById('dm-thread-view').style.display = 'none';
   loadDMConversations();
+}
+
+function stopDMPolling() {
+  if (dmPollInterval) { clearInterval(dmPollInterval); dmPollInterval = null; }
+  currentDMThread = null;
 }
 
 async function sendDM() {
@@ -337,7 +358,7 @@ async function sendDM() {
     display_name: getMyDisplayName(),
     message: text.slice(0, 500)
   });
-  openDMThread(currentDMThread);
+  refreshDMThread(currentDMThread);
 }
 
 // ── BLOCK USER ───────────────────────────────────────────────

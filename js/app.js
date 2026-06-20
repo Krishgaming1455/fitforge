@@ -136,6 +136,7 @@ function showScreen(name) {
     if (typeof subscribeToBoardRealtime === 'function') subscribeToBoardRealtime();
   } else {
     if (typeof stopBoardPolling === 'function') stopBoardPolling();
+    if (typeof stopDMPolling === 'function') stopDMPolling();
   }
 }
 
