@@ -60,3 +60,23 @@ create policy "Users manage own blocks" on user_blocks for all using (auth.uid()
 -- This enables real-time updates so messages appear instantly
 -- without needing to refresh the page.
 -- ============================================================
+
+-- ============================================================
+-- Public Routines table (Session 17 — view partner's workout routine)
+-- ============================================================
+create table public_routines (
+  user_id uuid references auth.users on delete cascade primary key,
+  display_name text,
+  experience_level text,
+  custom_exercises jsonb default '{}'::jsonb,
+  updated_at timestamp default now()
+);
+alter table public_routines enable row level security;
+create policy "Anyone can view public routines" on public_routines for select using (true);
+create policy "Users can update own routine" on public_routines for all using (auth.uid() = user_id);
+
+-- ============================================================
+-- Privacy columns for public_routines (Session 18)
+-- ============================================================
+alter table public_routines add column if not exists hide_routine boolean default false;
+alter table public_routines add column if not exists hide_stats boolean default false;

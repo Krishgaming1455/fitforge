@@ -120,11 +120,122 @@ function reportMessage(messageId, messageText) {
   });
 }
 
+// ── USER SEARCH (find anyone, even if never posted in chat) ──
+let _userSearchTimer = null;
+function searchUsers() {
+  clearTimeout(_userSearchTimer);
+  _userSearchTimer = setTimeout(_doSearchUsers, 250);
+}
+
+async function _doSearchUsers() {
+  const q = document.getElementById('user-search-input')?.value?.trim();
+  const resultsEl = document.getElementById('user-search-results');
+  if (!resultsEl) return;
+  if (!q || q.length < 1) { resultsEl.style.display = 'none'; return; }
+  if (isGuest) { resultsEl.style.display = 'block'; resultsEl.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--muted);text-align:center">Create an account to search and message other users.</div>`; return; }
+
+  try {
+    const { data, error } = await sb
+      .from('public_routines')
+      .select('user_id, display_name')
+      .ilike('display_name', `%${q}%`)
+      .neq('user_id', currentUser.id)
+      .limit(15);
+
+    if (error || !data || !data.length) {
+      resultsEl.style.display = 'block';
+      resultsEl.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--muted);text-align:center">No users found matching "${escapeHtml(q)}"</div>`;
+      return;
+    }
+
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = data.map(u => `
+      <div onclick="openUserMenuFromSearch('${u.user_id}','${escapeHtml(u.display_name||'Anonymous Lifter').replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💪</div>
+        <div style="font-size:13px;font-weight:600">${escapeHtml(u.display_name || 'Anonymous Lifter')}</div>
+      </div>`).join('');
+  } catch (e) {
+    console.error('searchUsers error:', e);
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--muted);text-align:center">Search unavailable right now.</div>`;
+  }
+}
+
+function openUserMenuFromSearch(userId, displayName) {
+  document.getElementById('user-search-results').style.display = 'none';
+  document.getElementById('user-search-input').value = '';
+  // Reuse the same menu as chat usernames, anchored near the search bar
+  const anchor = document.getElementById('user-search-input');
+  openUserMenu(userId, displayName, anchor);
+}
+
+// ── PUBLIC ROUTINE SHARING ────────────────────────────────────
 function escapeHtml(str) {
   if (!str) return '';
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+async function syncPublicRoutine() {
+  if (!currentUser || isGuest) return;
+  try {
+    const hideRoutine = document.getElementById('privacy-hide-routine')?.checked || false;
+    const hideStats = document.getElementById('privacy-hide-stats')?.checked || false;
+    await sb.from('public_routines').upsert({
+      user_id: currentUser.id,
+      display_name: getMyDisplayName(),
+      experience_level: typeof getExperienceLevel === 'function' ? getExperienceLevel() : 'intermediate',
+      custom_exercises: customExercises || {},
+      hide_routine: hideRoutine,
+      hide_stats: hideStats,
+      updated_at: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('syncPublicRoutine error:', e);
+  }
+}
+
+async function viewPartnerRoutine(userId, displayName) {
+  closeUserMenu();
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9600;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `<div class="card" style="max-width:380px;width:100%;max-height:80vh;overflow-y:auto;position:relative">
+    <button onclick="this.closest('div[style*=fixed]').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;margin-bottom:4px">💪 ${escapeHtml(displayName)}'s Routine</div>
+    <div id="partner-routine-content" style="margin-top:14px;font-size:12px;color:var(--muted);text-align:center;padding:20px">Loading...</div>
+  </div>`;
+  document.body.appendChild(modal);
+
+  const { data, error } = await sb.from('public_routines').select('*').eq('user_id', userId).single();
+  const contentEl = modal.querySelector('#partner-routine-content');
+  if (error || !data) {
+    contentEl.innerHTML = `<div style="padding:20px">This user hasn't set up a routine yet, or hasn't saved their profile.</div>`;
+    return;
+  }
+
+  if (data.hide_routine) {
+    contentEl.innerHTML = `<div style="padding:20px">🔒 This user has kept their routine private.</div>`;
+    return;
+  }
+
+  const levelLabel = { beginner: '🌱 Beginner', intermediate: '⚙️ Intermediate', advanced: '🔥 Advanced' }[data.experience_level] || data.experience_level;
+  const customs = data.custom_exercises || {};
+  const hasCustom = ['push','pull','legs'].some(d => customs[d]?.length);
+
+  contentEl.innerHTML = `
+    <div style="text-align:left">
+      <div style="display:inline-block;background:var(--bg3);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px">${levelLabel}</div>
+      ${hasCustom ? ['push','pull','legs'].map(day => {
+        if (!customs[day]?.length) return '';
+        const dayLabel = {push:'💪 Push',pull:'🔥 Pull',legs:'🦵 Legs'}[day];
+        return `<div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">${dayLabel} — Custom Additions</div>
+          ${customs[day].map(ex => `<div style="font-size:12px;padding:6px 10px;background:var(--bg3);border-radius:6px;margin-bottom:4px">${escapeHtml(ex.name)} — ${escapeHtml(ex.sets)}×${escapeHtml(ex.reps)}</div>`).join('')}
+        </div>`;
+      }).join('') : `<div style="font-size:12px;color:var(--muted);padding:10px 0">Following the standard FitForge ${levelLabel} programme — no custom exercises added yet.</div>`}
+    </div>`;
 }
 
 // ── USER MENU (tap username in chat) ─────────────────────────
@@ -136,6 +247,7 @@ function openUserMenu(userId, displayName, anchorEl) {
   menu.innerHTML = `
     <div style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--accent2);border-bottom:1px solid var(--border);margin-bottom:4px">${escapeHtml(displayName)}</div>
     <button onclick="viewUserProfile('${userId}','${displayName.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">👤 View Profile</button>
+    <button onclick="viewPartnerRoutine('${userId}','${displayName.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">💪 View Routine</button>
     <button onclick="startDMFromMenu('${userId}','${displayName.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">✉️ Message</button>
     <button onclick="blockUser('${userId}')" style="width:100%;text-align:left;background:none;border:none;color:#ff4466;padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">🚫 Block User</button>
   `;

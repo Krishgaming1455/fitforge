@@ -240,3 +240,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* ── COMMUNITY CHAT ───────────────────────────────────────── */
 .community-panel{display:flex;flex-direction:column}
 #board-messages, #dm-thread-messages{scrollbar-width:thin}
+
+/* ── TOGGLE SWITCH (privacy settings) ────────────────────── */
+.toggle-switch{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--border);transition:.2s;border-radius:24px}
+.toggle-switch:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;transition:.2s;border-radius:50%}
+.toggle-switch.on{background-color:var(--accent)}
+.toggle-switch.on:before{transform:translateX(20px)}

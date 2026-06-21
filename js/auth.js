@@ -289,6 +289,8 @@ async function saveUserData() {
     targetProtein,
     workoutHistory,
     overloadLog,
+    customExercises,
+    experienceLevel: getExperienceLevel(),
     lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
@@ -300,6 +302,9 @@ async function saveUserData() {
   if (error) console.error('Save error:', error.message);
   else console.log('Saved to Supabase ✅');
   if (saveBtn) { saveBtn.textContent = 'Save Profile'; saveBtn.disabled = false; }
+
+  // Sync a public-facing copy so others can view this routine in chat profiles
+  if (typeof syncPublicRoutine === 'function') syncPublicRoutine();
 }
 
 // ── LOAD FROM SUPABASE ───────────────────────────────────────
@@ -341,6 +346,7 @@ async function loadUserData() {
   if (data.targetProtein) targetProtein = data.targetProtein;
   workoutHistory = data.workoutHistory || [];
   overloadLog = data.overloadLog || {};
+  customExercises = data.customExercises || { push: [], pull: [], legs: [] };
 
   // Water: reset if new day
   waterGlasses = (data.waterDate === today) ? (data.waterGlasses || 0) : 0;

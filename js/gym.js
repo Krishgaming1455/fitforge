@@ -151,7 +151,60 @@ function getAdjustedExercises(day) {
     exs = [...exs, ...ATHLETIC_ADDON[day]];
   }
 
+  // User's own custom exercises — always included regardless of level
+  if (customExercises[day] && customExercises[day].length) {
+    exs = [...exs, ...customExercises[day]];
+  }
+
   return exs;
+}
+
+// ── ADD CUSTOM EXERCISE MODAL ─────────────────────────────────
+let currentCustomExerciseDay = null;
+
+function openAddExerciseModal(day) {
+  currentCustomExerciseDay = day;
+  const modal = document.getElementById('custom-exercise-modal');
+  if (modal) modal.style.display = 'flex';
+  ['ce-name','ce-sets','ce-muscles','ce-equipment','ce-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && id !== 'ce-sets') el.value = '';
+  });
+  document.getElementById('ce-sets').value = '3';
+  document.getElementById('ce-reps').value = '12-15';
+}
+
+function closeAddExerciseModal() {
+  const modal = document.getElementById('custom-exercise-modal');
+  if (modal) modal.style.display = 'none';
+  currentCustomExerciseDay = null;
+}
+
+function saveCustomExercise() {
+  const name = document.getElementById('ce-name')?.value.trim();
+  if (!name) { alert('Exercise name is required'); return; }
+  const sets = document.getElementById('ce-sets')?.value.trim() || '3';
+  const reps = document.getElementById('ce-reps')?.value.trim() || '12';
+  const muscles = document.getElementById('ce-muscles')?.value.trim() || 'Custom';
+  const equipment = document.getElementById('ce-equipment')?.value.trim() || '';
+  const note = document.getElementById('ce-note')?.value.trim() || 'Custom exercise added by you.';
+
+  if (!currentCustomExerciseDay) return;
+  if (!customExercises[currentCustomExerciseDay]) customExercises[currentCustomExerciseDay] = [];
+  customExercises[currentCustomExerciseDay].push({ name, sets, reps, muscles, equipment, note, isCustom: true });
+
+  closeAddExerciseModal();
+  renderPPL();
+  autoSave();
+  syncPublicRoutine();
+}
+
+function removeCustomExercise(day, index) {
+  if (!confirm('Remove this custom exercise?')) return;
+  customExercises[day].splice(index, 1);
+  renderPPL();
+  autoSave();
+  syncPublicRoutine();
 }
 
 function renderPPL() {
@@ -167,18 +220,22 @@ function renderPPL() {
       const done = (pplChecked[day] && pplChecked[day][key]) || false;
       const safeId = 'ol-btn-' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
       const prev = (overloadLog && overloadLog[ex.name]) || null;
+      const customIdx = ex.isCustom ? customExercises[day].findIndex(c => c.name === ex.name) : -1;
       return `
       <div class="workout-exercise-item" id="${day}-ex-${i}">
         <div class="workout-checkbox ${done ? 'done' : ''}" onclick="toggleExercise('${day}','${key}')"></div>
         <div class="workout-ex-info">
-          <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name}</div>
+          <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${ex.name} ${ex.isCustom ? '<span style="font-size:9px;background:var(--accent);color:#000;padding:1px 6px;border-radius:4px;font-weight:700;vertical-align:middle">YOURS</span>' : ''}</div>
           <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
             <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${ex.muscles}</span>
             ${ex.equipment ? `<span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>` : ''}
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
           ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
-          <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+            <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
+            ${customIdx >= 0 ? `<button onclick="removeCustomExercise('${day}',${customIdx})" style="background:none;border:none;color:#ff4466;font-size:10px;cursor:pointer;text-decoration:underline">Remove</button>` : ''}
+          </div>
         </div>
         <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
       </div>`;

@@ -286,6 +286,29 @@
           <div class="tag" onclick="toggleTag(this); autoSave()">🤕 None</div>
         </div>
       </div>
+      <div class="form-group"><label class="form-label">🔒 Privacy — Community Visibility</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Hide my routine from others</div>
+            <div style="font-size:11px;color:var(--muted)">Others won't see your custom exercises in chat</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="privacy-hide-routine" onchange="autoSave()" style="opacity:0;width:0;height:0">
+            <span onclick="document.getElementById('privacy-hide-routine').click(); this.classList.toggle('on', document.getElementById('privacy-hide-routine').checked)" class="toggle-switch"></span>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Hide my stats from others</div>
+            <div style="font-size:11px;color:var(--muted)">Hides streak, experience level, workout count</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="privacy-hide-stats" onchange="autoSave()" style="opacity:0;width:0;height:0">
+            <span onclick="document.getElementById('privacy-hide-stats').click(); this.classList.toggle('on', document.getElementById('privacy-hide-stats').checked)" class="toggle-switch"></span>
+          </label>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">Your weight, height, age and email are always private — never shown to other users regardless of these settings.</div>
+      </div>
     </div>
     <div id="profile-results"></div>
     <button class="btn-primary btn-full" onclick="generateAIAdvice()">🤖 Get AI Analysis (Optional)</button>
@@ -340,6 +363,7 @@
       <div class="workout-progress"><div class="workout-progress-fill" id="push-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="push-progress-label">0 / 8 exercises completed</p>
       <div id="push-exercises"></div>
+      <button onclick="openAddExerciseModal('push')" style="width:100%;background:var(--bg3);border:1px dashed var(--border);color:var(--accent2);padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">+ Add Custom Exercise</button>
       <button class="finish-workout-btn" id="finish-btn-push" onclick="finishWorkout('push')">✅ FINISH WORKOUT</button>
     </div>
 
@@ -352,6 +376,7 @@
       <div class="workout-progress"><div class="workout-progress-fill" id="pull-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="pull-progress-label">0 / 8 exercises completed</p>
       <div id="pull-exercises"></div>
+      <button onclick="openAddExerciseModal('pull')" style="width:100%;background:var(--bg3);border:1px dashed var(--border);color:var(--accent2);padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">+ Add Custom Exercise</button>
       <button class="finish-workout-btn" id="finish-btn-pull" onclick="finishWorkout('pull')">✅ FINISH WORKOUT</button>
     </div>
 
@@ -364,6 +389,7 @@
       <div class="workout-progress"><div class="workout-progress-fill" id="legs-progress" style="width:0%"></div></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="legs-progress-label">0 / 8 exercises completed</p>
       <div id="legs-exercises"></div>
+      <button onclick="openAddExerciseModal('legs')" style="width:100%;background:var(--bg3);border:1px dashed var(--border);color:var(--accent2);padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">+ Add Custom Exercise</button>
       <button class="finish-workout-btn" id="finish-btn-legs" onclick="finishWorkout('legs')">✅ FINISH WORKOUT</button>
     </div>
 
@@ -534,6 +560,12 @@
   </div>
 
   <div class="container section" style="max-width:720px">
+    <!-- USER SEARCH (find anyone to DM, even if they've never posted) -->
+    <div style="position:relative;margin-bottom:18px">
+      <input class="form-input" id="user-search-input" placeholder="🔍 Find someone to message..." oninput="searchUsers()" autocomplete="off">
+      <div id="user-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-top:6px;max-height:240px;overflow-y:auto;z-index:50"></div>
+    </div>
+
     <!-- Sub tabs: Public Board / DMs -->
     <div class="sub-tabs">
       <button class="sub-tab community-tab active" onclick="switchCommunityTab('board',this)">🌐 Public Board</button>
@@ -579,6 +611,23 @@
       <button onclick="copyInviteLink()" id="invite-copy-btn" style="background:var(--accent);color:#000;border:none;padding:0 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Copy</button>
     </div>
     <div style="font-size:11px;color:var(--muted)">Scan the QR or share the link — works on any device</div>
+  </div>
+</div>
+
+<!-- ADD CUSTOM EXERCISE MODAL -->
+<div id="custom-exercise-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:380px;width:100%;position:relative;max-height:85vh;overflow-y:auto">
+    <button onclick="closeAddExerciseModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;margin-bottom:16px">+ CUSTOM EXERCISE</div>
+    <div class="form-group"><label class="form-label">Exercise Name *</label><input class="form-input" id="ce-name" placeholder="e.g. Cable Crunches"></div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1"><label class="form-label">Sets</label><input class="form-input" id="ce-sets" placeholder="3" value="3"></div>
+      <div class="form-group" style="flex:1"><label class="form-label">Reps</label><input class="form-input" id="ce-reps" placeholder="12-15" value="12-15"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Muscles Worked</label><input class="form-input" id="ce-muscles" placeholder="e.g. Abs · Core"></div>
+    <div class="form-group"><label class="form-label">Equipment</label><input class="form-input" id="ce-equipment" placeholder="e.g. Cable Machine"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><input class="form-input" id="ce-note" placeholder="Form tips, etc."></div>
+    <button class="btn-primary btn-full" onclick="saveCustomExercise()">Add to Workout</button>
   </div>
 </div>
 

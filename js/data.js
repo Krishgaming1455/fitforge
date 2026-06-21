@@ -308,3 +308,6 @@ const REST_DAY_TIPS = [
 ];
 
 
+
+// ── CUSTOM EXERCISES (user-added, per day) ───────────────────
+let customExercises = { push: [], pull: [], legs: [] };
