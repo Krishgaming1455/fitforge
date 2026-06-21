@@ -195,6 +195,7 @@ const MYTHS = [
 let currentUser = null;
 let isGuest = false;
 let foodLog = [];
+let yesterdayFoodLog = []; // snapshot of foodLog before daily reset, for "copy yesterday" feature
 let targetCal = 2800, targetProtein = 100;
 let currentRecoveryArea = 'back', currentRecoveryType = 'doms';
 let pplChecked = {push:{}, pull:{}, legs:{}};
@@ -311,3 +312,36 @@ const REST_DAY_TIPS = [
 
 // ── CUSTOM EXERCISES (user-added, per day) ───────────────────
 let customExercises = { push: [], pull: [], legs: [] };
+
+// ── AGE GROUP ADJUSTMENTS ───────────────────────────────────
+// Teen: emphasize form over heavy weight, growth-plate-safe notes
+const TEEN_SWAPS = {
+  "Barbell Back Squat": {note:"Focus on perfect form with lighter weight — your growth plates are still developing. Master the movement pattern before adding heavy load."},
+  "Flat Barbell Bench Press": {note:"Use a weight you can control for all reps with good form. No ego lifting — technique matters far more than weight at your age."},
+  "Stiff-Leg Deadlift (Barbell)": {note:"Keep the weight moderate and focus on the hip-hinge pattern. Heavy spinal loading isn't worth it while you're still growing."},
+  "Barbell Bent-Over Row": {note:"Lighter weight, strict form. Your back is still developing — don't round it under load."}
+};
+
+// Mature (40+): lower-impact swaps, more warm-up emphasis, joint-friendly notes
+const MATURE_SWAPS = {
+  "Barbell Back Squat": {name:"Leg Press (High Feet)", sets:"4", reps:"12-15", note:"Leg press is much easier on the knees and lower back than a loaded barbell squat while still building serious leg strength."},
+  "Box Squat (Goblet) or Barbell Squat": {name:"Leg Press (High Feet)", sets:"4", reps:"12-15", note:"Joint-friendly alternative — less spinal loading, same muscle-building benefit."},
+  "Plyo Push-Ups": {name:"Standard Push-Ups", sets:"3", reps:"10-12", note:"Skip the explosive landing impact — standard push-ups still build power and strength without joint stress."},
+  "Sprint Intervals": {name:"Brisk Incline Walk Intervals", sets:"6", reps:"1 min fast pace, 1 min recovery", note:"Lower-impact way to get the conditioning benefit of sprints without the injury risk to joints and tendons."},
+  "Lateral Bounds": {name:"Lateral Step-Overs", sets:"3", reps:"10 each side", muscles:"Glutes · Lateral Stability", equipment:"Step/Box", note:"Builds the same lateral stability without the jarring landing impact."}
+};
+
+function getAgeGroupFromAge(age) {
+  const a = parseFloat(age);
+  if (!a) return 'adult';
+  if (a < 18) return 'teen';
+  if (a >= 40) return 'mature';
+  return 'adult';
+}
+
+// ── EXERCISE HISTORY (full timeline, separate from quick "last" lookup) ──
+let overloadHistory = {}; // { exerciseName: [{weight, reps, date, ts}, ...] }
+
+// ── FULLY CUSTOM ROUTINE (replaces PPL entirely when enabled) ──
+let customRoutineEnabled = false;
+let customRoutineDays = []; // [{ id, name, icon, exercises: [{name,sets,reps,muscles,equipment,note}] }]

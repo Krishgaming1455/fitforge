@@ -273,6 +273,7 @@ function updateNutritionDisplay() {
   if (remEl) { remEl.textContent = rem>0?`${Math.round(rem)} left`:`${Math.round(-rem)} over!`; remEl.style.color=rem>0?'var(--accent2)':'var(--red)'; }
   setEl('nt-prot',t.p); setEl('nt-carb',t.c); setEl('nt-fat',t.f); setEl('nt-fiber',t.fi);
   setW('pb-prot',t.p,targetProtein); setW('pb-carb',t.c,350); setW('pb-fat',t.f,90); setW('pb-fiber',t.fi,30);
+  renderMacroDonut(t.p, t.c, t.f);
   const vitamins = [
     {n:'Vitamin C',v:t.vitC,tg:90,u:'mg',c:'#ff8844'},
     {n:'Vitamin D',v:t.vitD,tg:600,u:'IU',c:'#f0ff44'},
@@ -286,6 +287,53 @@ function updateNutritionDisplay() {
     const st = p>=80?{t:'✅ Good',c:'var(--green)'}:p>=40?{t:'⚠️ Low',c:'var(--accent)'}:{t:'❌ Very Low',c:'var(--red)'};
     return `<div class="vitamin-row"><div class="vitamin-name">${v.n}</div><div class="vitamin-bar-wrap"><div class="vitamin-bar"><div class="vitamin-bar-fill" style="width:${p}%;background:${v.c}"></div></div></div><div class="vitamin-amount">${Math.round(v.v)}/${v.tg}${v.u}</div><div class="vitamin-status" style="color:${st.c}">${st.t}</div></div>`;
   }).join('');
+}
+
+function renderMacroDonut(protein, carbs, fat) {
+  const container = document.getElementById('macro-donut-container');
+  if (!container) return;
+
+  // Convert grams to calories for proportional chart (protein=4, carbs=4, fat=9 kcal/g)
+  const pCal = protein * 4, cCal = carbs * 4, fCal = fat * 9;
+  const total = pCal + cCal + fCal;
+
+  if (total === 0) {
+    container.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px">Log food to see your macro breakdown</div>`;
+    return;
+  }
+
+  const pPct = (pCal/total)*100, cPct = (cCal/total)*100, fPct = (fCal/total)*100;
+  // Build conic-gradient stops
+  const gradient = `conic-gradient(var(--accent2) 0% ${pPct}%, var(--accent) ${pPct}% ${pPct+cPct}%, #ff6644 ${pPct+cPct}% 100%)`;
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center">
+      <div style="width:110px;height:110px;border-radius:50%;background:${gradient};position:relative;flex-shrink:0">
+        <div style="position:absolute;inset:14px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px">${Math.round(total)}</div>
+          <div style="font-size:8px;color:var(--muted)">kcal</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:3px;background:var(--accent2)"></div><span style="font-size:12px">Protein <strong>${Math.round(pPct)}%</strong> (${Math.round(protein)}g)</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:3px;background:var(--accent)"></div><span style="font-size:12px">Carbs <strong>${Math.round(cPct)}%</strong> (${Math.round(carbs)}g)</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:3px;background:#ff6644"></div><span style="font-size:12px">Fat <strong>${Math.round(fPct)}%</strong> (${Math.round(fat)}g)</span></div>
+      </div>
+    </div>`;
+}
+
+function copyYesterday() {
+  if (!yesterdayFoodLog || !yesterdayFoodLog.length) {
+    alert('No food logged yesterday to copy.');
+    return;
+  }
+  if (!confirm(`Copy ${yesterdayFoodLog.length} item(s) from yesterday into today's log?`)) return;
+  yesterdayFoodLog.forEach(f => {
+    foodLog.push({ ...f, uid: Date.now() + Math.random() });
+  });
+  renderFoodLog();
+  updateNutritionDisplay();
+  autoSave();
 }
 
 function renderFoodLog() {

@@ -75,6 +75,14 @@ function showMainApp() {
   // Only show mobile-nav via CSS media query — remove inline style override
   document.getElementById('mobile-nav').style.removeProperty('display');
   updateAuthDisplay();
+
+  // Persistent guest banner — shown on every screen while in guest mode
+  const guestBanner = document.getElementById('global-guest-banner');
+  if (guestBanner) {
+    guestBanner.style.display = isGuest ? 'block' : 'none';
+    document.body.style.paddingTop = isGuest ? '92px' : '58px';
+  }
+
   showScreen('home');
 }
 
@@ -282,6 +290,7 @@ async function saveUserData() {
     },
     foodLog,
     foodLogDate: new Date().toDateString(),
+    yesterdayFoodLog,
     waterGlasses,
     waterDate: new Date().toDateString(),
     pplChecked,
@@ -289,8 +298,11 @@ async function saveUserData() {
     targetProtein,
     workoutHistory,
     overloadLog,
+    overloadHistory,
     customExercises,
     experienceLevel: getExperienceLevel(),
+    customRoutineEnabled,
+    customRoutineDays,
     lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
@@ -330,8 +342,11 @@ async function loadUserData() {
   // BUG FIX: foodLog daily reset — check if saved date matches today
   if (data.foodLogDate === today) {
     foodLog = data.foodLog || [];
+    yesterdayFoodLog = data.yesterdayFoodLog || [];
   } else {
-    foodLog = []; // new day — reset food log
+    // New day — snapshot what was logged (now "yesterday") before resetting
+    yesterdayFoodLog = data.foodLog || [];
+    foodLog = [];
   }
 
   // BUG FIX: workout date from Supabase (cross-device)
@@ -346,7 +361,10 @@ async function loadUserData() {
   if (data.targetProtein) targetProtein = data.targetProtein;
   workoutHistory = data.workoutHistory || [];
   overloadLog = data.overloadLog || {};
+  overloadHistory = data.overloadHistory || {};
   customExercises = data.customExercises || { push: [], pull: [], legs: [] };
+  customRoutineEnabled = data.customRoutineEnabled || false;
+  customRoutineDays = data.customRoutineDays || [];
 
   // Water: reset if new day
   waterGlasses = (data.waterDate === today) ? (data.waterGlasses || 0) : 0;
@@ -375,6 +393,22 @@ async function loadUserData() {
       }
       if (p.weight && p.height) calcBMI();
       syncProfileToDiet();
+    }
+
+    // Restore custom routine toggle UI state
+    const routineToggle = document.getElementById('custom-routine-toggle');
+    if (routineToggle) {
+      routineToggle.checked = customRoutineEnabled;
+      const toggleSwitch = routineToggle.nextElementSibling;
+      if (toggleSwitch) toggleSwitch.classList.toggle('on', customRoutineEnabled);
+    }
+    const builder = document.getElementById('custom-routine-builder');
+    const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
+    if (customRoutineEnabled) {
+      if (builder) builder.style.display = 'block';
+      if (pplTabsWrap) pplTabsWrap.style.display = 'none';
+      document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = 'none');
+      if (typeof renderCustomRoutineDays === 'function') renderCustomRoutineDays();
     }
 
     // BUG FIX: trigger all UI updates after data is restored

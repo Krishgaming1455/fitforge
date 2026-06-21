@@ -108,6 +108,10 @@
   </div>
 </header>
 
+<div id="global-guest-banner" style="display:none;background:rgba(240,255,68,.08);border-bottom:1px solid rgba(240,255,68,.2);padding:8px 16px;text-align:center;position:fixed;top:58px;left:0;right:0;z-index:150">
+  <span style="font-size:11.5px;color:var(--accent)">👤 You're browsing as a Guest — your data won't be saved. <a onclick="logout()" style="text-decoration:underline;cursor:pointer;color:var(--accent2)">Create an account</a> to save your progress.</span>
+</div>
+
 <div class="mobile-nav" id="mobile-nav" style="display:none">
   <div class="mobile-user-bar" id="mobile-user-bar">
     <span id="mobile-user-display">👤</span>
@@ -276,6 +280,16 @@
           <div class="tag" onclick="selectTag(this,'experience'); renderPPL(); autoSave()">🔥 Advanced</div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Adjusts exercise count, difficulty, and rest times in your workout plan</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-top:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600">🛠️ Build my own routine</div>
+            <div style="font-size:11px;color:var(--muted)">Replace Push/Pull/Legs with custom days you design yourself</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="custom-routine-toggle" onchange="toggleCustomRoutineMode()" style="opacity:0;width:0;height:0">
+            <span onclick="document.getElementById('custom-routine-toggle').click(); this.classList.toggle('on', document.getElementById('custom-routine-toggle').checked)" class="toggle-switch"></span>
+          </label>
+        </div>
       </div>
       <div class="form-group"><label class="form-label">Injury History (Select all that apply)</label>
         <div class="tag-group" id="injury-tags">
@@ -336,6 +350,18 @@
     <span style="font-size:11.5px;color:#ffaa00">🍌 <strong>Pre-workout tip:</strong> Eat carbs + a little protein 60-90 min before training. Training fasted often causes sudden strength drops mid-session.</span>
   </div>
   <div class="container section">
+    <!-- CUSTOM ROUTINE BUILDER — shown only when toggle enabled -->
+    <div id="custom-routine-builder" style="display:none;margin-bottom:32px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <p class="section-title" style="margin:0">MY <span>ROUTINE</span></p>
+          <button onclick="openAddRoutineDayModal()" style="background:var(--accent);color:#000;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Add Day</button>
+        </div>
+        <div id="custom-routine-days-list"></div>
+        <div id="custom-routine-empty" style="display:none;text-align:center;padding:30px 10px;color:var(--muted);font-size:13px">No custom days yet — tap "+ Add Day" to create your first one (e.g. "Chest Day", "Cardio", "Arms")</div>
+      </div>
+    </div>
+
     <!-- REST DAY CONTENT — only shown on rest days -->
     <div id="rest-day-content" style="display:none;margin-bottom:32px">
       <div style="background:linear-gradient(135deg,rgba(170,68,255,.08),transparent);border:1px solid rgba(170,68,255,.2);border-radius:14px;padding:24px">
@@ -398,6 +424,34 @@
       <p class="section-title" style="margin-bottom:6px">WORKOUT <span>HISTORY</span></p>
       <p class="section-sub" style="margin-bottom:20px">Your last 7 sessions</p>
       <div id="workout-history-list"></div>
+    </div>
+
+    <!-- MUSCLE HEATMAP -->
+    <div style="margin-top:44px">
+      <p class="section-title" style="margin-bottom:6px">MUSCLE <span>HEATMAP</span></p>
+      <p class="section-sub" style="margin-bottom:20px">Which muscles you've trained this week</p>
+      <div class="card">
+        <div id="muscle-heatmap-container"></div>
+      </div>
+    </div>
+
+    <!-- 1RM CALCULATOR -->
+    <div style="margin-top:44px">
+      <p class="section-title" style="margin-bottom:6px">1RM <span>CALCULATOR</span></p>
+      <p class="section-sub" style="margin-bottom:20px">Estimate your one-rep max from any set</p>
+      <div class="card">
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px">
+            <label class="form-label">Weight Lifted (kg)</label>
+            <input class="form-input" id="orm-weight" type="number" placeholder="e.g. 60" min="0" step="2.5" oninput="calculate1RM()">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label class="form-label">Reps Completed</label>
+            <input class="form-input" id="orm-reps" type="number" placeholder="e.g. 8" min="1" max="20" oninput="calculate1RM()">
+          </div>
+        </div>
+        <div id="orm-result"><div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">Enter weight and reps to calculate</div></div>
+      </div>
     </div>
 
     <!-- WEEKLY SPLIT ACCORDION -->
@@ -499,13 +553,20 @@
         <div class="nutrition-item"><div class="nutrition-label">Fiber</div><div class="nutrition-value" id="nt-fiber" style="color:var(--blue)">0</div><div class="nutrition-unit">/ 30g</div><div class="progress-bar"><div class="progress-fill" id="pb-fiber" style="width:0%;background:var(--blue)"></div></div></div>
       </div>
       <div class="card" style="margin-top:18px">
+        <h3 style="font-size:14px;margin-bottom:10px">🍩 Macro Breakdown</h3>
+        <div id="macro-donut-container"></div>
+      </div>
+      <div class="card" style="margin-top:18px">
         <h3 style="font-size:14px;margin-bottom:6px">💊 Vitamins &amp; Minerals</h3>
         <div id="vit-display"></div>
       </div>
       <div class="card" style="margin-top:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <h3 style="font-size:14px">📋 Today's Log</h3>
-          <button onclick="clearFoodLog()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.2);color:var(--red);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700">Clear All</button>
+          <div style="display:flex;gap:8px">
+            <button onclick="copyYesterday()" style="background:rgba(68,255,204,.08);border:1px solid rgba(68,255,204,.2);color:var(--accent2);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700">📋 Copy Yesterday</button>
+            <button onclick="clearFoodLog()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.2);color:var(--red);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700">Clear All</button>
+          </div>
         </div>
         <div id="food-log-list"><div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Search and add foods above to track today</div></div>
       </div>
@@ -611,6 +672,45 @@
       <button onclick="copyInviteLink()" id="invite-copy-btn" style="background:var(--accent);color:#000;border:none;padding:0 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Copy</button>
     </div>
     <div style="font-size:11px;color:var(--muted)">Scan the QR or share the link — works on any device</div>
+  </div>
+</div>
+
+<!-- ADD ROUTINE DAY MODAL -->
+<div id="routine-day-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:340px;width:100%;position:relative">
+    <button onclick="closeRoutineDayModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;margin-bottom:16px">+ NEW ROUTINE DAY</div>
+    <div class="form-group"><label class="form-label">Day Name *</label><input class="form-input" id="rd-name" placeholder="e.g. Chest & Triceps, Cardio, Arms"></div>
+    <div class="form-group"><label class="form-label">Icon</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="rd-icon-picker">
+        <button type="button" onclick="selectRoutineIcon('💪',this)" class="rd-icon-btn selected" style="font-size:20px;background:var(--bg3);border:2px solid var(--accent);border-radius:8px;padding:8px 10px;cursor:pointer">💪</button>
+        <button type="button" onclick="selectRoutineIcon('🔥',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🔥</button>
+        <button type="button" onclick="selectRoutineIcon('🦵',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🦵</button>
+        <button type="button" onclick="selectRoutineIcon('🏃',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🏃</button>
+        <button type="button" onclick="selectRoutineIcon('⚡',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">⚡</button>
+        <button type="button" onclick="selectRoutineIcon('🎯',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🎯</button>
+        <button type="button" onclick="selectRoutineIcon('🧘',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🧘</button>
+        <button type="button" onclick="selectRoutineIcon('🥊',this)" class="rd-icon-btn" style="font-size:20px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer">🥊</button>
+      </div>
+    </div>
+    <button class="btn-primary btn-full" onclick="saveRoutineDay()">Create Day</button>
+  </div>
+</div>
+
+<!-- ADD EXERCISE TO ROUTINE DAY MODAL -->
+<div id="routine-exercise-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:380px;width:100%;position:relative;max-height:85vh;overflow-y:auto">
+    <button onclick="closeRoutineExerciseModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;margin-bottom:16px">+ ADD EXERCISE</div>
+    <div class="form-group"><label class="form-label">Exercise Name *</label><input class="form-input" id="rde-name" placeholder="e.g. Cable Crunches"></div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1"><label class="form-label">Sets</label><input class="form-input" id="rde-sets" value="3"></div>
+      <div class="form-group" style="flex:1"><label class="form-label">Reps</label><input class="form-input" id="rde-reps" value="12-15"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Muscles Worked</label><input class="form-input" id="rde-muscles" placeholder="e.g. Abs · Core"></div>
+    <div class="form-group"><label class="form-label">Equipment</label><input class="form-input" id="rde-equipment" placeholder="e.g. Cable Machine"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><input class="form-input" id="rde-note" placeholder="Form tips, etc."></div>
+    <button class="btn-primary btn-full" onclick="saveRoutineExercise()">Add Exercise</button>
   </div>
 </div>
 

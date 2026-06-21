@@ -129,6 +129,7 @@ function hasAthleticGoal() {
 function getAdjustedExercises(day) {
   let exs = [...PPL_DATA[day]]; // copy
   const level = getExperienceLevel();
+  const ageGroup = getAgeGroupFromAge(document.getElementById('p-age')?.value);
 
   if (level === 'beginner') {
     // Swap harder exercises for easier ones, trim to 6
@@ -141,6 +142,19 @@ function getAdjustedExercises(day) {
     exs = [...exs, ADVANCED_BONUS[day]];
   }
 
+  // Age group adjustments — applied after level swaps
+  if (ageGroup === 'teen') {
+    exs = exs.map(ex => {
+      const swap = TEEN_SWAPS[ex.name];
+      return swap ? { ...ex, ...swap } : ex;
+    });
+  } else if (ageGroup === 'mature') {
+    exs = exs.map(ex => {
+      const swap = MATURE_SWAPS[ex.name];
+      return swap ? { ...ex, ...swap } : ex;
+    });
+  }
+
   // Posture add-on
   if (hasDeskJobTag() && POSTURE_ADDON[day]) {
     exs = [...exs, ...POSTURE_ADDON[day]];
@@ -148,7 +162,15 @@ function getAdjustedExercises(day) {
 
   // Athletic add-on
   if (hasAthleticGoal() && ATHLETIC_ADDON[day]) {
-    exs = [...exs, ...ATHLETIC_ADDON[day]];
+    let athleticExs = [...ATHLETIC_ADDON[day]];
+    // Apply mature swaps to athletic add-ons too (sprints/bounds are high-impact)
+    if (ageGroup === 'mature') {
+      athleticExs = athleticExs.map(ex => {
+        const swap = MATURE_SWAPS[ex.name];
+        return swap ? { ...ex, ...swap } : ex;
+      });
+    }
+    exs = [...exs, ...athleticExs];
   }
 
   // User's own custom exercises — always included regardless of level
@@ -231,7 +253,7 @@ function renderPPL() {
             ${ex.equipment ? `<span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${ex.equipment}</span>` : ''}
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
-          ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
+          ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date}) <span onclick="viewExerciseHistory('${ex.name.replace(/'/g,"\\'")}')" style="text-decoration:underline;cursor:pointer;color:var(--accent2)">View History</span></div>` : ''}
           <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
             <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
             ${customIdx >= 0 ? `<button onclick="removeCustomExercise('${day}',${customIdx})" style="background:none;border:none;color:#ff4466;font-size:10px;cursor:pointer;text-decoration:underline">Remove</button>` : ''}
@@ -383,6 +405,12 @@ function saveOverload(exName, safeId) {
   const today = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short'});
   const prev = overloadLog[exName];
   overloadLog[exName] = { weight: w, reps: r, date: today };
+
+  // Append to full history (capped at last 15 entries per exercise)
+  if (!overloadHistory[exName]) overloadHistory[exName] = [];
+  overloadHistory[exName].push({ weight: w, reps: r, date: today, ts: Date.now() });
+  if (overloadHistory[exName].length > 15) overloadHistory[exName].shift();
+
   // PR detection
   if (prev && w > prev.weight) {
     showPRCelebration(exName, w);
@@ -390,6 +418,57 @@ function saveOverload(exName, safeId) {
   autoSave();
   document.getElementById(safeId)?.remove();
   renderPPL(); // refresh to show updated prev
+}
+
+function viewExerciseHistory(exName) {
+  const history = overloadHistory[exName] || [];
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9600;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  if (!history.length) {
+    modal.innerHTML = `<div class="card" style="max-width:320px;width:100%;text-align:center;position:relative">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">${escapeHtmlGym(exName)}</div>
+      <div style="color:var(--muted);font-size:12px;padding:20px 0">No history yet — log a weight to start tracking progress.</div>
+    </div>`;
+    document.body.appendChild(modal);
+    return;
+  }
+
+  const maxWeight = Math.max(...history.map(h => h.weight));
+  const minWeight = Math.min(...history.map(h => h.weight));
+  const range = maxWeight - minWeight || 1;
+
+  modal.innerHTML = `<div class="card" style="max-width:380px;width:100%;position:relative">
+    <button onclick="this.closest('div[style*=fixed]').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px">${escapeHtmlGym(exName)}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Last ${history.length} session${history.length>1?'s':''}</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:10px;padding:0 4px">
+      ${history.map(h => {
+        const heightPct = 15 + ((h.weight - minWeight) / range) * 85;
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+          <div style="font-size:9px;color:var(--accent);margin-bottom:3px;font-weight:700">${h.weight}</div>
+          <div style="width:100%;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:4px 4px 0 0;height:${heightPct}%"></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:6px;padding:0 4px">
+      ${history.map(h => `<div style="flex:1;text-align:center;font-size:8px;color:var(--muted)">${h.date}</div>`).join('')}
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+      <span>Best: <strong style="color:var(--accent)">${maxWeight}kg</strong></span>
+      <span>Latest: <strong style="color:var(--text)">${history[history.length-1].weight}kg × ${history[history.length-1].reps}</strong></span>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function escapeHtmlGym(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function showPRCelebration(exName, weight) {
@@ -426,6 +505,7 @@ function finishWorkout(dayType) {
   autoSave();
   renderWorkoutHistory();
   renderHome();
+  if (typeof renderMuscleHeatmap === 'function') renderMuscleHeatmap();
   // Show confirmation
   const btn = document.getElementById('finish-btn-' + dayType);
   if (btn) { btn.textContent = '✅ WORKOUT SAVED!'; btn.disabled = true; setTimeout(() => { btn.textContent = '✅ FINISH WORKOUT'; btn.disabled = false; }, 3000); }
@@ -466,4 +546,306 @@ function getStreak() {
     else break;
   }
   return streak;
+}
+
+// ============================================================
+// 1RM CALCULATOR (Epley Formula)
+// ============================================================
+function calculate1RM() {
+  const weightEl = document.getElementById('orm-weight');
+  const repsEl = document.getElementById('orm-reps');
+  const resultEl = document.getElementById('orm-result');
+  if (!weightEl || !repsEl || !resultEl) return;
+
+  const weight = parseFloat(weightEl.value);
+  const reps = parseInt(repsEl.value);
+
+  if (!weight || !reps || reps < 1 || reps > 20) {
+    resultEl.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">Enter weight and reps (1-20) to calculate</div>`;
+    return;
+  }
+
+  // Epley formula: 1RM = weight × (1 + reps/30)
+  const oneRM = weight * (1 + reps / 30);
+  const rounded = Math.round(oneRM * 2) / 2; // round to nearest 0.5
+
+  // Percentage breakdown table — common training percentages
+  const percentages = [
+    {pct: 100, label: '1RM (Max)'},
+    {pct: 95, label: '~2 reps'},
+    {pct: 90, label: '~4 reps'},
+    {pct: 85, label: '~6 reps'},
+    {pct: 80, label: '~8 reps'},
+    {pct: 75, label: '~10 reps'},
+    {pct: 70, label: '~12 reps'},
+  ];
+
+  resultEl.innerHTML = `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:1px;color:var(--accent)">${rounded}<span style="font-size:16px;color:var(--muted)">kg</span></div>
+      <div style="font-size:11px;color:var(--muted)">Estimated 1 Rep Max</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      ${percentages.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--bg3);border-radius:6px">
+          <span style="font-size:11px;color:var(--muted)">${p.pct}% — ${p.label}</span>
+          <span style="font-size:13px;font-weight:700;color:${p.pct===100?'var(--accent)':'var(--text)'}">${(rounded * p.pct / 100).toFixed(1)}kg</span>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center">Based on the Epley formula — estimate only, actual performance varies</div>`;
+}
+
+// ============================================================
+// MUSCLE HEATMAP
+// ============================================================
+function getTrainedMuscleGroups() {
+  // Determine which muscle groups were trained this week based on workoutHistory
+  const groups = { chest: 0, shoulders: 0, triceps: 0, back: 0, biceps: 0, quads: 0, hamstrings: 0, glutes: 0, calves: 0, abs: 0 };
+  const dayToGroups = {
+    push: ['chest', 'shoulders', 'triceps'],
+    pull: ['back', 'biceps', 'shoulders'],
+    legs: ['quads', 'hamstrings', 'glutes', 'calves']
+  };
+  const recentHistory = workoutHistory.filter(h => {
+    const daysAgo = (Date.now() - new Date(h.dateRaw).getTime()) / 86400000;
+    return daysAgo <= 7;
+  });
+  recentHistory.forEach(h => {
+    const intensity = h.completed / h.total; // 0 to 1
+    (dayToGroups[h.dayType] || []).forEach(g => {
+      groups[g] = Math.min(1, groups[g] + intensity * 0.4); // accumulate, cap at 1
+    });
+  });
+  return groups;
+}
+
+function renderMuscleHeatmap() {
+  const container = document.getElementById('muscle-heatmap-container');
+  if (!container) return;
+  const groups = getTrainedMuscleGroups();
+
+  const heat = (g) => {
+    const v = groups[g] || 0;
+    if (v === 0) return 'rgba(120,120,130,.25)';
+    if (v < 0.3) return 'rgba(68,170,255,.4)';
+    if (v < 0.6) return 'rgba(240,255,68,.55)';
+    return 'rgba(255,107,68,.75)';
+  };
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:center;gap:30px;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700">FRONT</div>
+        <svg width="110" height="220" viewBox="0 0 110 220">
+          <!-- Head -->
+          <circle cx="55" cy="18" r="14" fill="rgba(120,120,130,.15)"/>
+          <!-- Shoulders -->
+          <ellipse cx="30" cy="42" rx="13" ry="9" fill="${heat('shoulders')}"/>
+          <ellipse cx="80" cy="42" rx="13" ry="9" fill="${heat('shoulders')}"/>
+          <!-- Chest -->
+          <rect x="32" y="40" width="46" height="32" rx="8" fill="${heat('chest')}"/>
+          <!-- Abs -->
+          <rect x="38" y="74" width="34" height="38" rx="6" fill="${heat('abs')}"/>
+          <!-- Biceps -->
+          <rect x="14" y="48" width="13" height="34" rx="6" fill="${heat('biceps')}"/>
+          <rect x="83" y="48" width="13" height="34" rx="6" fill="${heat('biceps')}"/>
+          <!-- Quads -->
+          <rect x="34" y="115" width="18" height="55" rx="7" fill="${heat('quads')}"/>
+          <rect x="58" y="115" width="18" height="55" rx="7" fill="${heat('quads')}"/>
+          <!-- Calves -->
+          <rect x="36" y="175" width="14" height="35" rx="6" fill="${heat('calves')}"/>
+          <rect x="60" y="175" width="14" height="35" rx="6" fill="${heat('calves')}"/>
+        </svg>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700">BACK</div>
+        <svg width="110" height="220" viewBox="0 0 110 220">
+          <circle cx="55" cy="18" r="14" fill="rgba(120,120,130,.15)"/>
+          <ellipse cx="30" cy="42" rx="13" ry="9" fill="${heat('shoulders')}"/>
+          <ellipse cx="80" cy="42" rx="13" ry="9" fill="${heat('shoulders')}"/>
+          <!-- Back/Lats -->
+          <rect x="30" y="40" width="50" height="48" rx="8" fill="${heat('back')}"/>
+          <!-- Triceps -->
+          <rect x="14" y="48" width="13" height="34" rx="6" fill="${heat('triceps')}"/>
+          <rect x="83" y="48" width="13" height="34" rx="6" fill="${heat('triceps')}"/>
+          <!-- Glutes -->
+          <rect x="36" y="92" width="38" height="22" rx="8" fill="${heat('glutes')}"/>
+          <!-- Hamstrings -->
+          <rect x="34" y="116" width="18" height="50" rx="7" fill="${heat('hamstrings')}"/>
+          <rect x="58" y="116" width="18" height="50" rx="7" fill="${heat('hamstrings')}"/>
+          <!-- Calves -->
+          <rect x="36" y="175" width="14" height="35" rx="6" fill="${heat('calves')}"/>
+          <rect x="60" y="175" width="14" height="35" rx="6" fill="${heat('calves')}"/>
+        </svg>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:14px;margin-top:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:rgba(120,120,130,.25)"></div>Not trained</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:rgba(68,170,255,.4)"></div>Light</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:rgba(240,255,68,.55)"></div>Moderate</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:rgba(255,107,68,.75)"></div>Heavy</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Based on workouts finished in the last 7 days</div>`;
+}
+
+// ============================================================
+// FULLY CUSTOM ROUTINE BUILDER
+// ============================================================
+let _selectedRoutineIcon = '💪';
+let _editingRoutineDayId = null;
+
+function toggleCustomRoutineMode() {
+  customRoutineEnabled = document.getElementById('custom-routine-toggle')?.checked || false;
+  const builder = document.getElementById('custom-routine-builder');
+  const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
+  document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = customRoutineEnabled ? 'none' : '');
+
+  if (builder) builder.style.display = customRoutineEnabled ? 'block' : 'none';
+  if (pplTabsWrap) pplTabsWrap.style.display = customRoutineEnabled ? 'none' : 'flex';
+
+  if (customRoutineEnabled) {
+    renderCustomRoutineDays();
+  } else {
+    renderPPL();
+  }
+  autoSave();
+}
+
+function selectRoutineIcon(icon, btn) {
+  _selectedRoutineIcon = icon;
+  document.querySelectorAll('.rd-icon-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = 'var(--border)'; });
+  btn.classList.add('selected');
+  btn.style.borderColor = 'var(--accent)';
+}
+
+function openAddRoutineDayModal() {
+  const modal = document.getElementById('routine-day-modal');
+  if (modal) modal.style.display = 'flex';
+  document.getElementById('rd-name').value = '';
+  _selectedRoutineIcon = '💪';
+}
+
+function closeRoutineDayModal() {
+  const modal = document.getElementById('routine-day-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function saveRoutineDay() {
+  const name = document.getElementById('rd-name')?.value.trim();
+  if (!name) { alert('Day name is required'); return; }
+  customRoutineDays.push({
+    id: 'day_' + Date.now(),
+    name,
+    icon: _selectedRoutineIcon,
+    exercises: []
+  });
+  closeRoutineDayModal();
+  renderCustomRoutineDays();
+  autoSave();
+  syncPublicRoutine();
+}
+
+function deleteRoutineDay(dayId) {
+  if (!confirm('Delete this entire day and its exercises?')) return;
+  customRoutineDays = customRoutineDays.filter(d => d.id !== dayId);
+  renderCustomRoutineDays();
+  autoSave();
+  syncPublicRoutine();
+}
+
+function openAddRoutineExerciseModal(dayId) {
+  _editingRoutineDayId = dayId;
+  const modal = document.getElementById('routine-exercise-modal');
+  if (modal) modal.style.display = 'flex';
+  ['rde-name','rde-muscles','rde-equipment','rde-note'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('rde-sets').value = '3';
+  document.getElementById('rde-reps').value = '12-15';
+}
+
+function closeRoutineExerciseModal() {
+  const modal = document.getElementById('routine-exercise-modal');
+  if (modal) modal.style.display = 'none';
+  _editingRoutineDayId = null;
+}
+
+function saveRoutineExercise() {
+  const name = document.getElementById('rde-name')?.value.trim();
+  if (!name) { alert('Exercise name is required'); return; }
+  const sets = document.getElementById('rde-sets')?.value.trim() || '3';
+  const reps = document.getElementById('rde-reps')?.value.trim() || '12';
+  const muscles = document.getElementById('rde-muscles')?.value.trim() || 'Custom';
+  const equipment = document.getElementById('rde-equipment')?.value.trim() || '';
+  const note = document.getElementById('rde-note')?.value.trim() || 'Custom exercise.';
+
+  const day = customRoutineDays.find(d => d.id === _editingRoutineDayId);
+  if (!day) return;
+  day.exercises.push({ name, sets, reps, muscles, equipment, note });
+
+  closeRoutineExerciseModal();
+  renderCustomRoutineDays();
+  autoSave();
+  syncPublicRoutine();
+}
+
+function removeRoutineExercise(dayId, exIndex) {
+  const day = customRoutineDays.find(d => d.id === dayId);
+  if (!day) return;
+  day.exercises.splice(exIndex, 1);
+  renderCustomRoutineDays();
+  autoSave();
+  syncPublicRoutine();
+}
+
+function toggleCustomRoutineCheck(dayId, exName) {
+  const key = `custom_${dayId}_${exName}`;
+  if (!pplChecked.custom) pplChecked.custom = {};
+  pplChecked.custom[key] = !pplChecked.custom[key];
+  renderCustomRoutineDays();
+  autoSave();
+}
+
+function renderCustomRoutineDays() {
+  const listEl = document.getElementById('custom-routine-days-list');
+  const emptyEl = document.getElementById('custom-routine-empty');
+  if (!listEl) return;
+
+  if (!customRoutineDays.length) {
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  if (!pplChecked.custom) pplChecked.custom = {};
+
+  listEl.innerHTML = customRoutineDays.map(day => {
+    const doneCount = day.exercises.filter(ex => pplChecked.custom[`custom_${day.id}_${ex.name}`]).length;
+    return `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:700">${day.icon} ${escapeHtmlGym(day.name)}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:11px;color:var(--muted)">${doneCount}/${day.exercises.length}</span>
+          <button onclick="deleteRoutineDay('${day.id}')" style="background:none;border:none;color:#ff4466;font-size:11px;cursor:pointer">Delete Day</button>
+        </div>
+      </div>
+      ${day.exercises.map((ex, i) => {
+        const done = pplChecked.custom[`custom_${day.id}_${ex.name}`] || false;
+        return `<div class="workout-exercise-item">
+          <div class="workout-checkbox ${done ? 'done' : ''}" onclick="toggleCustomRoutineCheck('${day.id}','${ex.name.replace(/'/g,"\\'")}')"></div>
+          <div class="workout-ex-info">
+            <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${escapeHtmlGym(ex.name)}</div>
+            <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
+              <span style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${escapeHtmlGym(ex.muscles)}</span>
+              ${ex.equipment ? `<span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${escapeHtmlGym(ex.equipment)}</span>` : ''}
+            </div>
+            ${ex.note ? `<div style="font-size:11px;color:var(--muted);margin-top:5px">${escapeHtmlGym(ex.note)}</div>` : ''}
+            <button onclick="removeRoutineExercise('${day.id}',${i})" style="background:none;border:none;color:#ff4466;font-size:10px;cursor:pointer;text-decoration:underline;margin-top:4px">Remove</button>
+          </div>
+          <div class="workout-ex-badge">${escapeHtmlGym(ex.sets)} × ${escapeHtmlGym(ex.reps)}</div>
+        </div>`;
+      }).join('')}
+      <button onclick="openAddRoutineExerciseModal('${day.id}')" style="width:100%;background:var(--bg);border:1px dashed var(--border);color:var(--accent2);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px">+ Add Exercise</button>
+    </div>`;
+  }).join('');
 }
