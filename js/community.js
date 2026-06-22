@@ -322,19 +322,25 @@ function startDMFromMenu(userId, displayName) {
 let boardPollInterval = null;
 
 function subscribeToBoardRealtime() {
-  if (boardRealtimeChannel || isGuest || !currentUser) return;
-  try {
-    boardRealtimeChannel = sb
-      .channel('community_messages_channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_messages' }, () => {
-        loadBoardMessages();
-      })
-      .subscribe();
-  } catch (e) { console.error('Realtime subscribe error:', e); }
+  if (isGuest || !currentUser) return;
+
+  if (!boardRealtimeChannel) {
+    try {
+      boardRealtimeChannel = sb
+        .channel('community_messages_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'community_messages' }, () => {
+          loadBoardMessages();
+        })
+        .subscribe();
+    } catch (e) { console.error('Realtime subscribe error:', e); }
+  }
 
   // Polling fallback — guarantees new messages show up even if realtime
   // isn't properly configured on the Supabase project. Only runs while
   // the community screen is the active screen.
+  // BUG FIX: this used to be skipped entirely if boardRealtimeChannel was
+  // already set from a previous visit — meaning polling never restarted
+  // after navigating away and back to the Community screen.
   if (boardPollInterval) clearInterval(boardPollInterval);
   boardPollInterval = setInterval(() => {
     const screen = document.getElementById('screen-community');
