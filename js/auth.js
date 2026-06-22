@@ -84,6 +84,9 @@ function showMainApp() {
   }
 
   showScreen('home');
+
+  // Start global DM notification polling (guests can't receive DMs, so skip)
+  if (typeof startGlobalDMPolling === 'function' && !isGuest) startGlobalDMPolling();
 }
 
 function showAuthScreen() {
@@ -239,6 +242,8 @@ async function logout() {
   }
   await saveUserData();
   await sb.auth.signOut();
+  if (typeof stopGlobalDMPolling === 'function') stopGlobalDMPolling();
+  if (typeof clearDMBadge === 'function') clearDMBadge();
   currentUser = null;
   foodLog = [];
   pplChecked = { push: {}, pull: {}, legs: {} };

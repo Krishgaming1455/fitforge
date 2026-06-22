@@ -170,6 +170,149 @@ function openUserMenuFromSearch(userId, displayName) {
 }
 
 // ── PUBLIC ROUTINE SHARING ────────────────────────────────────
+// ── GLOBAL DM NOTIFICATIONS (toast + persistent badge) ───────
+let globalDMPollInterval = null;
+let lastSeenDMIds = new Set();
+let dmToastTimeout = null;
+let toastSwipeStartX = null;
+let toastFromUserId = null;
+
+function startGlobalDMPolling() {
+  if (globalDMPollInterval || isGuest || !currentUser) return;
+  // Prime lastSeenDMIds with existing messages so we don't toast on page load for old messages
+  primeSeenDMIds().then(() => {
+    globalDMPollInterval = setInterval(checkForNewDMs, 9000); // lighter than in-screen polling
+  });
+}
+
+function stopGlobalDMPolling() {
+  if (globalDMPollInterval) { clearInterval(globalDMPollInterval); globalDMPollInterval = null; }
+}
+
+async function primeSeenDMIds() {
+  if (!currentUser) return;
+  try {
+    const { data } = await sb
+      .from('direct_messages')
+      .select('id')
+      .eq('recipient_id', currentUser.id);
+    (data || []).forEach(m => lastSeenDMIds.add(m.id));
+  } catch (e) { console.error('primeSeenDMIds error:', e); }
+}
+
+async function checkForNewDMs() {
+  if (!currentUser || isGuest) return;
+  try {
+    const { data, error } = await sb
+      .from('direct_messages')
+      .select('*')
+      .eq('recipient_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error || !data) return;
+
+    const newOnes = data.filter(m => !lastSeenDMIds.has(m.id));
+    newOnes.forEach(m => lastSeenDMIds.add(m.id));
+
+    if (newOnes.length) {
+      // Show badge (persists until Community/Messages opened)
+      showDMBadge();
+      // Show toast for the most recent new message only (don't stack)
+      const latest = newOnes[0];
+      showDMToast(latest.display_name || 'Someone', latest.message, latest.sender_id);
+    }
+  } catch (e) { console.error('checkForNewDMs error:', e); }
+}
+
+function showDMBadge() {
+  const desktopBadge = document.getElementById('dm-badge-desktop');
+  const mobileBadge = document.getElementById('dm-badge-mobile');
+  if (desktopBadge) desktopBadge.style.display = 'block';
+  if (mobileBadge) mobileBadge.style.display = 'block';
+}
+
+function clearDMBadge() {
+  const desktopBadge = document.getElementById('dm-badge-desktop');
+  const mobileBadge = document.getElementById('dm-badge-mobile');
+  if (desktopBadge) desktopBadge.style.display = 'none';
+  if (mobileBadge) mobileBadge.style.display = 'none';
+}
+
+function showDMToast(name, text, senderId) {
+  const toast = document.getElementById('dm-toast');
+  if (!toast) return;
+  toastFromUserId = senderId;
+  document.getElementById('dm-toast-name').textContent = name;
+  document.getElementById('dm-toast-text').textContent = text;
+
+  // Reset any in-progress swipe/animation
+  toast.style.transition = 'opacity .25s, transform .25s';
+  toast.style.transform = 'translateX(-50%) translateY(-20px)';
+  toast.style.opacity = '0';
+  toast.style.display = 'block';
+
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.style.opacity = '1';
+  });
+
+  clearTimeout(dmToastTimeout);
+  dmToastTimeout = setTimeout(() => hideDMToast(), 2000);
+}
+
+function hideDMToast() {
+  const toast = document.getElementById('dm-toast');
+  if (!toast) return;
+  toast.style.opacity = '0';
+  toast.style.transform = 'translateX(-50%) translateY(-20px)';
+  setTimeout(() => { toast.style.display = 'none'; }, 250);
+}
+
+function goToDMFromToast() {
+  hideDMToast();
+  if (!toastFromUserId) return;
+  showScreen('community');
+  setTimeout(() => startDMFromMenu(toastFromUserId, document.getElementById('dm-toast-name')?.textContent || 'User'), 200);
+}
+
+// Swipe-to-dismiss for the toast
+document.addEventListener('DOMContentLoaded', () => {
+  const toast = document.getElementById('dm-toast');
+  if (!toast) return;
+
+  toast.addEventListener('touchstart', (e) => {
+    toastSwipeStartX = e.touches[0].clientX;
+    clearTimeout(dmToastTimeout); // pause auto-hide while interacting
+  }, { passive: true });
+
+  toast.addEventListener('touchmove', (e) => {
+    if (toastSwipeStartX === null) return;
+    const dx = e.touches[0].clientX - toastSwipeStartX;
+    toast.style.transition = 'none';
+    toast.style.transform = `translateX(calc(-50% + ${dx}px)) translateY(0)`;
+    toast.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 200));
+  }, { passive: true });
+
+  toast.addEventListener('touchend', (e) => {
+    if (toastSwipeStartX === null) return;
+    const dx = (e.changedTouches[0]?.clientX || 0) - toastSwipeStartX;
+    toastSwipeStartX = null;
+    toast.style.transition = 'opacity .2s, transform .2s';
+    if (Math.abs(dx) > 80) {
+      // swiped far enough — dismiss
+      toast.style.transform = `translateX(calc(-50% + ${dx > 0 ? 400 : -400}px)) translateY(0)`;
+      toast.style.opacity = '0';
+      setTimeout(() => { toast.style.display = 'none'; }, 200);
+    } else {
+      // snap back and resume auto-hide timer
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      toast.style.opacity = '1';
+      dmToastTimeout = setTimeout(() => hideDMToast(), 1500);
+    }
+  });
+});
+
 function escapeHtml(str) {
   if (!str) return '';
   const div = document.createElement('div');
@@ -421,6 +564,12 @@ async function openDMThread(otherUserId) {
   document.getElementById('dm-thread-view').style.display = 'block';
 
   await refreshDMThread(otherUserId);
+
+  // Mark this conversation's messages as read
+  try {
+    await sb.from('direct_messages').update({ read: true }).eq('sender_id', otherUserId).eq('recipient_id', currentUser.id).eq('read', false);
+  } catch (e) { console.error('mark read error:', e); }
+  if (typeof clearDMBadge === 'function') clearDMBadge();
 
   // Poll for new DM replies every 3 seconds while this thread is open
   if (dmPollInterval) clearInterval(dmPollInterval);

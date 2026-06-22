@@ -49,3 +49,32 @@ testing rather than building more — said this last session too, still true.
 Repo: https://github.com/Krishgaming1455/fitforge.git
 Supabase: tlzymwuoedjyzpkockfe.supabase.co
 Stack: HTML + vanilla JS modules (css/, js/) + Supabase
+
+---
+
+## 🆕 SESSION 20 — DM Notifications (Toast + Persistent Badge)
+
+### Decisions:
+- Global lightweight polling for new DMs (checks even when not on Community screen)
+- Toast notification: shows for 2 seconds, swipe-to-dismiss
+- Nav tab badge: persists until user actually opens the Community/Messages screen (not time-based)
+
+### Approach:
+- Global poll every 8-10s (lighter than the 3-4s in-screen polling) checks for unread DMs across the app
+- Need a way to know "is this message unread" — direct_messages table already has a `read` boolean column
+- On new unread DM detected: show toast (top of screen, slide in/out, swipe to dismiss) + add red dot badge to Community nav tab (desktop + mobile)
+- Badge clears when user opens Community screen and views Messages tab
+- Mark messages as read when DM thread is opened (update read=true in Supabase)
+
+### Implementation notes:
+- Toast should not stack — if multiple new messages arrive, show one toast that updates/queues rather than spamming
+- Swipe gesture: touch-based drag detection, dismiss if dragged far enough horizontally
+- Badge: small red dot, no need for unread count for v1 (keep it simple)
+
+### ✅ SESSION 20 BUILT — DM Notifications:
+- Global lightweight polling (9s interval) checks for new DMs even when not on Community screen
+- Red dot badge on Community nav tab (desktop + mobile) appears on new unread DM, persists until Messages tab/thread opened
+- 2-second toast notification slides in from top, shows sender name + message preview, tappable to jump straight into that DM thread
+- Swipe-to-dismiss: drag toast left/right past 80px threshold to dismiss early; snaps back + resumes timer if swipe wasn't far enough
+- Messages marked as read in Supabase when thread is opened — badge clears automatically
+- Polling starts on login, stops cleanly on logout (guests excluded — can't receive DMs anyway)

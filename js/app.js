@@ -134,6 +134,7 @@ function showScreen(name) {
   if (name === 'community') {
     if (typeof loadBoardMessages === 'function') loadBoardMessages();
     if (typeof subscribeToBoardRealtime === 'function') subscribeToBoardRealtime();
+    if (typeof clearDMBadge === 'function') clearDMBadge();
   } else {
     if (typeof stopBoardPolling === 'function') stopBoardPolling();
     if (typeof stopDMPolling === 'function') stopDMPolling();
