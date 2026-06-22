@@ -350,6 +350,16 @@
     <span style="font-size:11.5px;color:#ffaa00">🍌 <strong>Pre-workout tip:</strong> Eat carbs + a little protein 60-90 min before training. Training fasted often causes sudden strength drops mid-session.</span>
   </div>
   <div class="container section">
+    <!-- ROUTINE PRESET SELECTOR -->
+    <div id="preset-selector-section" style="margin-bottom:32px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <p class="section-title" style="margin:0">CHOOSE YOUR <span>SPLIT</span></p>
+        <button onclick="togglePresetSelector()" id="preset-toggle-btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;font-size:11px;cursor:pointer">Change</button>
+      </div>
+      <p class="section-sub" style="margin-bottom:14px" id="current-preset-label">Loading...</p>
+      <div id="preset-cards-wrap" style="display:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:10px"></div>
+    </div>
+
     <!-- CUSTOM ROUTINE BUILDER — shown only when toggle enabled -->
     <div id="custom-routine-builder" style="display:none;margin-bottom:32px">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px">

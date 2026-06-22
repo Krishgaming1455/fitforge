@@ -78,3 +78,42 @@ Stack: HTML + vanilla JS modules (css/, js/) + Supabase
 - Swipe-to-dismiss: drag toast left/right past 80px threshold to dismiss early; snaps back + resumes timer if swipe wasn't far enough
 - Messages marked as read in Supabase when thread is opened — badge clears automatically
 - Polling starts on login, stops cleanly on logout (guests excluded — can't receive DMs anyway)
+
+---
+
+## 🆕 SESSION 21 — Preset Routine Library + Smart Recommendation
+
+### Decisions:
+- Build preset library: PPL (existing) + Bro Split (Back/Chest/Arms/Back/Shoulders/Legs) + Upper/Lower
+- Recommendation engine suggests a split based on weight/height/BMI/goal/experience, but always overridable
+
+### Approach:
+- New "Choose a Routine" section on Gym screen / Profile — shows preset cards (PPL, Bro Split, Upper/Lower, or Custom)
+- Each preset is pre-populated with checkbox-able exercises just like PPL — no manual typing needed
+- User taps a preset card → it loads into the same exercise/checkbox/overload system already built
+- Recommendation logic (simple, rule-based):
+  - Beginner + first time → PPL (simplest 3-way split, easiest to learn)
+  - Intermediate/Advanced + wants more volume per muscle/frequency → Upper/Lower or Bro Split
+  - Higher BMI / fat loss goal → favor higher-frequency splits (PPL, hits each muscle 2x/week)
+  - Muscle gain goal + advanced → Bro Split (more volume per session, common bodybuilder approach)
+- Show recommendation as a highlighted "Recommended for you" badge on one preset card, but all cards remain tappable
+
+### Data needed:
+- BRO_SPLIT_DATA: 6 days (Back, Chest, Arms, Back, Shoulders, Legs) — using the exact exercise list already worked out with user
+- UPPER_LOWER_DATA: 4 days (Upper A, Lower A, Upper B, Lower B) — need to build exercise list
+- Both follow same data shape as PPL_DATA (name, sets, reps, muscles, equipment, note) for compatibility with existing render/checkbox/overload code
+
+
+### ✅ SESSION 21 BUILT — Preset Routine Library:
+- 3 selectable presets: PPL (existing), Bro Split (Back/Chest/Arms/Back/Shoulders/Legs — matches user's trainer schedule exactly), Upper/Lower (4-day)
+- "Choose Your Split" section on Gym screen — shows current active preset, tap "Change" to browse cards
+- Smart recommendation badge based on experience level + BMI + goal (rule-based, not ML — simple and transparent)
+- All presets fully pre-populated with exercises (no manual typing needed) — sets/reps/muscles/equipment/notes all included
+- Switching presets works with existing checkbox/overload-log/finish-workout system
+- Synced to Supabase (activePreset field) — persists across devices and visible to others via public_routines
+- Verified: Bro Split has exactly 6 days matching user's trainer schedule, all exercise counts correct
+
+### ✅ SESSION 22 — DM header name fix:
+- Fixed: DM thread header showed blank for new conversations (no messages yet) since it relied on inferring the name from message history
+- Fixed: conversation list could show YOUR OWN name instead of the other person's if you sent the last message in that thread
+- Now: display name is passed directly when opening a thread (from conversation list or user menu) and set immediately, no more guessing from message content

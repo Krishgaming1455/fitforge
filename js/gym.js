@@ -849,3 +849,191 @@ function renderCustomRoutineDays() {
     </div>`;
   }).join('');
 }
+
+// ============================================================
+// ROUTINE PRESET SELECTOR (PPL / Bro Split / Upper-Lower)
+// ============================================================
+const PRESET_INFO = {
+  ppl: { label: 'Push / Pull / Legs', icon: '💪', desc: '6 days, hits each muscle 2x/week. Best for most lifters and beginners.' },
+  broSplit: { label: 'Bro Split (Back/Chest/Arms/Back/Shoulders/Legs)', icon: '🏋️', desc: '6 days, one muscle group focus per day. High volume per session — popular for muscle gain.' },
+  upperLower: { label: 'Upper / Lower', icon: '⚡', desc: '4 days, hits each muscle ~2x/week with less time in the gym. Good if you have limited days available.' }
+};
+
+function getRecommendedPreset() {
+  const weight = parseFloat(document.getElementById('p-weight')?.value);
+  const height = parseFloat(document.getElementById('p-height')?.value);
+  const level = typeof getExperienceLevel === 'function' ? getExperienceLevel() : 'intermediate';
+  const goalTag = document.querySelector('#goal-tags .tag.selected')?.textContent || '';
+
+  if (level === 'beginner') return 'ppl'; // simplest split to learn movement patterns
+
+  let bmi = null;
+  if (weight && height) bmi = weight / ((height/100) ** 2);
+
+  if (goalTag.includes('Gain Muscle') && level === 'advanced') return 'broSplit';
+  if (bmi && bmi >= 25) return 'ppl'; // higher frequency favors fat-loss-friendly splits
+  if (goalTag.includes('Athletic') || goalTag.includes('Stronger')) return 'upperLower';
+
+  return 'ppl'; // safe default
+}
+
+function renderPresetSelector() {
+  const labelEl = document.getElementById('current-preset-label');
+  const cardsWrap = document.getElementById('preset-cards-wrap');
+  if (!labelEl || !cardsWrap) return;
+
+  const info = PRESET_INFO[activePreset];
+  labelEl.innerHTML = `Currently on: <strong style="color:var(--accent)">${info.icon} ${info.label}</strong>`;
+
+  const recommended = getRecommendedPreset();
+  cardsWrap.innerHTML = Object.entries(PRESET_INFO).map(([key, p]) => {
+    const isActive = key === activePreset;
+    const isRecommended = key === recommended && key !== activePreset;
+    return `
+    <div onclick="switchPreset('${key}')" style="cursor:pointer;background:${isActive ? 'rgba(240,255,68,.08)' : 'var(--bg3)'};border:1px solid ${isActive ? 'var(--accent)' : 'var(--border)'};border-radius:12px;padding:16px;position:relative">
+      ${isRecommended ? '<div style="position:absolute;top:-9px;right:10px;background:var(--accent2);color:#000;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px">RECOMMENDED FOR YOU</div>' : ''}
+      <div style="font-size:24px;margin-bottom:6px">${p.icon}</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">${p.label}</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.4">${p.desc}</div>
+      ${isActive ? '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:8px">✓ ACTIVE</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function togglePresetSelector() {
+  const wrap = document.getElementById('preset-cards-wrap');
+  const btn = document.getElementById('preset-toggle-btn');
+  if (!wrap) return;
+  const isOpen = wrap.style.display === 'grid';
+  wrap.style.display = isOpen ? 'none' : 'grid';
+  if (btn) btn.textContent = isOpen ? 'Change' : 'Close';
+  if (!isOpen) renderPresetSelector();
+}
+
+function switchPreset(presetKey) {
+  activePreset = presetKey;
+  renderPresetSelector();
+  renderActivePresetDays();
+  autoSave();
+  syncPublicRoutine();
+  // Collapse selector after choosing
+  const wrap = document.getElementById('preset-cards-wrap');
+  const btn = document.getElementById('preset-toggle-btn');
+  if (wrap) wrap.style.display = 'none';
+  if (btn) btn.textContent = 'Change';
+}
+
+function getActivePresetData() {
+  if (activePreset === 'broSplit') return BRO_SPLIT_DATA;
+  if (activePreset === 'upperLower') return UPPER_LOWER_DATA;
+  return null; // PPL uses existing PPL_DATA system, handled separately
+}
+
+function renderActivePresetDays() {
+  const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
+  const builder = document.getElementById('custom-routine-builder');
+
+  if (activePreset === 'ppl') {
+    // Restore original PPL view
+    if (pplTabsWrap) pplTabsWrap.style.display = customRoutineEnabled ? 'none' : 'flex';
+    document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = customRoutineEnabled ? 'none' : '');
+    if (!customRoutineEnabled) renderPPL();
+    removePresetDayPanels();
+    return;
+  }
+
+  // Bro Split or Upper/Lower — hide PPL tabs/panels, hide custom builder, show preset days instead
+  if (pplTabsWrap) pplTabsWrap.style.display = 'none';
+  document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = 'none');
+  if (builder) builder.style.display = 'none';
+
+  renderPresetDayPanels();
+}
+
+function removePresetDayPanels() {
+  const existing = document.getElementById('preset-day-panels');
+  if (existing) existing.remove();
+}
+
+function renderPresetDayPanels() {
+  removePresetDayPanels();
+  const presetData = getActivePresetData();
+  if (!presetData) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'preset-day-panels';
+
+  if (!pplChecked.preset) pplChecked.preset = {};
+
+  wrap.innerHTML = Object.entries(presetData).map(([dayKey, day]) => {
+    const doneCount = day.exercises.filter(ex => pplChecked.preset[`${activePreset}_${dayKey}_${ex.name}`]).length;
+    return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px">${day.day}</div>
+          <div style="font-size:18px;font-weight:700">${day.icon} ${day.label}</div>
+        </div>
+        <span style="font-size:12px;color:var(--muted)">${doneCount}/${day.exercises.length}</span>
+      </div>
+      <div class="workout-progress"><div class="workout-progress-fill" style="width:${Math.round((doneCount/day.exercises.length)*100)}%"></div></div>
+      <div style="margin-top:12px">
+        ${day.exercises.map(ex => {
+          const checkKey = `${activePreset}_${dayKey}_${ex.name}`;
+          const done = pplChecked.preset[checkKey] || false;
+          const prev = (overloadLog && overloadLog[ex.name]) || null;
+          const safeId = 'ol-btn-' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
+          return `<div class="workout-exercise-item">
+            <div class="workout-checkbox ${done ? 'done' : ''}" onclick="togglePresetExercise('${dayKey}','${ex.name.replace(/'/g,"\\'")}')"></div>
+            <div class="workout-ex-info">
+              <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${escapeHtmlGym(ex.name)}</div>
+              <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
+                <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${escapeHtmlGym(ex.muscles)}</span>
+                <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${escapeHtmlGym(ex.equipment)}</span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${escapeHtmlGym(ex.note)}</div>
+              ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
+              <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
+            </div>
+            <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="finish-workout-btn" onclick="finishPresetDay('${dayKey}')">✅ FINISH WORKOUT</button>
+    </div>`;
+  }).join('');
+
+  const anchor = document.getElementById('custom-routine-builder');
+  if (anchor) anchor.insertAdjacentElement('afterend', wrap);
+}
+
+function togglePresetExercise(dayKey, exName) {
+  if (!pplChecked.preset) pplChecked.preset = {};
+  const key = `${activePreset}_${dayKey}_${exName}`;
+  pplChecked.preset[key] = !pplChecked.preset[key];
+  renderPresetDayPanels();
+  autoSave();
+}
+
+function finishPresetDay(dayKey) {
+  const presetData = getActivePresetData();
+  if (!presetData) return;
+  const day = presetData[dayKey];
+  const doneCount = day.exercises.filter(ex => pplChecked.preset[`${activePreset}_${dayKey}_${ex.name}`]).length;
+  if (doneCount === 0) { alert('Complete at least one exercise before finishing!'); return; }
+
+  workoutHistory.unshift({
+    date: new Date().toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'}),
+    dateRaw: new Date().toDateString(),
+    dayType: day.label,
+    week: '',
+    completed: doneCount,
+    total: day.exercises.length,
+    icon: day.icon
+  });
+  if (workoutHistory.length > 30) workoutHistory.pop();
+  autoSave();
+  renderWorkoutHistory();
+  renderHome();
+  alert(`${day.label} workout saved! 💪`);
+}

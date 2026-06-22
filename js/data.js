@@ -345,3 +345,92 @@ let overloadHistory = {}; // { exerciseName: [{weight, reps, date, ts}, ...] }
 // ── FULLY CUSTOM ROUTINE (replaces PPL entirely when enabled) ──
 let customRoutineEnabled = false;
 let customRoutineDays = []; // [{ id, name, icon, exercises: [{name,sets,reps,muscles,equipment,note}] }]
+
+// ── PRESET ROUTINE: BRO SPLIT (Back/Chest/Arms/Back/Shoulders/Legs) ──
+const BRO_SPLIT_DATA = {
+  back1: { label: "Back", day: "Monday", icon: "🔙", exercises: [
+    {name:"Deadlift", sets:"4", reps:"6-8", muscles:"Lats · Glutes · Hamstrings · Lower Back", equipment:"Barbell", note:"Hip hinge, bar stays close to legs. The king of back exercises — builds total posterior strength."},
+    {name:"Lat Pulldown", sets:"4", reps:"10-12", muscles:"Latissimus Dorsi · Biceps", equipment:"Cable Machine", note:"Lean back slightly, drive elbows down and back. Builds the V-taper width."},
+    {name:"Barbell Bent-Over Row", sets:"4", reps:"10-12", muscles:"Mid Back · Lats · Biceps", equipment:"Barbell", note:"Hinge at hips, back at 45°, pull to lower sternum. Heavy compound for back thickness."},
+    {name:"Seated Cable Row", sets:"3", reps:"10-12", muscles:"Mid Back · Biceps · Rear Delts", equipment:"Cable Machine", note:"Sit tall, pull to lower sternum, squeeze shoulder blades together at the end."},
+    {name:"Single-Arm Dumbbell Row", sets:"3", reps:"10-12 each", muscles:"Lats · Mid Back", equipment:"Dumbbell + Bench", note:"Knee on bench, full stretch at bottom, pull elbow past torso. Great for fixing imbalances."},
+    {name:"Face Pulls", sets:"3", reps:"15-20", muscles:"Rear Deltoid · Upper Traps", equipment:"Cable Machine", note:"Cable at face height, pull apart, elbows flare out. Corrective — reverses desk posture."}
+  ]},
+  chest: { label: "Chest", day: "Tuesday", icon: "🫀", exercises: [
+    {name:"Flat Barbell Bench Press", sets:"4", reps:"8-10", muscles:"Chest · Front Shoulders · Triceps", equipment:"Barbell + Bench", note:"Grip 1.5x shoulder width, lower to lower chest, drive feet into floor."},
+    {name:"Incline Dumbbell Press", sets:"4", reps:"10-12", muscles:"Upper Chest · Front Shoulders", equipment:"Dumbbell + Bench", note:"Bench at 30-45°. Targets upper chest more than flat pressing."},
+    {name:"Cable Crossover (High-to-Low)", sets:"3", reps:"12-15", muscles:"Lower Chest · Front Delt", equipment:"Cable Machine", note:"Cables set high, pull down and across to hips. Targets lower chest."},
+    {name:"Dips (Chest-Focused)", sets:"3", reps:"10-15", muscles:"Lower Chest · Triceps", equipment:"Dip Bars", note:"Lean forward for chest focus. Lower until elbows reach 90°."},
+    {name:"Pec Deck / Chest Fly Machine", sets:"3", reps:"12-15", muscles:"Chest (Isolation)", equipment:"Machine", note:"Feel the stretch at the open position, squeeze at the top."}
+  ]},
+  arms: { label: "Biceps & Triceps", day: "Wednesday", icon: "💪", exercises: [
+    {name:"Barbell Curl", sets:"4", reps:"10-12", muscles:"Biceps Brachii", equipment:"Barbell", note:"Elbows fixed at sides, controlled 3s lowering. The classic mass builder for biceps."},
+    {name:"Hammer Curl", sets:"3", reps:"12", muscles:"Brachialis · Forearms", equipment:"Dumbbell", note:"Neutral grip throughout, builds arm thickness more than regular curls."},
+    {name:"Cable Curl", sets:"3", reps:"12-15", muscles:"Biceps Brachii", equipment:"Cable Machine", note:"Constant tension throughout the rep unlike free weights — great pump finisher."},
+    {name:"Close-Grip Bench Press", sets:"4", reps:"10-12", muscles:"Triceps · Inner Chest", equipment:"Barbell + Bench", note:"Grip shoulder-width, elbows stay close to body. Heavy tricep mass builder."},
+    {name:"Tricep Pushdown (Cable — Bar)", sets:"3", reps:"12-15", muscles:"Triceps (Lateral Head)", equipment:"Cable Machine", note:"Elbows locked to sides, press down fully and lock out."},
+    {name:"Overhead Tricep Extension", sets:"3", reps:"12-14", muscles:"Triceps (Long Head)", equipment:"Dumbbell", note:"Lower behind head slowly, stretches the long head — best position for growth."}
+  ]},
+  back2: { label: "Back", day: "Thursday", icon: "🔙", exercises: [
+    {name:"Pull-Ups / Assisted Pull-Ups", sets:"4", reps:"6-10", muscles:"Lats · Biceps · Rear Delts", equipment:"Pull-up Bar", note:"Full ROM from dead hang to chin over bar. Best lat builder there is."},
+    {name:"Chest-Supported Dumbbell Row", sets:"4", reps:"10-12", muscles:"Mid Back · Lower Traps", equipment:"Dumbbell + Incline Bench", note:"Chest fully supported, removes lower back from the movement entirely."},
+    {name:"Cable Seated Row (Close Grip)", sets:"3", reps:"10-12", muscles:"Mid Back · Biceps", equipment:"Cable Machine", note:"Close grip handle, pull to lower abdomen, squeeze shoulder blades."},
+    {name:"Straight-Arm Pulldown", sets:"3", reps:"12-15", muscles:"Lats (Long Head)", equipment:"Cable Machine", note:"Arms straight, pull from overhead to thighs. Keeps lats under constant tension."},
+    {name:"Face Pulls", sets:"3", reps:"15-20", muscles:"Rear Deltoid · Upper Traps", equipment:"Cable Machine", note:"Mandatory every back session — reverses rounded shoulder posture."}
+  ]},
+  shoulders: { label: "Shoulders", day: "Friday", icon: "🎯", exercises: [
+    {name:"Seated Overhead Press", sets:"4", reps:"10-12", muscles:"Front & Medial Deltoid · Triceps", equipment:"Dumbbell + Bench", note:"Seated for back support, press straight overhead, don't go behind the neck."},
+    {name:"Machine Shoulder Press", sets:"3", reps:"10-12", muscles:"Front & Medial Deltoid", equipment:"Machine", note:"Guided path lets you focus purely on the muscle without stabilizing."},
+    {name:"Lateral Raises", sets:"4", reps:"15-20", muscles:"Medial Deltoid", equipment:"Dumbbell", note:"Light weight, lead with elbows, slow 3s lowering for max growth."},
+    {name:"Front Raise", sets:"3", reps:"12-14", muscles:"Front Deltoid", equipment:"Dumbbell", note:"Raise to shoulder height only, alternate arms."},
+    {name:"Reverse Fly", sets:"3", reps:"15-20", muscles:"Rear Deltoid · Upper Back", equipment:"Dumbbell", note:"Bent forward at 90°, light weight, squeeze rear delts at the top."},
+    {name:"Barbell Shrugs", sets:"3", reps:"12-15", muscles:"Upper Traps", equipment:"Barbell", note:"Shrug straight up, no rolling, hold 1 second at the top."}
+  ]},
+  legs: { label: "Legs", day: "Saturday", icon: "🦵", exercises: [
+    {name:"Barbell Back Squat", sets:"4", reps:"8-10", muscles:"Quads · Glutes · Hamstrings · Core", equipment:"Barbell + Squat Rack", note:"Bar on upper traps, squat to parallel, keep chest tall. The king of leg exercises."},
+    {name:"Romanian Deadlift", sets:"4", reps:"10-12", muscles:"Hamstrings · Glutes", equipment:"Barbell", note:"Push hips back, soft knee bend, feel the hamstring stretch."},
+    {name:"Leg Press (High Feet)", sets:"4", reps:"12-15", muscles:"Glutes · Hamstrings", equipment:"Leg Press Machine", note:"Feet high and wide shifts emphasis to glutes and hamstrings."},
+    {name:"Leg Curl Machine", sets:"3", reps:"12-15", muscles:"Hamstrings", equipment:"Machine", note:"Full ROM, slow controlled lowering, complements the RDL."},
+    {name:"Leg Extension Machine", sets:"3", reps:"15", muscles:"Quads (Isolation)", equipment:"Machine", note:"Full extension at top, light-to-moderate weight with full range."},
+    {name:"Standing Calf Raise", sets:"4", reps:"15-20", muscles:"Gastrocnemius", equipment:"Machine", note:"Deep stretch at bottom, full contraction at top, hold 1 second."}
+  ]}
+};
+
+// ── PRESET ROUTINE: UPPER / LOWER (4-day split) ──────────────
+const UPPER_LOWER_DATA = {
+  upperA: { label: "Upper Body A", day: "Mon/Thu", icon: "💪", exercises: [
+    {name:"Flat Barbell Bench Press", sets:"4", reps:"8-10", muscles:"Chest · Triceps", equipment:"Barbell + Bench", note:"Primary horizontal press for the day."},
+    {name:"Pull-Ups / Lat Pulldown", sets:"4", reps:"8-10", muscles:"Lats · Biceps", equipment:"Pull-up Bar / Cable Machine", note:"Primary vertical pull — balances the pressing movement."},
+    {name:"Seated Overhead Press", sets:"3", reps:"10-12", muscles:"Front & Medial Deltoid", equipment:"Dumbbell + Bench", note:"Builds shoulder strength and width."},
+    {name:"Barbell Bent-Over Row", sets:"3", reps:"10-12", muscles:"Mid Back · Lats", equipment:"Barbell", note:"Horizontal pull for back thickness."},
+    {name:"Bicep Curl", sets:"3", reps:"12", muscles:"Biceps Brachii", equipment:"Dumbbell / Barbell", note:"Arm isolation to finish the session."},
+    {name:"Tricep Pushdown", sets:"3", reps:"12-15", muscles:"Triceps", equipment:"Cable Machine", note:"Arm isolation, paired with curls."}
+  ]},
+  lowerA: { label: "Lower Body A", day: "Tue/Fri", icon: "🦵", exercises: [
+    {name:"Barbell Back Squat", sets:"4", reps:"8-10", muscles:"Quads · Glutes · Hamstrings", equipment:"Barbell + Squat Rack", note:"Primary squat pattern for the day."},
+    {name:"Romanian Deadlift", sets:"4", reps:"10-12", muscles:"Hamstrings · Glutes", equipment:"Barbell", note:"Primary hip-hinge pattern, complements the squat."},
+    {name:"Leg Press", sets:"3", reps:"12-15", muscles:"Quads · Glutes", equipment:"Leg Press Machine", note:"Extra quad/glute volume with less spinal load."},
+    {name:"Leg Curl Machine", sets:"3", reps:"12-15", muscles:"Hamstrings", equipment:"Machine", note:"Hamstring isolation."},
+    {name:"Standing Calf Raise", sets:"4", reps:"15-20", muscles:"Gastrocnemius", equipment:"Machine", note:"Calves need high volume — train every lower day."},
+    {name:"Hanging Knee Raises", sets:"3", reps:"12-15", muscles:"Core · Hip Flexors", equipment:"Pull-up Bar", note:"Core finisher."}
+  ]},
+  upperB: { label: "Upper Body B", day: "Mon/Thu (Week B)", icon: "🔥", exercises: [
+    {name:"Incline Dumbbell Press", sets:"4", reps:"10-12", muscles:"Upper Chest · Shoulders", equipment:"Dumbbell + Bench", note:"Different pressing angle from Upper A for varied stimulus."},
+    {name:"Chest-Supported Dumbbell Row", sets:"4", reps:"10-12", muscles:"Mid Back · Lower Traps", equipment:"Dumbbell + Incline Bench", note:"Different pulling angle and back protection."},
+    {name:"Lateral Raises", sets:"3", reps:"15-20", muscles:"Medial Deltoid", equipment:"Dumbbell", note:"Shoulder width isolation."},
+    {name:"Cable Seated Row", sets:"3", reps:"10-12", muscles:"Mid Back · Biceps", equipment:"Cable Machine", note:"Extra back volume."},
+    {name:"Hammer Curl", sets:"3", reps:"12", muscles:"Brachialis", equipment:"Dumbbell", note:"Different curl variation from Upper A."},
+    {name:"Overhead Tricep Extension", sets:"3", reps:"12-14", muscles:"Triceps (Long Head)", equipment:"Dumbbell", note:"Stretched position tricep work."}
+  ]},
+  lowerB: { label: "Lower Body B", day: "Tue/Fri (Week B)", icon: "⚡", exercises: [
+    {name:"Bulgarian Split Squat", sets:"3", reps:"10 each leg", muscles:"Quads · Glutes", equipment:"Dumbbell + Bench", note:"Single-leg work for balance and unilateral strength."},
+    {name:"Stiff-Leg Deadlift", sets:"4", reps:"10", muscles:"Hamstrings · Glutes", equipment:"Barbell", note:"Maximum hamstring stretch variation."},
+    {name:"Hack Squat Machine", sets:"4", reps:"10-12", muscles:"Quads", equipment:"Hack Squat Machine", note:"Quad-focused machine work, easier to load heavy safely."},
+    {name:"Seated Leg Curl", sets:"3", reps:"12-15", muscles:"Hamstrings", equipment:"Machine", note:"Different hamstring angle from Lower A."},
+    {name:"Hip Abduction Machine", sets:"3", reps:"15-20", muscles:"Glute Medius", equipment:"Machine", note:"Glute and hip stability work."},
+    {name:"Plank", sets:"3", reps:"30-45 sec", muscles:"Core", equipment:"Bodyweight", note:"Core stability finisher."}
+  ]}
+};
+
+// ── ACTIVE PRESET STATE ───────────────────────────────────────
+let activePreset = 'ppl'; // 'ppl' | 'broSplit' | 'upperLower'

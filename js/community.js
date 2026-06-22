@@ -330,6 +330,7 @@ async function syncPublicRoutine() {
       display_name: getMyDisplayName(),
       experience_level: typeof getExperienceLevel === 'function' ? getExperienceLevel() : 'intermediate',
       custom_exercises: customExercises || {},
+      active_preset: typeof activePreset !== 'undefined' ? activePreset : 'ppl',
       hide_routine: hideRoutine,
       hide_stats: hideStats,
       updated_at: new Date().toISOString()
@@ -449,16 +450,7 @@ function startDMFromMenu(userId, displayName) {
   // Switch to DM tab and open thread with this user
   const dmTabBtn = document.querySelector('.community-tab:nth-child(2)');
   if (dmTabBtn) switchCommunityTab('dms', dmTabBtn);
-  setTimeout(() => {
-    document.getElementById('dm-conversation-list').style.display = 'none';
-    document.getElementById('dm-thread-view').style.display = 'block';
-    currentDMThread = userId;
-    const headerEl = document.getElementById('dm-thread-header');
-    if (headerEl) headerEl.textContent = displayName;
-    const threadEl = document.getElementById('dm-thread-messages');
-    if (threadEl) threadEl.innerHTML = '';
-    openDMThread(userId);
-  }, 150);
+  setTimeout(() => openDMThread(userId, displayName), 150);
 }
 
 // ── REALTIME SUBSCRIPTION (+ polling fallback) ──────────────
@@ -542,10 +534,14 @@ async function loadDMConversations() {
 
     listEl.innerHTML = Object.entries(convos).map(([otherId, msgs]) => {
       const last = msgs[0];
-      return `<div class="history-item" style="cursor:pointer" onclick="openDMThread('${otherId}')">
+      // BUG FIX: find a message actually sent BY the other person to get their real name,
+      // rather than using last.display_name which could be OUR name if we sent the last message
+      const theirMessage = msgs.find(m => m.sender_id === otherId);
+      const theirName = theirMessage?.display_name || 'User';
+      return `<div class="history-item" style="cursor:pointer" onclick="openDMThread('${otherId}','${theirName.replace(/'/g,"\\'")}')">
         <div class="history-icon">💬</div>
         <div class="history-info">
-          <div class="history-type">${escapeHtml(last.display_name || 'User')}</div>
+          <div class="history-type">${escapeHtml(theirName)}</div>
           <div class="history-meta">${escapeHtml((last.message||'').slice(0,40))}${last.message?.length>40?'...':''}</div>
         </div>
       </div>`;
@@ -558,10 +554,16 @@ async function loadDMConversations() {
 
 let dmPollInterval = null;
 
-async function openDMThread(otherUserId) {
+async function openDMThread(otherUserId, otherDisplayName) {
   currentDMThread = otherUserId;
   document.getElementById('dm-conversation-list').style.display = 'none';
   document.getElementById('dm-thread-view').style.display = 'block';
+
+  // BUG FIX: set header immediately with the name we already have, rather than
+  // waiting to infer it from message history (which fails for brand new convos
+  // with zero messages, or shows the wrong person's name)
+  const headerEl = document.getElementById('dm-thread-header');
+  if (headerEl) headerEl.textContent = otherDisplayName || 'Conversation';
 
   await refreshDMThread(otherUserId);
 
@@ -587,9 +589,6 @@ async function refreshDMThread(otherUserId) {
     .order('created_at', { ascending: true });
 
   const msgs = data || [];
-  const headerEl = document.getElementById('dm-thread-header');
-  if (headerEl && !headerEl.textContent) headerEl.textContent = msgs[0]?.display_name || 'Conversation';
-
   const threadEl = document.getElementById('dm-thread-messages');
   if (!threadEl) return;
   const wasAtBottom = threadEl.scrollHeight - threadEl.scrollTop <= threadEl.clientHeight + 50;

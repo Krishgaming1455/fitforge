@@ -308,6 +308,7 @@ async function saveUserData() {
     experienceLevel: getExperienceLevel(),
     customRoutineEnabled,
     customRoutineDays,
+    activePreset,
     lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
@@ -370,6 +371,7 @@ async function loadUserData() {
   customExercises = data.customExercises || { push: [], pull: [], legs: [] };
   customRoutineEnabled = data.customRoutineEnabled || false;
   customRoutineDays = data.customRoutineDays || [];
+  activePreset = data.activePreset || 'ppl';
 
   // Water: reset if new day
   waterGlasses = (data.waterDate === today) ? (data.waterGlasses || 0) : 0;
@@ -419,7 +421,9 @@ async function loadUserData() {
     // BUG FIX: trigger all UI updates after data is restored
     if (typeof renderFoodLog === 'function') renderFoodLog();
     if (typeof updateNutritionDisplay === 'function') updateNutritionDisplay();
-    if (typeof renderPPL === 'function') renderPPL();
+    if (typeof renderPresetSelector === 'function') renderPresetSelector();
+    if (typeof renderActivePresetDays === 'function') renderActivePresetDays();
+    else if (typeof renderPPL === 'function') renderPPL();
     if (typeof renderWeeklySplit === 'function') renderWeeklySplit();
     if (typeof renderWaterTracker === 'function') renderWaterTracker();
     if (typeof renderWorkoutHistory === 'function') renderWorkoutHistory();
