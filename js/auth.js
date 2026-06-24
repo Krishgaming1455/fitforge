@@ -309,6 +309,7 @@ async function saveUserData() {
     customRoutineEnabled,
     customRoutineDays,
     activePreset,
+    customDayMapping,
     lastWorkoutDate: new Date().toDateString(),
     lastUpdated: new Date().toISOString()
   };
@@ -317,12 +318,29 @@ async function saveUserData() {
     .from('user_profiles')
     .upsert({ id: currentUser.id, data, updated_at: new Date().toISOString() });
 
-  if (error) console.error('Save error:', error.message);
-  else console.log('Saved to Supabase ✅');
+  if (error) {
+    console.error('Save error:', error.message);
+    showSaveFailedToast();
+  }
   if (saveBtn) { saveBtn.textContent = 'Save Profile'; saveBtn.disabled = false; }
 
   // Sync a public-facing copy so others can view this routine in chat profiles
   if (typeof syncPublicRoutine === 'function') syncPublicRoutine();
+}
+
+let _saveFailToastTimeout = null;
+function showSaveFailedToast() {
+  let toast = document.getElementById('save-failed-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'save-failed-toast';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,68,102,.95);color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '⚠️ Your data couldn\'t be saved — check your connection and try again.';
+  toast.style.display = 'block';
+  clearTimeout(_saveFailToastTimeout);
+  _saveFailToastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 4000);
 }
 
 // ── LOAD FROM SUPABASE ───────────────────────────────────────
@@ -372,6 +390,7 @@ async function loadUserData() {
   customRoutineEnabled = data.customRoutineEnabled || false;
   customRoutineDays = data.customRoutineDays || [];
   activePreset = data.activePreset || 'ppl';
+  customDayMapping = data.customDayMapping || {};
 
   // Water: reset if new day
   waterGlasses = (data.waterDate === today) ? (data.waterGlasses || 0) : 0;

@@ -116,7 +116,9 @@ function syncProfileToDiet() {
 }
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
+  const targetScreen = document.getElementById('screen-' + name);
+  if (!targetScreen) { console.error('showScreen: no screen found for', name); return; }
+  targetScreen.classList.add('active');
   const ntNames = ['home','profile','gym','diet','recovery','myths','community'];
   const mnNames = ['home','profile','gym','diet','recovery','community'];
   document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ntNames[i] === name));
@@ -160,7 +162,11 @@ function toggleTag(el) {
 function calcBMI() {
   const w = parseFloat(document.getElementById('p-weight').value);
   const h = parseFloat(document.getElementById('p-height').value);
-  if (!w || !h) return;
+  const resultsEl = document.getElementById('bmi-results') || document.getElementById('profile-results');
+  if (!w || !h) {
+    if (resultsEl) resultsEl.innerHTML = `<div class="info-box" style="border-color:rgba(255,170,0,.3);color:#ffaa00">⚠️ Enter your weight and height above to see your BMI and personalised targets.</div>`;
+    return;
+  }
   const age = parseFloat(document.getElementById('p-age').value) || 25;
   // Read goal + activity from diet section to stay consistent
   const goal = document.getElementById('diet-goal')?.value || 'maintenance';
@@ -283,42 +289,24 @@ async function generateAIAdvice() {
 
   area.innerHTML = `<div class="ai-response"><div style="display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.14s"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldBounce 1s ease infinite;animation-delay:.28s"></div> Generating your plan…</div></div>`;
 
-  // N6 FIX: AbortController with 10s timeout
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {"Content-Type": "application/json", "x-api-key": ""},
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001", max_tokens: 1000,
-        messages: [{role:"user",content:`You are a professional gym trainer. Provide advice for: Name: ${name}, Age: ${age}, Weight: ${weight}kg, Height: ${height}cm. Provide structure with <h4> tags. Keep it under 300 words.`}]
-      })
-    });
-    clearTimeout(timeout);
-    const data = await res.json();
-    // F7 FIX: check for API errors
-    if (data.error || !data.content) throw new Error(data.error?.message || 'No response');
-    const txt = data.content?.map(c => c.text||'').join('') || '';
-    if (!txt) throw new Error('Empty response');
-    area.innerHTML = `<div style="font-size:11px;color:var(--accent2);font-weight:700;letter-spacing:.8px;margin-bottom:8px">🤖 AI ANALYSIS FOR ${name.toUpperCase()}</div><div class="ai-response">${txt}</div>`;
-  } catch(e) {
-    clearTimeout(timeout);
-    // F7 FIX: always show useful fallback
-    const safeWeight = parseFloat(weight) || 60;
-    area.innerHTML = `<div class="ai-response">
-      <h4>📊 Quick Analysis for ${name}</h4>
-      <p>At <strong>${safeWeight}kg</strong>, here's your personalised plan:</p>
-      <h4>🥩 Daily Protein Target</h4>
-      <p><strong>${targetProtein || Math.round(safeWeight * 1.8)}g protein/day</strong> — eggs, dal, paneer, chicken breast, Greek yoghurt.</p>
-      <h4>💪 Training Priority</h4>
-      <p>3–4 sessions/week. Progressive overload every 2 weeks (+2.5kg). Sleep 7–9hrs — muscles grow during rest, not in the gym.</p>
-      <h4>⚡ Quick Wins</h4>
-      <p>Eat within 45 min post-workout. Drink 3L water daily. Creatine monohydrate 5g/day is the most proven supplement.</p>
-    </div>`;
-  }
+  // NOTE: this used to attempt a direct browser → Anthropic API call with an
+  // empty API key, which always failed and silently fell back to this same
+  // content anyway — and shipping a real key in client-side code would expose
+  // it to anyone opening dev tools. Removed the fake "AI" framing entirely;
+  // this is honestly a smart rule-based summary using the person's own stats,
+  // and it's presented as exactly that now.
+  await new Promise(r => setTimeout(r, 500)); // brief delay so the loading state doesn't flash instantly
+  const safeWeight = parseFloat(weight) || 60;
+  area.innerHTML = `<div style="font-size:11px;color:var(--accent2);font-weight:700;letter-spacing:.8px;margin-bottom:8px">📊 SMART ANALYSIS FOR ${name.toUpperCase()}</div><div class="ai-response">
+    <h4>📊 Quick Analysis</h4>
+    <p>At <strong>${safeWeight}kg</strong>, here's your personalised plan:</p>
+    <h4>🥩 Daily Protein Target</h4>
+    <p><strong>${targetProtein || Math.round(safeWeight * 1.8)}g protein/day</strong> — eggs, dal, paneer, chicken breast, Greek yoghurt.</p>
+    <h4>💪 Training Priority</h4>
+    <p>3–4 sessions/week. Progressive overload every 2 weeks (+2.5kg). Sleep 7–9hrs — muscles grow during rest, not in the gym.</p>
+    <h4>⚡ Quick Wins</h4>
+    <p>Eat within 45 min post-workout. Drink 3L water daily. Creatine monohydrate 5g/day is the most proven supplement.</p>
+  </div>`;
 }
 
 // ============================================================

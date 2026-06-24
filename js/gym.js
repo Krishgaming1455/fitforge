@@ -4,11 +4,33 @@ function checkDailyWorkoutReset() {
     window._showWorkoutResetPrompt = false;
     // N3 FIX: only prompt if user actually checked something
     const hasChecked = Object.values(pplChecked).some(day => Object.values(day).some(v => v));
-    if (hasChecked && confirm('New day! Reset yesterday\'s workout checkboxes?\n[OK] = Reset  [Cancel] = Keep')) {
-      pplChecked = { push: {}, pull: {}, legs: {} };
-      autoSave();
+    if (hasChecked) {
+      showResetPromptModal();
     }
   }
+}
+
+function showResetPromptModal() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div class="card" style="max-width:320px;width:100%;text-align:center">
+      <div style="font-size:32px;margin-bottom:10px">☀️</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;margin-bottom:8px">NEW DAY!</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Reset yesterday's workout checkboxes for a fresh start today?</p>
+      <div style="display:flex;gap:10px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Keep</button>
+        <button onclick="confirmWorkoutReset(this)" style="flex:1;background:var(--accent);border:none;color:#000;padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Reset</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function confirmWorkoutReset(btn) {
+  pplChecked = { push: {}, pull: {}, legs: {} };
+  autoSave();
+  if (typeof renderPPL === 'function') renderPPL();
+  btn.closest('div[style*=fixed]')?.remove();
 }
 
 function renderTodayBanner() {
@@ -401,7 +423,17 @@ function toggleOverloadInput(exName) {
 function saveOverload(exName, safeId) {
   const w = parseFloat(document.getElementById(safeId + '-w')?.value);
   const r = parseInt(document.getElementById(safeId + '-r')?.value);
-  if (!w || !r) return;
+  if (!w || !r) {
+    const inputW = document.getElementById(safeId + '-w');
+    const inputR = document.getElementById(safeId + '-r');
+    if (!w && inputW) inputW.style.borderColor = '#ff4466';
+    if (!r && inputR) inputR.style.borderColor = '#ff4466';
+    setTimeout(() => {
+      if (inputW) inputW.style.borderColor = 'var(--border)';
+      if (inputR) inputR.style.borderColor = 'var(--border)';
+    }, 1500);
+    return;
+  }
   const today = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short'});
   const prev = overloadLog[exName];
   overloadLog[exName] = { weight: w, reps: r, date: today };
@@ -932,6 +964,7 @@ function getActivePresetData() {
 function renderActivePresetDays() {
   const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
   const builder = document.getElementById('custom-routine-builder');
+  const mappingSection = document.getElementById('day-mapping-section');
 
   if (activePreset === 'ppl') {
     // Restore original PPL view
@@ -939,6 +972,7 @@ function renderActivePresetDays() {
     document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = customRoutineEnabled ? 'none' : '');
     if (!customRoutineEnabled) renderPPL();
     removePresetDayPanels();
+    if (mappingSection) mappingSection.style.display = 'none';
     return;
   }
 
@@ -947,6 +981,7 @@ function renderActivePresetDays() {
   document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = 'none');
   if (builder) builder.style.display = 'none';
 
+  renderDayMappingUI();
   renderPresetDayPanels();
 }
 
@@ -964,14 +999,16 @@ function renderPresetDayPanels() {
   wrap.id = 'preset-day-panels';
 
   if (!pplChecked.preset) pplChecked.preset = {};
+  const todaysKey = getTodaysPresetDayKey();
 
   wrap.innerHTML = Object.entries(presetData).map(([dayKey, day]) => {
     const doneCount = day.exercises.filter(ex => pplChecked.preset[`${activePreset}_${dayKey}_${ex.name}`]).length;
+    const isToday = dayKey === todaysKey;
     return `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+    <div style="background:var(--card);border:1px solid ${isToday ? 'var(--accent)' : 'var(--border)'};border-radius:14px;padding:20px;margin-bottom:16px;${isToday ? 'box-shadow:0 0 18px rgba(240,255,68,.08)' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div>
-          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px">${day.day}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px">${day.day} ${isToday ? '<span style="background:var(--accent);color:#000;padding:1px 7px;border-radius:4px;font-weight:800;margin-left:4px">TODAY</span>' : ''}</div>
           <div style="font-size:18px;font-weight:700">${day.icon} ${day.label}</div>
         </div>
         <span style="font-size:12px;color:var(--muted)">${doneCount}/${day.exercises.length}</span>
@@ -1036,4 +1073,65 @@ function finishPresetDay(dayKey) {
   renderWorkoutHistory();
   renderHome();
   alert(`${day.label} workout saved! 💪`);
+}
+
+// ============================================================
+// CUSTOM DAY MAPPING — let user override which weekday = which body part
+// ============================================================
+function getDefaultDayMapping(presetKey) {
+  // Default Mon-Sat order matching the original layout (0=Sun..6=Sat)
+  if (presetKey === 'broSplit') {
+    return { back1: 1, chest: 2, arms: 3, back2: 4, shoulders: 5, legs: 6 };
+  }
+  if (presetKey === 'upperLower') {
+    return { upperA: 1, lowerA: 2, upperB: 4, lowerB: 5 };
+  }
+  return {};
+}
+
+function renderDayMappingUI() {
+  const section = document.getElementById('day-mapping-section');
+  const grid = document.getElementById('day-mapping-grid');
+  if (!section || !grid) return;
+
+  const presetData = getActivePresetData();
+  if (!presetData) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  if (!Object.keys(customDayMapping).length) {
+    customDayMapping = getDefaultDayMapping(activePreset);
+  }
+
+  grid.innerHTML = Object.entries(presetData).map(([dayKey, day]) => {
+    const currentVal = customDayMapping[dayKey] ?? getDefaultDayMapping(activePreset)[dayKey];
+    return `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px">${day.icon} ${escapeHtmlGym(day.label)}</div>
+      <select class="form-select" style="width:100%;font-size:12px;padding:6px 8px" onchange="setDayMapping('${dayKey}', this.value)">
+        ${WEEKDAY_OPTIONS.map(w => `<option value="${w.val}" ${w.val === currentVal ? 'selected' : ''}>${w.label}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function setDayMapping(dayKey, weekdayVal) {
+  customDayMapping[dayKey] = parseInt(weekdayVal);
+  autoSave();
+  renderActivePresetDays(); // refresh so "today" highlighting matches new mapping
+}
+
+function resetDayMapping() {
+  customDayMapping = getDefaultDayMapping(activePreset);
+  autoSave();
+  renderDayMappingUI();
+  renderActivePresetDays();
+}
+
+function getTodaysPresetDayKey() {
+  const presetData = getActivePresetData();
+  if (!presetData) return null;
+  const todayWeekday = new Date().getDay();
+  const mapping = Object.keys(customDayMapping).length ? customDayMapping : getDefaultDayMapping(activePreset);
+  const match = Object.entries(mapping).find(([key, weekday]) => weekday === todayWeekday);
+  return match ? match[0] : null;
 }

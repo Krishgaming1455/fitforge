@@ -434,3 +434,20 @@ const UPPER_LOWER_DATA = {
 
 // ── ACTIVE PRESET STATE ───────────────────────────────────────
 let activePreset = 'ppl'; // 'ppl' | 'broSplit' | 'upperLower'
+
+// ── UNIQUE ID GENERATOR ───────────────────────────────────────
+// Guaranteed unique even if called multiple times in the same millisecond,
+// unlike Date.now() alone or Date.now() + Math.random() (which can theoretically collide).
+let _uidCounter = 0;
+function generateUniqueId() {
+  _uidCounter++;
+  return `${Date.now()}_${_uidCounter}`;
+}
+
+// ── CUSTOM DAY MAPPING (override which weekday = which body part) ──
+// { dayKey: weekdayNumber } e.g. { back1: 1, chest: 2, ... } where 0=Sun,1=Mon...
+let customDayMapping = {};
+const WEEKDAY_OPTIONS = [
+  { val: 1, label: 'Monday' }, { val: 2, label: 'Tuesday' }, { val: 3, label: 'Wednesday' },
+  { val: 4, label: 'Thursday' }, { val: 5, label: 'Friday' }, { val: 6, label: 'Saturday' }, { val: 0, label: 'Sunday' }
+];

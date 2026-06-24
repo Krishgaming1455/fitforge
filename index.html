@@ -325,7 +325,7 @@
       </div>
     </div>
     <div id="profile-results"></div>
-    <button class="btn-primary btn-full" onclick="generateAIAdvice()">🤖 Get AI Analysis (Optional)</button>
+    <button class="btn-primary btn-full" onclick="generateAIAdvice()">📊 Get Personalised Analysis</button>
   </div>
 </div>
 
@@ -358,6 +358,18 @@
       </div>
       <p class="section-sub" style="margin-bottom:14px" id="current-preset-label">Loading...</p>
       <div id="preset-cards-wrap" style="display:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:10px"></div>
+    </div>
+
+    <!-- DAY MAPPING — shown only for Bro Split / Upper-Lower, lets user set their own schedule -->
+    <div id="day-mapping-section" style="display:none;margin-bottom:32px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <p class="section-title" style="margin:0;font-size:16px">SET YOUR <span>SCHEDULE</span></p>
+          <button onclick="resetDayMapping()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">Reset to default</button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:16px">Tell us which day your trainer assigned each body part — we'll move it to match</p>
+        <div id="day-mapping-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      </div>
     </div>
 
     <!-- CUSTOM ROUTINE BUILDER — shown only when toggle enabled -->

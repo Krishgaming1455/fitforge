@@ -89,7 +89,7 @@ function generateDietPlan() {
   const dalG = isLoss ? Math.round(120 + weight * 0.3) : (isGain ? Math.round(140 + weight * 0.5) : 130);
   const soyaG = isLoss && weight > 70 ? 80 : (isLoss ? 60 : 0);
   const riceG = isLoss ? Math.round(70 + weight * 0.2) : (isGain ? Math.round(120 + weight * 0.6) : 100);
-  const rotiCount = isLoss ? (safeWeight > 80 ? 3 : 2) : (isGain ? (safeWeight > 80 ? 6 : weight > 65 ? 5 : 4) : 3);
+  const rotiCount = isLoss ? (safeWeight > 80 ? 3 : 2) : (isGain ? (safeWeight > 80 ? 6 : safeWeight > 65 ? 5 : 4) : 3);
   const oatsG = isGain ? Math.round(50 + weight * 0.4) : (isLoss ? 0 : 50);
   const bananaCount = isGain ? (safeWeight > 80 ? 3 : weight > 65 ? 2 : 2) : (isLoss ? 1 : 1);
   const milkMl = isGain ? Math.round(250 + weight * 1.5) : (isLoss ? 250 : 350);
@@ -229,7 +229,7 @@ function addFood(name, idx) {
   const qtyEl = document.getElementById(`food-qty-${idx}`);
   const q = qtyEl ? parseFloat(qtyEl.value) : 1;
   if (!q || isNaN(q) || q <= 0) return;
-  foodLog.push({...food, qty:q, uid:Date.now()});
+  foodLog.push({...food, qty:q, uid: generateUniqueId()});
   document.getElementById('food-search-input').value = '';
   document.getElementById('food-suggestions').style.display = 'none';
   updateNutritionDisplay();
@@ -329,7 +329,7 @@ function copyYesterday() {
   }
   if (!confirm(`Copy ${yesterdayFoodLog.length} item(s) from yesterday into today's log?`)) return;
   yesterdayFoodLog.forEach(f => {
-    foodLog.push({ ...f, uid: Date.now() + Math.random() });
+    foodLog.push({ ...f, uid: generateUniqueId() });
   });
   renderFoodLog();
   updateNutritionDisplay();
