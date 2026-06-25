@@ -985,6 +985,24 @@ function renderActivePresetDays() {
   renderPresetDayPanels();
 }
 
+function togglePresetDayCard(dayKey) {
+  const card = document.getElementById(`preset-day-${dayKey}`);
+  if (!card) return;
+  const body = card.querySelector('.preset-day-body');
+  const chevron = card.querySelector('.preset-chevron');
+  const isExpanded = card.classList.contains('expanded');
+
+  if (isExpanded) {
+    card.classList.remove('expanded');
+    if (body) body.style.display = 'none';
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
+  } else {
+    card.classList.add('expanded');
+    if (body) body.style.display = 'block';
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+  }
+}
+
 function removePresetDayPanels() {
   const existing = document.getElementById('preset-day-panels');
   if (existing) existing.remove();
@@ -1004,39 +1022,49 @@ function renderPresetDayPanels() {
   wrap.innerHTML = Object.entries(presetData).map(([dayKey, day]) => {
     const doneCount = day.exercises.filter(ex => pplChecked.preset[`${activePreset}_${dayKey}_${ex.name}`]).length;
     const isToday = dayKey === todaysKey;
+    // Accordion: only today's day starts expanded, all others start collapsed
+    const expanded = isToday;
     return `
-    <div style="background:var(--card);border:1px solid ${isToday ? 'var(--accent)' : 'var(--border)'};border-radius:14px;padding:20px;margin-bottom:16px;${isToday ? 'box-shadow:0 0 18px rgba(240,255,68,.08)' : ''}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div class="preset-day-card ${expanded ? 'expanded' : ''}" id="preset-day-${dayKey}" style="background:var(--card);border:1px solid ${isToday ? 'var(--accent)' : 'var(--border)'};border-radius:14px;margin-bottom:14px;overflow:hidden;${isToday ? 'box-shadow:0 0 18px rgba(240,255,68,.08)' : ''}">
+      <div onclick="togglePresetDayCard('${dayKey}')" style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;cursor:pointer">
         <div>
           <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px">${day.day} ${isToday ? '<span style="background:var(--accent);color:#000;padding:1px 7px;border-radius:4px;font-weight:800;margin-left:4px">TODAY</span>' : ''}</div>
           <div style="font-size:18px;font-weight:700">${day.icon} ${day.label}</div>
         </div>
-        <span style="font-size:12px;color:var(--muted)">${doneCount}/${day.exercises.length}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:var(--muted)">${doneCount}/${day.exercises.length}</span>
+          <span style="color:var(--muted);font-size:13px;transition:transform .2s;${expanded ? 'transform:rotate(180deg)' : ''}" class="preset-chevron">▼</span>
+        </div>
       </div>
-      <div class="workout-progress"><div class="workout-progress-fill" style="width:${Math.round((doneCount/day.exercises.length)*100)}%"></div></div>
-      <div style="margin-top:12px">
-        ${day.exercises.map(ex => {
-          const checkKey = `${activePreset}_${dayKey}_${ex.name}`;
-          const done = pplChecked.preset[checkKey] || false;
-          const prev = (overloadLog && overloadLog[ex.name]) || null;
-          const safeId = 'ol-btn-' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
-          return `<div class="workout-exercise-item">
-            <div class="workout-checkbox ${done ? 'done' : ''}" onclick="togglePresetExercise('${dayKey}','${ex.name.replace(/'/g,"\\'")}')"></div>
-            <div class="workout-ex-info">
-              <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${escapeHtmlGym(ex.name)}</div>
-              <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
-                <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${escapeHtmlGym(ex.muscles)}</span>
-                <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${escapeHtmlGym(ex.equipment)}</span>
+      <div class="preset-day-body" style="display:${expanded ? 'block' : 'none'};padding:0 20px 20px">
+        <div class="workout-progress"><div class="workout-progress-fill" style="width:${Math.round((doneCount/day.exercises.length)*100)}%"></div></div>
+        <div style="margin-top:12px">
+          ${day.exercises.map(ex => {
+            const checkKey = `${activePreset}_${dayKey}_${ex.name}`;
+            const done = pplChecked.preset[checkKey] || false;
+            const prev = (overloadLog && overloadLog[ex.name]) || null;
+            const safeId = 'ol-btn-' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
+            return `<div class="workout-exercise-item">
+              <div class="workout-checkbox ${done ? 'done' : ''}" onclick="event.stopPropagation();togglePresetExercise('${dayKey}','${ex.name.replace(/'/g,"\\'")}')"></div>
+              <div class="workout-ex-info">
+                <div class="workout-ex-name" style="${done ? 'text-decoration:line-through;opacity:.5' : ''}">${escapeHtmlGym(ex.name)}</div>
+                <div class="workout-ex-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px">
+                  <span style="font-size:10px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:4px">🎯 ${escapeHtmlGym(ex.muscles)}</span>
+                  <span style="font-size:10px;color:var(--accent2);background:rgba(68,255,204,.07);border:1px solid rgba(68,255,204,.2);padding:2px 7px;border-radius:4px">🏋️ ${escapeHtmlGym(ex.equipment)}</span>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${escapeHtmlGym(ex.note)}</div>
+                ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
+                <button class="overload-log-btn" onclick="event.stopPropagation();toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
               </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${escapeHtmlGym(ex.note)}</div>
-              ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date})</div>` : ''}
-              <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
-            </div>
-            <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
-          </div>`;
-        }).join('')}
+              <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        ${isToday
+          ? `<button class="finish-workout-btn" onclick="event.stopPropagation();finishPresetDay('${dayKey}')">✅ FINISH WORKOUT</button>`
+          : `<div style="text-align:center;padding:12px;font-size:11px;color:var(--muted);background:var(--bg3);border-radius:8px;margin-top:8px">This isn't today's workout — switch to ${day.day} to log it here</div>`
+        }
       </div>
-      <button class="finish-workout-btn" onclick="finishPresetDay('${dayKey}')">✅ FINISH WORKOUT</button>
     </div>`;
   }).join('');
 
@@ -1134,4 +1162,124 @@ function getTodaysPresetDayKey() {
   const mapping = Object.keys(customDayMapping).length ? customDayMapping : getDefaultDayMapping(activePreset);
   const match = Object.entries(mapping).find(([key, weekday]) => weekday === todayWeekday);
   return match ? match[0] : null;
+}
+
+// ============================================================
+// EXERCISE LIBRARY SEARCH (search-to-assign for Custom Routine Builder)
+// ============================================================
+let _exerciseLibraryCache = null;
+
+function buildExerciseLibrary() {
+  if (_exerciseLibraryCache) return _exerciseLibraryCache;
+  const pool = [];
+  const seen = new Set();
+
+  const addFrom = (sourceObj) => {
+    Object.values(sourceObj).forEach(dayOrWeek => {
+      const exercises = Array.isArray(dayOrWeek) ? dayOrWeek : dayOrWeek.exercises;
+      if (!exercises) return;
+      exercises.forEach(ex => {
+        if (!seen.has(ex.name)) {
+          seen.add(ex.name);
+          pool.push(ex);
+        }
+      });
+    });
+  };
+
+  // Pull from PPL Week A & B
+  if (typeof PPL_DATA_WEEK !== 'undefined') {
+    addFrom(PPL_DATA_WEEK.A);
+    addFrom(PPL_DATA_WEEK.B);
+  }
+  // Pull from Bro Split
+  if (typeof BRO_SPLIT_DATA !== 'undefined') addFrom(BRO_SPLIT_DATA);
+  // Pull from Upper/Lower
+  if (typeof UPPER_LOWER_DATA !== 'undefined') addFrom(UPPER_LOWER_DATA);
+
+  _exerciseLibraryCache = pool;
+  return pool;
+}
+
+function searchExerciseLibrary() {
+  const input = document.getElementById('exercise-search-input');
+  const resultsEl = document.getElementById('exercise-search-results');
+  if (!input || !resultsEl) return;
+  const q = input.value.trim().toLowerCase();
+
+  if (!q) { resultsEl.style.display = 'none'; return; }
+
+  const library = buildExerciseLibrary();
+  const matches = library.filter(ex =>
+    ex.name.toLowerCase().includes(q) || (ex.muscles && ex.muscles.toLowerCase().includes(q))
+  ).slice(0, 15);
+
+  if (!matches.length) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">No exercises found for "${escapeHtmlGym(q)}"</div>`;
+    return;
+  }
+
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map((ex, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${escapeHtmlGym(ex.name)}</div>
+        <div style="font-size:10px;color:var(--muted)">${escapeHtmlGym(ex.muscles)} · ${escapeHtmlGym(ex.equipment||'')}</div>
+      </div>
+      <button onclick="openAssignExerciseModal(${i})" style="background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:8px">+ Add</button>
+    </div>`).join('');
+
+  // Stash matches for the assign modal to reference by index
+  window._lastSearchMatches = matches;
+}
+
+function openAssignExerciseModal(matchIndex) {
+  const ex = window._lastSearchMatches?.[matchIndex];
+  if (!ex) return;
+  window._pendingAssignExercise = ex;
+
+  const modal = document.getElementById('assign-exercise-modal');
+  const nameEl = document.getElementById('assign-exercise-name');
+  const optionsEl = document.getElementById('assign-day-options');
+  if (!modal || !optionsEl) return;
+
+  nameEl.textContent = ex.name;
+
+  if (!customRoutineDays.length) {
+    optionsEl.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px">No custom days yet — tap "+ Add Day" first to create one, then come back and add this exercise.</div>`;
+  } else {
+    optionsEl.innerHTML = customRoutineDays.map(day => `
+      <button onclick="assignExerciseToDay('${day.id}')" style="display:flex;align-items:center;gap:10px;width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left">
+        <span style="font-size:18px">${day.icon}</span> ${escapeHtmlGym(day.name)}
+      </button>`).join('');
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeAssignExerciseModal() {
+  const modal = document.getElementById('assign-exercise-modal');
+  if (modal) modal.style.display = 'none';
+  window._pendingAssignExercise = null;
+}
+
+function assignExerciseToDay(dayId) {
+  const ex = window._pendingAssignExercise;
+  const day = customRoutineDays.find(d => d.id === dayId);
+  if (!ex || !day) return;
+
+  // Copy the exercise into this day (don't mutate the shared library object)
+  day.exercises.push({ ...ex });
+
+  closeAssignExerciseModal();
+  renderCustomRoutineDays();
+  autoSave();
+  syncPublicRoutine();
+
+  // Clear search so user can search for the next exercise
+  const input = document.getElementById('exercise-search-input');
+  const resultsEl = document.getElementById('exercise-search-results');
+  if (input) input.value = '';
+  if (resultsEl) resultsEl.style.display = 'none';
 }

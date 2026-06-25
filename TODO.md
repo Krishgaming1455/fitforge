@@ -231,3 +231,45 @@ those are excluded below. Only confirmed-real items are listed.
 - "More gym exercises which are missing" — user wants an EXPANDED exercise library, not yet built
 - Need to ask: more exercises within existing categories (more chest/back/leg options), or 
   entirely new categories not yet covered (e.g. forearms, neck, cardio/conditioning exercises)?
+
+---
+
+## 🆕 SESSION 25 — Collapsible Day Panels + Exercise Search-to-Assign
+
+### Decisions:
+1. Preset day panels (Bro Split/Upper-Lower): currently ALL days show fully expanded as a long list.
+   Fix: collapse all days by default, tapping a day header expands ONLY that one (accordion style).
+   This also naturally fixes the "Finish Workout" confusion — collapsed days are less likely to be 
+   finished by mistake, and only today's day auto-expands on load.
+
+2. Exercise search-to-assign (for Custom Routine Builder, not presets):
+   - New search bar lets user search exercises by name OR muscle/body part (e.g. type "chest" → 
+     see all chest exercises from our existing exercise database across PPL/BroSplit/UpperLower)
+   - Each search result has a "+ Add to Day" button → picks which day to add it to
+   - This replaces manually typing out every exercise — user searches our existing library instead
+   - Should pull from ALL existing exercise data (PPL_DATA_WEEK, BRO_SPLIT_DATA, UPPER_LOWER_DATA) 
+     as one searchable pool, not just custom exercises
+
+### Build order:
+1. Collapsible accordion for preset day panels (smaller, fixes immediate confusion)
+2. Exercise search-to-assign in Custom Routine Builder (bigger, more valuable long-term)
+
+### ✅ SESSION 25 BUILT — Collapsible Days + Exercise Search-to-Assign:
+
+**Collapsible accordion for preset day panels:**
+- Bro Split / Upper-Lower days now collapse by default — only today's day auto-expands
+- Tapping any day header expands/collapses it (smooth chevron rotation)
+- "Finish Workout" button only shows on today's day; other days show a gentle note 
+  ("This isn't today's workout — switch to [Day] to log it here") instead of letting 
+  you accidentally finish the wrong day
+- Fixes the original complaint: no more long scrolling list of all days fully expanded at once
+
+**Exercise Search-to-Assign (Custom Routine Builder):**
+- New search bar searches across the ENTIRE exercise library (66 unique exercises pulled 
+  from PPL Week A/B + Bro Split + Upper/Lower) by name or muscle group
+- Search "chest" → shows all chest exercises; search "squat" → shows all squat variations, etc.
+- Tap "+ Add" on any result → modal asks which custom day to add it to → done
+- No more manually typing exercise names/sets/reps from scratch — search and assign instead
+- Verified: search correctly returns 9 chest matches, 4 squat matches from the pooled library
+- If user has no custom days yet, search results politely prompt them to create one first
+

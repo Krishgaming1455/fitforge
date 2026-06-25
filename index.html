@@ -379,8 +379,25 @@
           <p class="section-title" style="margin:0">MY <span>ROUTINE</span></p>
           <button onclick="openAddRoutineDayModal()" style="background:var(--accent);color:#000;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Add Day</button>
         </div>
+
+        <!-- EXERCISE SEARCH — search the whole library by name or muscle, assign to a day -->
+        <div style="margin-bottom:20px">
+          <input class="form-input" id="exercise-search-input" placeholder="🔍 Search exercises by name or muscle (e.g. 'chest', 'squat')..." oninput="searchExerciseLibrary()" autocomplete="off">
+          <div id="exercise-search-results" style="display:none;margin-top:8px;max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--bg3)"></div>
+        </div>
+
         <div id="custom-routine-days-list"></div>
         <div id="custom-routine-empty" style="display:none;text-align:center;padding:30px 10px;color:var(--muted);font-size:13px">No custom days yet — tap "+ Add Day" to create your first one (e.g. "Chest Day", "Cardio", "Arms")</div>
+      </div>
+    </div>
+
+    <!-- ASSIGN EXERCISE TO DAY MODAL (from search) -->
+    <div id="assign-exercise-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px">
+      <div class="card" style="max-width:340px;width:100%;position:relative">
+        <button onclick="closeAssignExerciseModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;margin-bottom:6px">ADD TO WHICH DAY?</div>
+        <div id="assign-exercise-name" style="font-size:13px;color:var(--accent2);font-weight:700;margin-bottom:16px"></div>
+        <div id="assign-day-options" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
     </div>
 
