@@ -273,3 +273,10 @@ those are excluded below. Only confirmed-real items are listed.
 - Verified: search correctly returns 9 chest matches, 4 squat matches from the pooled library
 - If user has no custom days yet, search results politely prompt them to create one first
 
+
+### ✅ SESSION 26 — Multi-part exercise search fix:
+- Search now splits on spaces/commas and matches if ANY term is found (OR logic)
+- "biceps triceps" now correctly returns 25 combined matches (was 0 before — required exact phrase)
+- "biceps, triceps, back" works too — commas treated same as spaces
+- Single-term search unaffected, still works as before (e.g. "squat" still returns 4 matches)
+- Updated placeholder text to hint at multi-part search capability

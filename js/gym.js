@@ -1205,18 +1205,24 @@ function searchExerciseLibrary() {
   const input = document.getElementById('exercise-search-input');
   const resultsEl = document.getElementById('exercise-search-results');
   if (!input || !resultsEl) return;
-  const q = input.value.trim().toLowerCase();
+  const raw = input.value.trim().toLowerCase();
 
-  if (!q) { resultsEl.style.display = 'none'; return; }
+  if (!raw) { resultsEl.style.display = 'none'; return; }
+
+  // Support multiple terms: "biceps triceps" or "biceps, triceps, shoulders"
+  // splits into separate search terms, matches if ANY term is found (OR logic)
+  const terms = raw.split(/[\s,]+/).filter(t => t.length > 0);
 
   const library = buildExerciseLibrary();
-  const matches = library.filter(ex =>
-    ex.name.toLowerCase().includes(q) || (ex.muscles && ex.muscles.toLowerCase().includes(q))
-  ).slice(0, 15);
+  const matches = library.filter(ex => {
+    const nameLower = ex.name.toLowerCase();
+    const musclesLower = (ex.muscles || '').toLowerCase();
+    return terms.some(term => nameLower.includes(term) || musclesLower.includes(term));
+  }).slice(0, 20);
 
   if (!matches.length) {
     resultsEl.style.display = 'block';
-    resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">No exercises found for "${escapeHtmlGym(q)}"</div>`;
+    resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">No exercises found for "${escapeHtmlGym(raw)}"</div>`;
     return;
   }
 
