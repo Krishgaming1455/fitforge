@@ -280,3 +280,40 @@ those are excluded below. Only confirmed-real items are listed.
 - "biceps, triceps, back" works too — commas treated same as spaces
 - Single-term search unaffected, still works as before (e.g. "squat" still returns 4 matches)
 - Updated placeholder text to hint at multi-part search capability
+
+---
+
+## 🆕 SESSION 27 — Privacy Policy Page (for AdSense + general compliance)
+
+### Context:
+- User wants to monetize via Google AdSense eventually
+- AdSense requires a real privacy policy; also genuinely needed since app collects: 
+  email, profile data, chat messages, workout/diet data via Supabase
+- User confirmed 18+, personal AdSense account signup is on their end, not built here
+- Building privacy policy page now; actual ad code deferred until AdSense account exists
+
+### Verified gap found while writing this: NO account deletion flow exists yet
+- Checked auth.js — no deleteAccount function, no Supabase user deletion call anywhere
+- Privacy policy must NOT falsely claim users can self-delete their account/data
+- Should either: (a) be honest that deletion requires contacting the developer manually, 
+  or (b) build a real deletion flow before publishing the policy — flagging as a TODO either way
+
+### Privacy policy content (accurate to actual app behavior):
+- Data collected: email, profile (name/age/weight/height/goals), workout/diet logs, 
+  chat messages (public + DM), water/overload tracking
+- Storage: Supabase (third-party backend)
+- Visibility: public board is genuinely public; DMs private; routine/stats have 
+  user-controlled privacy toggles (hide_routine/hide_stats)
+- Third parties: Supabase, QR code image API (api.qrserver.com), Google AdSense (once added)
+- Account deletion: currently manual via contacting developer (NOT self-service yet — gap noted above)
+- Standalone privacy.html, linked from auth screen footer
+
+
+### ✅ SESSION 27 BUILT — Privacy Policy Page:
+- New standalone privacy.html page, linked from the auth screen footer
+- Honestly documents: what data is collected, Supabase as the storage provider, 
+  public vs private visibility (chat board vs DMs vs routine/stats toggles), 
+  third-party services (Supabase, QR API, AdSense placeholder)
+- Flagged accurately that account deletion is currently manual (no self-service flow exists)
+- Ready for AdSense application once you set up the Google account on your end
+- ⚠️ ACTION NEEDED: replace "[add your contact email here]" placeholder with a real email
