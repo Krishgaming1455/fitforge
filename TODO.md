@@ -317,3 +317,15 @@ those are excluded below. Only confirmed-real items are listed.
 - Flagged accurately that account deletion is currently manual (no self-service flow exists)
 - Ready for AdSense application once you set up the Google account on your end
 - ⚠️ ACTION NEEDED: replace "[add your contact email here]" placeholder with a real email
+
+### ✅ SESSION 28 — Fixed "Build my own routine" toggle getting stuck:
+- Root cause 1: the visible toggle switch had its own separate class-toggling logic 
+  AND triggered the hidden checkbox's onchange — two sources of truth that could 
+  desync, making the switch look stuck/unresponsive on click
+- Root cause 2: toggleCustomRoutineMode() never cleaned up preset day panels 
+  (Bro Split/Upper-Lower) or the day-mapping section when switching to custom mode — 
+  if you were on a preset other than PPL, that old content stayed on screen, making 
+  it look like nothing happened when you clicked
+- Fix: single source of truth (the actual checkbox state drives everything), and 
+  toggleCustomRoutineMode now properly hides/shows ALL relevant sections (PPL tabs, 
+  preset panels, day mapping, custom builder) regardless of which mode you were in before

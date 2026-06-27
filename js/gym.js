@@ -727,18 +727,33 @@ let _selectedRoutineIcon = '💪';
 let _editingRoutineDayId = null;
 
 function toggleCustomRoutineMode() {
-  customRoutineEnabled = document.getElementById('custom-routine-toggle')?.checked || false;
+  const checkbox = document.getElementById('custom-routine-toggle');
+  customRoutineEnabled = checkbox?.checked || false;
+
+  // Keep the visible switch in sync with the actual checkbox state (single source of truth)
+  const toggleSwitch = checkbox?.nextElementSibling;
+  if (toggleSwitch) toggleSwitch.classList.toggle('on', customRoutineEnabled);
+
   const builder = document.getElementById('custom-routine-builder');
   const pplTabsWrap = document.getElementById('ppl-tabs-wrap');
-  document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = customRoutineEnabled ? 'none' : '');
+  const mappingSection = document.getElementById('day-mapping-section');
 
+  document.querySelectorAll('.ppl-panel').forEach(p => p.style.display = customRoutineEnabled ? 'none' : '');
   if (builder) builder.style.display = customRoutineEnabled ? 'block' : 'none';
   if (pplTabsWrap) pplTabsWrap.style.display = customRoutineEnabled ? 'none' : 'flex';
+
+  // BUG FIX: also hide preset day panels (Bro Split/Upper-Lower) and the day-mapping
+  // section when switching to custom routine mode — these were left visible before,
+  // making it look like the toggle "did nothing" since the preset content stayed on screen
+  if (typeof removePresetDayPanels === 'function' && customRoutineEnabled) removePresetDayPanels();
+  if (mappingSection) mappingSection.style.display = customRoutineEnabled ? 'none' : (getActivePresetData() ? 'block' : 'none');
 
   if (customRoutineEnabled) {
     renderCustomRoutineDays();
   } else {
-    renderPPL();
+    // Restore whichever was active before (PPL or a preset)
+    if (typeof renderActivePresetDays === 'function') renderActivePresetDays();
+    else renderPPL();
   }
   autoSave();
 }
