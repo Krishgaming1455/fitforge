@@ -354,3 +354,42 @@ those are excluded below. Only confirmed-real items are listed.
 - Shows a confirmation toast so the user knows the copy succeeded before switching tabs
 - Note: browsers can't auto-paste into another site for security reasons — this is a hard 
   limitation, so the user does need to paste manually once ChatGPT opens (one Ctrl+V / long-press)
+
+---
+
+## 🆕 SESSION 30 — Brute Force Login Protection
+
+### Honest scope of what we're building vs what's out of reach:
+- CAN build: client-side attempt tracking + temporary lockout after repeated failed logins 
+  on this device — slows down casual guessing through our actual login form
+- CANNOT build from our code: protection against someone bypassing our JS entirely and hitting 
+  Supabase's API directly with a script — that requires server-side controls
+- Supabase itself has SOME built-in protection (rate limiting on auth endpoints), but stronger 
+  protection (CAPTCHA, IP-based blocking, alerting) requires configuration in the Supabase 
+  dashboard itself, not application code — flagging this as a user action item, not something 
+  built here
+
+### What we're building:
+- Track failed login attempts per email (stored in browser, resets on success or after cooldown)
+- After 5 failed attempts: lock out further attempts for that email for 60 seconds, with a 
+  visible countdown message
+- Each additional failed attempt after a lockout period increases the next cooldown 
+  (60s → 2min → 5min) to discourage persistent retrying
+- This is NOT bulletproof security — it's a deterrent for casual brute-forcing through the UI, 
+  paired with whatever Supabase already does server-side
+
+### Action item for user (can't be done from code):
+- Consider enabling CAPTCHA/bot protection in Supabase dashboard → Authentication → settings, 
+  if available on the free tier, for stronger real protection against scripted attacks
+
+### ✅ SESSION 30 BUILT — Brute Force Login Protection (client-side deterrent):
+- After 5 failed login attempts for the same email: 60-second lockout with live countdown
+- Repeated lockouts escalate: 60s → 2min → 5min, discouraging persistent retrying
+- Only counts genuine wrong-password failures toward the lockout — network/server errors 
+  (Supabase outages) don't count against the user
+- Successful login clears the tracked attempts immediately
+- Verified via simulation: 4 failures = no lock, 5th failure = 60s lock, next round = 120s lock
+- HONEST LIMITATION noted in code comments and TODO: this only protects the actual login 
+  form UI. It does NOT stop someone bypassing our JavaScript and hitting Supabase's API 
+  directly with a script — that requires server-side controls (rate limiting/CAPTCHA) 
+  configured in the Supabase dashboard, which is a user action item, not something built here

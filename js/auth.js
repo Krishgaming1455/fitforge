@@ -163,6 +163,66 @@ async function handleSignup() {
   }
 }
 
+// ── BRUTE FORCE PROTECTION (client-side deterrent) ───────────
+// NOTE: this protects against casual repeated guessing through this login form.
+// It does NOT protect against someone bypassing the UI and hitting Supabase's API
+// directly — that requires server-side rate limiting/CAPTCHA configured in the
+// Supabase dashboard itself, which is outside what application code can control.
+function getLoginAttempts(email) {
+  try {
+    const raw = localStorage.getItem('login_attempts_' + email);
+    return raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0, lockoutLevel: 0 };
+  } catch (e) { return { count: 0, lockedUntil: 0, lockoutLevel: 0 }; }
+}
+
+function saveLoginAttempts(email, data) {
+  try { localStorage.setItem('login_attempts_' + email, JSON.stringify(data)); } catch (e) {}
+}
+
+function recordFailedLogin(email) {
+  const attempts = getLoginAttempts(email);
+  attempts.count++;
+  if (attempts.count >= 5) {
+    const cooldowns = [60, 120, 300]; // seconds: 1min, 2min, 5min — escalates each lockout
+    const cooldownSec = cooldowns[Math.min(attempts.lockoutLevel, cooldowns.length - 1)];
+    attempts.lockedUntil = Date.now() + cooldownSec * 1000;
+    attempts.lockoutLevel++;
+    attempts.count = 0;
+  }
+  saveLoginAttempts(email, attempts);
+}
+
+function clearLoginAttempts(email) {
+  try { localStorage.removeItem('login_attempts_' + email); } catch (e) {}
+}
+
+function checkLoginLockout(email) {
+  const attempts = getLoginAttempts(email);
+  if (attempts.lockedUntil && Date.now() < attempts.lockedUntil) {
+    return Math.ceil((attempts.lockedUntil - Date.now()) / 1000);
+  }
+  return 0;
+}
+
+let _lockoutCountdownInterval = null;
+function showLockoutCountdown(email, errorEl) {
+  clearInterval(_lockoutCountdownInterval);
+  const update = () => {
+    const secondsLeft = checkLoginLockout(email);
+    if (secondsLeft <= 0) {
+      clearInterval(_lockoutCountdownInterval);
+      errorEl.style.display = 'none';
+      return;
+    }
+    const mins = Math.floor(secondsLeft / 60);
+    const secs = secondsLeft % 60;
+    const display = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    showError(errorEl, `🔒 Too many failed attempts. Try again in ${display}.`);
+  };
+  update();
+  _lockoutCountdownInterval = setInterval(update, 1000);
+}
+
 // ── LOGIN ────────────────────────────────────────────────────
 async function handleLogin() {
   const email = document.getElementById('auth-login-email').value.trim();
@@ -173,6 +233,13 @@ async function handleLogin() {
   errorEl.style.display = 'none';
 
   if (!email || !password) return showError(errorEl, '❌ Email and password required');
+
+  // Check if this email is currently locked out from too many failed attempts
+  const lockedSecondsLeft = checkLoginLockout(email);
+  if (lockedSecondsLeft > 0) {
+    showLockoutCountdown(email, errorEl);
+    return;
+  }
 
   btn.textContent = 'Logging in...';
   btn.disabled = true;
@@ -192,8 +259,18 @@ async function handleLogin() {
       if (msg.includes('fetch') || msg.includes('network')) {
         return showError(errorEl, '⚠️ Can\'t reach the server right now. Supabase may be having issues — try again in a few minutes.');
       }
+      // Only count actual wrong-credential failures toward the lockout, not network issues
+      if (msg.includes('invalid') || msg.includes('credentials') || msg.includes('password')) {
+        recordFailedLogin(email);
+        const nowLockedFor = checkLoginLockout(email);
+        if (nowLockedFor > 0) {
+          return showError(errorEl, `🔒 Too many failed attempts. Try again in ${nowLockedFor} seconds.`);
+        }
+      }
       return showError(errorEl, '❌ ' + error.message);
     }
+    // Success — clear any tracked failed attempts for this email
+    clearLoginAttempts(email);
     // onAuthStateChange handles the rest
   } catch (e) {
     btn.textContent = 'Login';
