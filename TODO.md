@@ -329,3 +329,28 @@ those are excluded below. Only confirmed-real items are listed.
 - Fix: single source of truth (the actual checkbox state drives everything), and 
   toggleCustomRoutineMode now properly hides/shows ALL relevant sections (PPL tabs, 
   preset panels, day mapping, custom builder) regardless of which mode you were in before
+
+---
+
+## 🆕 SESSION 29 — Generate AI Prompt Button
+
+### Decision:
+- Button pulls user's actual stats (weight, height, age, goal, experience level, etc.)
+- Builds one combined diet + workout prompt
+- Copies to clipboard AND opens ChatGPT (or Claude) in a new tab automatically
+- User pastes the already-copied prompt themselves (browsers can't auto-paste into another site for security reasons — that's a hard browser limitation, not something we can code around)
+
+### Where to add it: Profile screen, near the existing "Get Personalised Analysis" button
+### What data to pull: name, age, weight, height, goal, experience level, injury tags, activity level, diet type (veg/non-veg if set)
+
+### ✅ SESSION 29 BUILT — Generate AI Prompt Button:
+- New "🤖 Generate Diet + Workout Prompt for ChatGPT" button on Profile screen
+- Pulls real user stats: age, weight, height, BMI, goal, experience level, activity, 
+  diet preference, injury/limitation tags
+- Builds a complete "act as a trainer/dietitian" prompt asking for a 7-day meal plan + 
+  weekly workout split with sets/reps, tailored to the person's actual data
+- Copies prompt to clipboard (with fallback for older browsers), then opens ChatGPT 
+  in a new tab automatically
+- Shows a confirmation toast so the user knows the copy succeeded before switching tabs
+- Note: browsers can't auto-paste into another site for security reasons — this is a hard 
+  limitation, so the user does need to paste manually once ChatGPT opens (one Ctrl+V / long-press)

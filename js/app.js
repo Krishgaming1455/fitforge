@@ -342,3 +342,77 @@ document.addEventListener('click', e => {
     const s = document.getElementById('food-suggestions'); if(s) s.style.display='none';
   }
 });
+
+// ============================================================
+// GENERATE AI PROMPT — pulls user stats, builds a ready-to-paste
+// prompt, copies it, opens ChatGPT in a new tab
+// ============================================================
+function generateAIPromptAndOpen() {
+  const name = document.getElementById('p-name')?.value || '';
+  const age = document.getElementById('p-age')?.value || 'not specified';
+  const weight = document.getElementById('p-weight')?.value || 'not specified';
+  const height = document.getElementById('p-height')?.value || 'not specified';
+  const goalTag = document.querySelector('#goal-tags .tag.selected')?.textContent.trim() || 'general fitness';
+  const experienceTag = document.querySelector('#experience-tags .tag.selected')?.textContent.trim() || 'Intermediate';
+  const injuryTags = [...document.querySelectorAll('#injury-tags .tag.selected')].map(t => t.textContent.trim()).filter(t => !t.includes('None'));
+  const activitySelect = document.getElementById('diet-activity');
+  const activity = activitySelect ? activitySelect.options[activitySelect.selectedIndex]?.text : 'moderately active';
+  const dietTypeSelect = document.getElementById('diet-type');
+  const dietType = dietTypeSelect ? dietTypeSelect.options[dietTypeSelect.selectedIndex]?.text : 'no preference';
+
+  let bmi = null;
+  if (weight !== 'not specified' && height !== 'not specified') {
+    bmi = (parseFloat(weight) / ((parseFloat(height)/100) ** 2)).toFixed(1);
+  }
+
+  const prompt = `Act as an experienced certified personal trainer and registered dietitian. Create a personalised 7-day diet plan and weekly workout plan for me based on these stats:
+
+- Age: ${age}
+- Weight: ${weight} kg
+- Height: ${height} cm
+${bmi ? `- BMI: ${bmi}` : ''}
+- Primary goal: ${goalTag}
+- Training experience: ${experienceTag}
+- Activity level: ${activity}
+- Diet preference: ${dietType}
+${injuryTags.length ? `- Injuries/limitations to work around: ${injuryTags.join(', ')}` : ''}
+
+Please provide:
+1. A daily calorie and protein target with brief reasoning
+2. A 7-day meal plan (breakfast, lunch, dinner, 1-2 snacks) using common, affordable ingredients
+3. A weekly workout split appropriate for my experience level and goal
+4. Sets/reps for each exercise in the workout plan
+5. Any specific cautions given my injuries/limitations (if listed above)
+
+Keep the response practical and easy to follow — I'll be using this as my actual plan.`;
+
+  // Copy to clipboard
+  navigator.clipboard?.writeText(prompt).then(() => {
+    showPromptCopiedToast();
+  }).catch(() => {
+    // Fallback for browsers without clipboard API support
+    const textarea = document.createElement('textarea');
+    textarea.value = prompt;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+    showPromptCopiedToast();
+  });
+
+  // Open ChatGPT in a new tab
+  window.open('https://chat.openai.com/', '_blank');
+}
+
+function showPromptCopiedToast() {
+  let toast = document.getElementById('prompt-copied-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'prompt-copied-toast';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '✅ Prompt copied! Paste it into the new ChatGPT tab.';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3500);
+}
