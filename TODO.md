@@ -393,3 +393,48 @@ those are excluded below. Only confirmed-real items are listed.
   form UI. It does NOT stop someone bypassing our JavaScript and hitting Supabase's API 
   directly with a script — that requires server-side controls (rate limiting/CAPTCHA) 
   configured in the Supabase dashboard, which is a user action item, not something built here
+
+---
+
+## 🆕 SESSION 31 — Exercise Form Videos (YouTube)
+
+### Decision: Both approaches
+1. Every exercise gets a "▶️ Watch Form Video" button → opens YouTube search for that exact 
+   exercise name + "form tutorial" (works for ALL 66+ exercises, zero curation needed)
+2. Popular/common exercises (the ones beginners do most) get an actual embedded YouTube video 
+   directly in the exercise card — curated list of well-known, reputable trainer channels
+
+### Approach for embedded videos:
+- Add a `videoId` field to exercise data ONLY for common exercises (squat, bench press, deadlift, 
+  pull-up, overhead press, etc.) — the rest just get the search link
+- Use YouTube's privacy-enhanced embed domain (youtube-nocookie.com) to reduce tracking/cookies
+- Embed shows inside a collapsible section so it doesn't visually clutter every exercise card 
+  by default — tap "▶️ Watch Form Video" to expand and show the embed (or open search if no 
+  curated video exists for that exercise)
+
+### Videos to curate (10-15 most common, foundational compound movements):
+Barbell Back Squat, Flat Barbell Bench Press, Deadlift, Pull-Ups, Barbell Bent-Over Row, 
+Seated Overhead Press, Romanian Deadlift, Leg Press, Lat Pulldown, Barbell Curl, 
+Close-Grip Bench Press, Standing Calf Raise, Plank, Box Squat (Goblet)
+
+### Important: video selection criteria
+- Must use reputable, well-known fitness channels (not random uploads) for safety — bad form 
+  demonstrations could actually cause injury, so source quality matters here
+- Since I (Claude) can't verify video IDs are live/correct without web search, will need user 
+  to confirm video links work correctly after I provide candidate searches, OR I should just 
+  build the search-link version for everything now and let user curate embeds later if they 
+  want — SAFER APPROACH, avoiding guessed/hallucinated video IDs
+
+### ✅ SESSION 31 BUILT — Exercise Form Videos:
+- "▶️ Watch Form Video" button on every exercise card
+- Tap to expand: shows embedded YouTube video for 14 curated common exercises (squat, 
+  bench, deadlift, pull-up, row, OHP, RDL, leg press, lat pulldown, curl, close-grip 
+  bench, calf raise, plank, goblet squat) — IDs currently empty placeholders, need user 
+  to fill in real verified video IDs
+- For all other exercises (or until video IDs are filled in): safely falls back to a 
+  YouTube search link for "[exercise name] proper form tutorial" — opens in new tab
+- Deliberately did NOT guess/hallucinate video IDs — risks showing wrong or unsafe-form 
+  videos to beginners trying to learn correctly. Safer to ship working search links now.
+- ⚠️ ACTION NEEDED: user should find/verify real YouTube videos for the 14 common exercises 
+  and paste video IDs into EXERCISE_VIDEO_IDS in js/gym.js (just the part after watch?v= in 
+  the URL)

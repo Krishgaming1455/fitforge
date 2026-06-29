@@ -276,10 +276,12 @@ function renderPPL() {
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4">${ex.note}</div>
           ${prev ? `<div class="overload-prev">📊 Last: ${prev.weight}kg × ${prev.reps} (${prev.date}) <span onclick="viewExerciseHistory('${ex.name.replace(/'/g,"\\'")}')" style="text-decoration:underline;cursor:pointer;color:var(--accent2)">View History</span></div>` : ''}
-          <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+          <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap">
             <button class="overload-log-btn" id="${safeId}" onclick="toggleOverloadInput('${ex.name.replace(/'/g,"\\'")}')">+ Log Weight</button>
+            <button onclick="toggleExerciseVideo('${day}-ex-${i}','${ex.name.replace(/'/g,"\\'")}')" style="background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.25);color:#ff6666;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">▶️ Watch Form Video</button>
             ${customIdx >= 0 ? `<button onclick="removeCustomExercise('${day}',${customIdx})" style="background:none;border:none;color:#ff4466;font-size:10px;cursor:pointer;text-decoration:underline">Remove</button>` : ''}
           </div>
+          <div id="video-${day}-ex-${i}" style="display:none;margin-top:8px"></div>
         </div>
         <div class="workout-ex-badge">${ex.sets} × ${ex.reps}</div>
       </div>`;
@@ -1303,4 +1305,56 @@ function assignExerciseToDay(dayId) {
   const resultsEl = document.getElementById('exercise-search-results');
   if (input) input.value = '';
   if (resultsEl) resultsEl.style.display = 'none';
+}
+
+// ============================================================
+// EXERCISE FORM VIDEOS — search link for all, embedded for common ones
+// ============================================================
+// NOTE: video IDs below are left empty intentionally. We don't guess/hallucinate
+// YouTube video IDs — that risks showing a broken or wrong (possibly unsafe-form)
+// video to someone trying to learn correctly. Fill these in with real, verified
+// video IDs (the part after "watch?v=" in a YouTube URL) for an embedded player.
+// Until filled in, every exercise safely falls back to a YouTube search link.
+const EXERCISE_VIDEO_IDS = {
+  "Barbell Back Squat": "",
+  "Flat Barbell Bench Press": "",
+  "Deadlift": "",
+  "Pull-Ups / Assisted Pull-Ups": "",
+  "Barbell Bent-Over Row": "",
+  "Seated Overhead Press": "",
+  "Romanian Deadlift": "",
+  "Leg Press (High Feet)": "",
+  "Lat Pulldown": "",
+  "Barbell Curl": "",
+  "Close-Grip Bench Press": "",
+  "Standing Calf Raise": "",
+  "Plank": "",
+  "Box Squat (Goblet)": ""
+};
+
+function toggleExerciseVideo(elId, exName) {
+  const container = document.getElementById('video-' + elId);
+  if (!container) return;
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  const videoId = EXERCISE_VIDEO_IDS[exName];
+  container.style.display = 'block';
+
+  if (videoId) {
+    // Privacy-enhanced embed, reduces tracking cookies
+    container.innerHTML = `<div style="position:relative;padding-bottom:56.25%;border-radius:10px;overflow:hidden">
+      <iframe src="https://www.youtube-nocookie.com/embed/${videoId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen loading="lazy"></iframe>
+    </div>`;
+  } else {
+    // Safe fallback — search link, never a guessed video ID
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(exName + ' proper form tutorial')}`;
+    container.innerHTML = `<a href="${searchUrl}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--accent2);font-size:12px;text-decoration:none">
+      🔍 Search YouTube for "${exName} form tutorial" <span style="margin-left:auto">↗</span>
+    </a>`;
+  }
 }
