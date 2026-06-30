@@ -444,3 +444,12 @@ Close-Grip Bench Press, Standing Calf Raise, Plank, Box Squat (Goblet)
   the backdrop padding area reliably closes the modal on touch devices (was click-only before)
 - #15: Rest timer now has a pause/resume button (⏸/▶) next to the existing stop (✕) button — 
   can pause mid-rest and resume from where it left off, instead of only start/stop
+
+### ✅ SESSION 33 — Undo food deletion + My PRs page:
+- #14 FIXED: removing a food log entry now shows a 5-second "Undo" toast — tap it to restore 
+  the exact item back to its original position in the log
+- #20 FIXED: new "🏆 My Personal Records" section on Gym screen, below Workout History
+  - Calculates the TRUE heaviest weight ever logged per exercise (scans full overloadHistory, 
+    not just the latest entry) — verified with test data that it correctly finds an 80kg PR 
+    from weeks ago even when the most recent log was a lighter 70kg
+  - Sorted heaviest-first, shows weight/reps/date for each exercise's all-time best

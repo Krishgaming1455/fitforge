@@ -125,7 +125,7 @@ function showScreen(name) {
   document.querySelectorAll('.mobile-nav-btn').forEach((b,i) => b.classList.toggle('active', mnNames[i] === name));
   window.scrollTo({top:0,behavior:'smooth'});
   if (name === 'home') renderHome();
-  if (name === 'gym') { checkDailyWorkoutReset(); renderPresetSelector(); renderActivePresetDays(); renderWeeklySplit(); renderWorkoutHistory(); renderMuscleHeatmap(); }
+  if (name === 'gym') { checkDailyWorkoutReset(); renderPresetSelector(); renderActivePresetDays(); renderWeeklySplit(); renderWorkoutHistory(); renderMuscleHeatmap(); renderMyPRs(); }
   if (name === 'myths') renderMyths();
   if (name === 'recovery') renderRecovery();
   if (name === 'diet') {

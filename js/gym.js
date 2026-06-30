@@ -1382,3 +1382,37 @@ function toggleExerciseVideo(elId, exName) {
     </a>`;
   }
 }
+
+// ============================================================
+// MY PERSONAL RECORDS — consolidated PR page from overloadHistory
+// ============================================================
+function renderMyPRs() {
+  const listEl = document.getElementById('my-prs-list');
+  if (!listEl) return;
+
+  const exerciseNames = Object.keys(overloadHistory || {});
+  if (!exerciseNames.length) {
+    listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">No PRs logged yet — use "+ Log Weight" on any exercise to start tracking your records!</div>`;
+    return;
+  }
+
+  // Find the heaviest entry per exercise from its full history (true PR, not just latest log)
+  const prs = exerciseNames.map(name => {
+    const history = overloadHistory[name] || [];
+    const best = history.reduce((max, entry) => (entry.weight > (max?.weight || 0) ? entry : max), null);
+    return best ? { name, ...best } : null;
+  }).filter(Boolean).sort((a, b) => b.weight - a.weight); // heaviest first
+
+  listEl.innerHTML = prs.map(pr => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
+      <div style="font-size:22px">🏆</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${escapeHtmlGym(pr.name)}</div>
+        <div style="font-size:11px;color:var(--muted)">Set on ${pr.date}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent)">${pr.weight}<span style="font-size:12px;color:var(--muted)">kg</span></div>
+        <div style="font-size:11px;color:var(--muted)">× ${pr.reps} reps</div>
+      </div>
+    </div>`).join('');
+}

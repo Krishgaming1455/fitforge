@@ -237,11 +237,50 @@ function addFood(name, idx) {
   autoSave();
 }
 
+let _lastRemovedFood = null;
+let _undoToastTimeout = null;
+
 function removeFood(uid) {
+  const removedItem = foodLog.find(f => f.uid === uid);
+  const removedIndex = foodLog.findIndex(f => f.uid === uid);
   foodLog = foodLog.filter(f => f.uid !== uid);
   updateNutritionDisplay();
   renderFoodLog();
   autoSave();
+
+  if (removedItem) {
+    _lastRemovedFood = { item: removedItem, index: removedIndex };
+    showUndoToast(removedItem.n);
+  }
+}
+
+function showUndoToast(foodName) {
+  let toast = document.getElementById('undo-food-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'undo-food-toast';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:12px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span>Removed "${foodName.length > 20 ? foodName.slice(0,20)+'...' : foodName}"</span><button onclick="undoRemoveFood()" style="background:var(--accent);color:#000;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">Undo</button>`;
+  toast.style.display = 'flex';
+  clearTimeout(_undoToastTimeout);
+  _undoToastTimeout = setTimeout(() => { toast.style.display = 'none'; _lastRemovedFood = null; }, 5000);
+}
+
+function undoRemoveFood() {
+  if (!_lastRemovedFood) return;
+  const { item, index } = _lastRemovedFood;
+  // Re-insert at original position if possible, otherwise append
+  if (index >= 0 && index <= foodLog.length) foodLog.splice(index, 0, item);
+  else foodLog.push(item);
+  updateNutritionDisplay();
+  renderFoodLog();
+  autoSave();
+  const toast = document.getElementById('undo-food-toast');
+  if (toast) toast.style.display = 'none';
+  _lastRemovedFood = null;
+  clearTimeout(_undoToastTimeout);
 }
 
 function clearFoodLog() {
