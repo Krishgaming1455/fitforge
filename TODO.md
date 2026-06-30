@@ -438,3 +438,9 @@ Close-Grip Bench Press, Standing Calf Raise, Plank, Box Squat (Goblet)
 - ⚠️ ACTION NEEDED: user should find/verify real YouTube videos for the 14 common exercises 
   and paste video IDs into EXERCISE_VIDEO_IDS in js/gym.js (just the part after watch?v= in 
   the URL)
+
+### ✅ SESSION 32 — Two quick fixes from the open bug list:
+- #10: Exercise history modal close — added touchend listener alongside click, so tapping 
+  the backdrop padding area reliably closes the modal on touch devices (was click-only before)
+- #15: Rest timer now has a pause/resume button (⏸/▶) next to the existing stop (✕) button — 
+  can pause mid-rest and resume from where it left off, instead of only start/stop

@@ -351,38 +351,59 @@ function renderWeeklySplit() {
 // ============================================================
 // WORKOUT TIMER
 // ============================================================
+let timerPaused = false;
+
 function startTimer(seconds) {
   clearInterval(timerInterval);
   timerSeconds = seconds;
+  timerPaused = false;
   const pill = document.getElementById('timer-pill');
   const display = document.getElementById('timer-display');
+  const pauseBtn = document.getElementById('timer-pause-btn');
   if (!pill || !display) return;
   pill.style.display = 'flex';
+  if (pauseBtn) pauseBtn.textContent = '⏸';
   updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    timerSeconds--;
-    updateTimerDisplay();
-    if (timerSeconds <= 0) {
-      clearInterval(timerInterval);
-      // Audio beep using Web Audio API
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.15, 0.3].forEach(t => {
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.frequency.value = 880;
-          g.gain.setValueAtTime(0.3, ctx.currentTime + t);
-          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.15);
-          o.start(ctx.currentTime + t);
-          o.stop(ctx.currentTime + t + 0.15);
-        });
-      } catch(e) {}
-      display.textContent = 'DONE!';
-      display.style.color = 'var(--green)';
-      setTimeout(() => { pill.style.display = 'none'; display.style.color = 'var(--accent)'; }, 2500);
-    }
-  }, 1000);
+  timerInterval = setInterval(tickTimer, 1000);
+}
+
+function tickTimer() {
+  timerSeconds--;
+  updateTimerDisplay();
+  if (timerSeconds <= 0) {
+    clearInterval(timerInterval);
+    const pill = document.getElementById('timer-pill');
+    const display = document.getElementById('timer-display');
+    // Audio beep using Web Audio API
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.15, 0.3].forEach(t => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.15);
+        o.start(ctx.currentTime + t);
+        o.stop(ctx.currentTime + t + 0.15);
+      });
+    } catch(e) {}
+    if (display) { display.textContent = 'DONE!'; display.style.color = 'var(--green)'; }
+    setTimeout(() => { if (pill) pill.style.display = 'none'; if (display) display.style.color = 'var(--accent)'; }, 2500);
+  }
+}
+
+function togglePauseTimer() {
+  const pauseBtn = document.getElementById('timer-pause-btn');
+  if (timerPaused) {
+    timerInterval = setInterval(tickTimer, 1000);
+    timerPaused = false;
+    if (pauseBtn) pauseBtn.textContent = '⏸';
+  } else {
+    clearInterval(timerInterval);
+    timerPaused = true;
+    if (pauseBtn) pauseBtn.textContent = '▶';
+  }
 }
 
 function updateTimerDisplay() {
@@ -395,6 +416,7 @@ function updateTimerDisplay() {
 
 function stopTimer() {
   clearInterval(timerInterval);
+  timerPaused = false;
   const pill = document.getElementById('timer-pill');
   if (pill) pill.style.display = 'none';
 }
@@ -458,7 +480,9 @@ function viewExerciseHistory(exName) {
   const history = overloadHistory[exName] || [];
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9600;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  const closeIfBackdrop = (e) => { if (e.target === modal) modal.remove(); };
+  modal.addEventListener('click', closeIfBackdrop);
+  modal.addEventListener('touchend', closeIfBackdrop, { passive: true });
 
   if (!history.length) {
     modal.innerHTML = `<div class="card" style="max-width:320px;width:100%;text-align:center;position:relative">
